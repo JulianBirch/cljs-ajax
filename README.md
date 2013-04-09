@@ -10,7 +10,7 @@ The client provides an easy way to send Ajax queries to the server using `ajax-r
 
 The `ajax-request` is the base request function that accepts the following parameters:
 
-* rel-url - the URI for the request
+* uri - the URI for the request
 * method - a string representing the HTTP request type, eg: "PUT", "DELETE", etc.
 * format - a keyword indicating the response format, can be either :json or :edn, defaults to :edn
 * handler - success handler, a function that accepts the response as a single argument
