@@ -19,7 +19,7 @@ The `ajax-request` is the base request function that accepts the following param
 
 #### GET/POST helpers
 
-The GET and POST helpers accept a URI followed by an optional map of options:
+The `GET` and `POST` helpers accept a URI followed by an optional map of options:
 
 :handler - the handler function for successful operation
            should accept a single parameter which is the deserialized
