@@ -2,7 +2,7 @@
 
 simple Ajax client for ClojureScript
 
-#### Leiningen dependency
+### Leiningen dependency
 
 ```clojure
 [cljs-ajax "0.1.0"]
