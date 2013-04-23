@@ -2,7 +2,14 @@
 
 simple Ajax client for ClojureScript
 
+#### Leiningen dependency
+
+```clojure
+[cljs-ajax "0.1.0"]
+```
+
 ### Usage
+
 
 The client provides an easy way to send Ajax queries to the server using `ajax-request`, `GET`, and `POST` functions.
 
