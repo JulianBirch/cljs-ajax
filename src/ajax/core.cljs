@@ -31,6 +31,11 @@
         query-data/createFromMap
         .toString)))
 
+(defn uri-with-params [uri params]
+  (if params
+    (str uri "?" (params-to-str params))
+    uri))
+
 (defn ajax-request [uri method {:keys [format handler error-handler params]}]
   (let [req              (new goog.net.XhrIo)
         response-handler (base-handler format handler error-handler)]
@@ -47,7 +52,9 @@
   :format - the format for the response :edn or :json defaults to :edn
   :params - a map of parameters that will be sent with the request"
   [uri & [opts]]
-  (ajax-request uri "GET" opts))
+  (ajax-request (uri-with-params uri (:params opts)) 
+                "GET" 
+                (dissoc opts :params)))
 
 (defn POST
   "accepts the URI and an optional map of options, options include:
@@ -59,5 +66,7 @@
   :format - the format for the response :edn or :json defaults to :edn
   :params - a map of parameters that will be sent with the request"
   [uri & [opts]]
-  (ajax-request uri "POST" opts))
+  (ajax-request uri 
+                "POST" 
+                opts))
 
