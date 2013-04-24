@@ -46,6 +46,8 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 
 (GET "/hello")
 
+(GET "/hello" {:params {:foo "foo"}})
+
 (GET "/hello" {:handler handler
                :error-handler error-handler})
 
