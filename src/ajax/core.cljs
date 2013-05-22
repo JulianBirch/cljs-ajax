@@ -66,7 +66,5 @@
   :format - the format for the response :edn or :json defaults to :edn
   :params - a map of parameters that will be sent with the request"
   [uri & [opts]]
-  (ajax-request uri
-                "POST"
-                opts))
+  (ajax-request uri "POST" opts))
 
