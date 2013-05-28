@@ -9,19 +9,23 @@
 (defn success? [status]
   (some #{status} [200 201 202 204 205 206]))
 
+(defn parse-response [target format]
+  (condp = (or format :edn)
+    :json (js->clj (.getResponseJson target))
+    :edn (reader/read-string (.getResponseText target))
+    (throw (js/Error. (str "unrecognized format: " format)))))
+
 (defn base-handler [& [format handler error-handler]]
   (fn [response]
     (let [target (.-target response)
           status (.getStatus target)]
       (if (success? status)
         (if handler
-          (handler (condp = (or format :edn)
-                     :json (js->clj (.getResponseJson target))
-                     :edn (reader/read-string (.getResponseText target))
-                     (throw (js/Error. (str "unrecognized format: " format))))))
+          (handler (parse-response target format)))
         (if error-handler
           (error-handler {:status status
-                          :status-text (.getStatusText target)}))))))
+                          :status-text (.getStatusText target)
+                          :response (try (parse-response target format))}))))))
 
 (defn params-to-str [params]
   (if params
