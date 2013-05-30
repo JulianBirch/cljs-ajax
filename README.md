@@ -64,9 +64,7 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 
 The error handler function has a map with the following keys passed to it:
 
-```
 * `:status` - the status code
 * `:status-message` - the status message
 * `:response` - the EDN/JSON response if it's valid
-```
 
