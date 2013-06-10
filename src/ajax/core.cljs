@@ -9,23 +9,23 @@
 (defn success? [status]
   (some #{status} [200 201 202 204 205 206]))
 
-(defn parse-response [target format]
+(defn parse-response [target format keywordize-keys]
   (condp = (or format :edn)
-    :json (js->clj (.getResponseJson target))
+    :json (js->clj (.getResponseJson target) :keywordize-keys keywordize-keys)
     :edn (reader/read-string (.getResponseText target))
     (throw (js/Error. (str "unrecognized format: " format)))))
 
-(defn base-handler [& [format handler error-handler]]
+(defn base-handler [& [format handler error-handler keywordize-keys]]
   (fn [response]
     (let [target (.-target response)
           status (.getStatus target)]
       (if (success? status)
         (if handler
-          (handler (parse-response target format)))
+          (handler (parse-response target format keywordize-keys)))
         (if error-handler
           (error-handler {:status status
                           :status-text (.getStatusText target)
-                          :response (try (parse-response target format))}))))))
+                          :response (try (parse-response target format keywordize-keys))}))))))
 
 (defn params-to-str [params]
   (if params
@@ -40,9 +40,9 @@
     (str uri "?" (params-to-str params))
     uri))
 
-(defn ajax-request [uri method {:keys [format handler error-handler params]}]
+(defn ajax-request [uri method {:keys [format keywordize-keys handler error-handler params]}]
   (let [req              (new goog.net.XhrIo)
-        response-handler (base-handler format handler error-handler)]
+        response-handler (base-handler format handler error-handler keywordize-keys)]
     (events/listen req goog.net.EventType/COMPLETE response-handler)
     (.send req uri method (params-to-str params))))
 

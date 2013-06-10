@@ -5,7 +5,7 @@ simple Ajax client for ClojureScript
 ### Leiningen
 
 ```clojure
-[cljs-ajax "0.1.2"]
+[cljs-ajax "0.1.3"]
 ```
 
 ### Usage
@@ -17,13 +17,13 @@ The client provides an easy way to send Ajax queries to the server using `ajax-r
 
 The `ajax-request` is the base request function that accepts the following parameters:
 
-* uri - the URI for the request
-* method - a string representing the HTTP request type, eg: "PUT", "DELETE", etc.
-* format - a keyword indicating the response format, can be either `:json` or `:edn`, defaults to `:edn`
-* handler - success handler, a function that accepts the response as a single argument
-* error-handler - error handler, a function that accepts a map representing the error with keys `:status and `:status-text`
-* params - a map of params to be sent to the server
-
+* `:uri` - the URI for the request
+* `:method` - a string representing the HTTP request type, eg: "PUT", "DELETE", etc.
+* `:format` - a keyword indicating the response format, can be either `:json` or `:edn`, defaults to `:edn`
+* `:handler` - success handler, a function that accepts the response as a single argument
+* `:error-handler` - error handler, a function that accepts a map representing the error with keys `:status and `:status-text`
+* `:params` - a map of params to be sent to the server
+* `:keywordize-keys` - true/false specifies whether keys in maps will be keywordized when using `:json` format
 #### GET/POST helpers
 
 The `GET` and `POST` helpers accept a URI followed by a map of options:
@@ -32,6 +32,7 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 * `:error-handler` - the handler function for errors, should accept a map with keys `:status` and `:status-text`
 * `:format` - the format for the response `:edn` or `:json` defaults to `:edn`
 * `:params` - a map of parameters that will be sent with the request
+* `:keywordize-keys` - true/false specifies whether keys in maps will be keywordized when using `:json` format
 
 
 ```clojure
@@ -53,11 +54,18 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 
 (POST "/hello")
 
-(POST "/send-message" 
+(POST "/send-message"
         {:params {:message "Hello World"
                   :user    "Bob"}
          :handler handler
          :error-handler error-handler})
+
+(POST "/send-message"
+        {:params {:message "Hello World"
+                  :user    "Bob"}
+         :handler handler
+         :format :json
+         :keywordize-keys true})
 ```
 
 ### Error Handler

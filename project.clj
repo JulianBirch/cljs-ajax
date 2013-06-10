@@ -1,4 +1,4 @@
-(defproject cljs-ajax "0.1.2"
+(defproject cljs-ajax "0.1.3"
   :clojurescript? true
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/yogthos/cljs-ajax"
@@ -7,7 +7,7 @@
   :dependencies [[org.clojure/clojure "1.5.1"]]
   :plugins [[lein-cljsbuild "0.3.2"]]
   :hooks [leiningen.cljsbuild]
-  
+
   :cljsbuild
     {:builds
      {:dev  {:source-paths ["src"]
