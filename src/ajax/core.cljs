@@ -15,15 +15,15 @@
     :edn (reader/read-string (.getResponseText target))
     (throw (js/Error. (str "unrecognized format: " format)))))
 
-(defn exception-response [e status format target]
+(defn exception-response [e status format is-default-format target]
   (let [response {:status status
                   :response nil}
         status-text (str (.-message e)
                          "  Format should have been "
-                         (or format :edn)
-                         (if format
-                           "."
-                           " (default)."))
+                         format
+                         (if is-default-format
+                           " (default)."
+                           "."))
         parse-error (assoc response
                       :status-text status-text
                       :is-parse-error true
@@ -38,7 +38,13 @@
   (fn [response]
     (try
       (let [target (.-target response)
-            status (.getStatus target)]
+            status (.getStatus target)
+            content-type (.getResponseHeader target "Content-Type")
+            is-default-format (nil? format)
+            format (or format
+                       (if (.indexOf content-type "json")
+                         :json
+                         :edn))]
         (try
           (let [response (parse-response target format keywordize-keys)]
             (if (success? status)
@@ -51,7 +57,8 @@
           (catch js/Object e
             (if error-handler
               (error-handler
-               (exception-response e status format target))))))
+               (exception-response e status
+                                   format is-default-format target))))))
       (catch js/Object e            ; These errors should never happen
         (if error-handler
           (error-handler {:status 0

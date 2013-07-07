@@ -30,7 +30,7 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 
 * `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response
 * `:error-handler` - the handler function for errors, should accept a map with keys `:status` and `:status-text`
-* `:format` - the format for the response `:edn` or `:json` defaults to `:edn`
+* `:format` - the format for the response `:edn` or `:json` defaults to `:edn` or json if specified by the Content-Type header of the response
 * `:params` - a map of parameters that will be sent with the request
 * `:keywordize-keys` - true/false specifies whether keys in maps will be keywordized when using `:json` format
 
