@@ -55,7 +55,7 @@
       (catch js/Object e            ; These errors should never happen
         (if error-handler
           (error-handler {:status 0
-                          :status-text (.getStatusText target)
+                          :status-text (.-message e)
                           :response nil}))))))
 
 (defn params-to-str [params]
