@@ -5,7 +5,7 @@ simple Ajax client for ClojureScript
 ### Leiningen
 
 ```clojure
-[cljs-ajax "0.1.3"]
+[cljs-ajax "0.1.4"]
 ```
 
 ### Usage
@@ -72,7 +72,9 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 
 The error handler function has a map with the following keys passed to it:
 
-* `:status` - the status code
-* `:status-message` - the status message
+* `:status` - the HTTP status code
+* `:status-text` - the HTTP status message, or feedback from a parse failure
 * `:response` - the EDN/JSON response if it's valid
-
+* `:original-text` The response as raw text (if parsing failed)
+* `:is-parse-error` Is true if this is feedback from a parse failure
+* `:parse-error` If the server returned an error, and that then failed to parse, the map contains the error, and this contains the parse failure
