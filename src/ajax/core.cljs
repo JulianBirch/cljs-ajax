@@ -15,17 +15,48 @@
     :edn (reader/read-string (.getResponseText target))
     (throw (js/Error. (str "unrecognized format: " format)))))
 
+(defn exception-response [e status format target]
+  (let [response {:status status
+                  :response nil}
+        status-text (str (.-message e)
+                         "  Format should have been "
+                         (or format :edn)
+                         (if format
+                           "."
+                           " (default)."))
+        parse-error (assoc response
+                      :status-text status-text
+                      :is-parse-error true
+                      :original-text (.getResponseText target))]
+    (if (success? status)
+      parse-error
+      (assoc response
+        :status-text (.getStatusText target)
+        :parse-error parse-error))))
+
 (defn base-handler [& [format handler error-handler keywordize-keys]]
   (fn [response]
-    (let [target (.-target response)
-          status (.getStatus target)]
-      (if (success? status)
-        (if handler
-          (handler (parse-response target format keywordize-keys)))
-        (if error-handler
-          (error-handler {:status status
-                          :status-text (.getStatusText target)
-                          :response (try (parse-response target format keywordize-keys))}))))))
+    (try
+      (let [target (.-target response)
+            status (.getStatus target)]
+        (try
+          (let [response (parse-response target format keywordize-keys)]
+            (if (success? status)
+              (if handler
+                (handler response))
+              (if error-handler
+                (error-handler {:status status
+                                :status-text (.getStatusText target)
+                                :response response}))))
+          (catch js/Object e
+            (if error-handler
+              (error-handler
+               (exception-response e status format target)))))
+        (catch js/Object e            ; These errors should never happen
+          (if error-handler
+            (error-handler {:status 0
+                            :status-text (.getStatusText target)
+                            :response nil})))))))
 
 (defn params-to-str [params]
   (if params
@@ -71,4 +102,3 @@
   :params - a map of parameters that will be sent with the request"
   [uri & [opts]]
   (ajax-request uri "POST" opts))
-
