@@ -78,11 +78,13 @@
     (str uri "?" (params-to-str params))
     uri))
 
-(defn ajax-request [uri method {:keys [format keywordize-keys handler error-handler params]}]
+(defn ajax-request [uri method {:keys [format keywordize-keys handler error-handler params body headers]}]
   (let [req              (new goog.net.XhrIo)
         response-handler (base-handler format handler error-handler keywordize-keys)]
     (events/listen req goog.net.EventType/COMPLETE response-handler)
-    (.send req uri method (params-to-str params))))
+    (if headers
+      (.send req uri method body (clj->js headers))
+      (.send req uri method (params-to-str params)))))
 
 (defn GET
   "accepts the URI and an optional map of options, options include:
