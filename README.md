@@ -21,7 +21,7 @@ The `ajax-request` is the base request function that accepts the following param
 * `:method` - a string representing the HTTP request type, eg: "PUT", "DELETE", etc.
 * `:format` - a keyword indicating the response format, can be either `:json` or `:edn`, defaults to `:edn`
 * `:handler` - success handler, a function that accepts the response as a single argument
-* `:error-handler` - error handler, a function that accepts a map representing the error with keys `:status and `:status-text`
+* `:error-handler` - error handler, a function that accepts a map representing the error with keys `:status` and `:status-text`
 * `:params` - a map of params to be sent to the server
 * `:keywordize-keys` - true/false specifies whether keys in maps will be keywordized when using `:json` format
 #### GET/POST helpers
@@ -30,7 +30,7 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 
 * `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response
 * `:error-handler` - the handler function for errors, should accept a map with keys `:status` and `:status-text`
-* `:format` - the format for the response `:edn` or `:json` defaults to `:edn` or json if specified by the Content-Type header of the response
+* `:format` - the format for the response `:edn` or `:json` defaults to `:json` if specified by the Content-Type header of the response or `:edn` otherwise
 * `:params` - a map of parameters that will be sent with the request
 * `:keywordize-keys` - true/false specifies whether keys in maps will be keywordized when using `:json` format
 
