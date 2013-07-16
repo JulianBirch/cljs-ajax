@@ -10,10 +10,13 @@
   (some #{status} [200 201 202 204 205 206]))
 
 (defn parse-response [target format keywordize-keys]
-  (condp = (or format :edn)
-    :json (js->clj (.getResponseJson target) :keywordize-keys keywordize-keys)
-    :edn (reader/read-string (.getResponseText target))
-    (throw (js/Error. (str "unrecognized format: " format)))))
+  (let [txt (.getResponseText target)]
+    (if (seq txt)
+      (condp = (or format :edn)
+        :json (js->clj (.getResponseJson target) :keywordize-keys keywordize-keys)
+        :edn (reader/read-string (.getResponseText target))
+        (throw (js/Error. (str "unrecognized format: " format))))
+      "")))
 
 (defn exception-response [e status format is-default-format target]
   (let [response {:status status
