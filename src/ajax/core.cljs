@@ -19,9 +19,19 @@
    :write pr-str
    :content-type "text/edn"})
 
+(defn params-to-str [params]
+  (if params
+    (-> params
+        clj->js
+        structs/Map.
+        query-data/createFromMap
+        .toString)))
+
 (defn raw-format []
   {:read (fn read-text [target] (.getResponseText target))
-   :description "raw text"})
+   :description "raw text"
+   :write params-to-str
+   :content-type "application/x-www-form-urlencoded"})
 
 (defn write-json [data]
   (.log js/console "WRITE JSON" data)
@@ -101,26 +111,15 @@
           h (if ok handler error-handler)]
       (if h (h result)))))
 
-(defn params-to-str [params]
-  (if params
-    (-> params
-        clj->js
-        structs/Map.
-        query-data/createFromMap
-        .toString)))
-
 (defn uri-with-params [uri params]
   (if params
     (str uri "?" (params-to-str params))
     uri))
 
-<<<<<<< HEAD
 (defn payload-and-headers [format {:keys [params body headers data]}]
   (let [payload (or body
                     (if-let [write (:write format)] (write data))
                     (params-to-str params))
-        _ (.log js/console "PAYLOAD " payload)
-        _ (.log js/console "FORMAT " format)
         content-type (if (and (nil? body) data)
                        (if-let [ct (:content-type format)]
                          {"Content-Type" ct}))
@@ -135,15 +134,6 @@
     (events/listen req goog.net.EventType/COMPLETE response-handler)
     (.send req uri method payload
            (clj->js headers) (:timeout opts))))
-=======
-(defn ajax-request [uri method {:keys [format keywordize-keys handler error-handler params body headers]}]
-  (let [req              (new goog.net.XhrIo)
-        response-handler (base-handler format handler error-handler keywordize-keys)]
-    (events/listen req goog.net.EventType/COMPLETE response-handler)
-    (if headers
-      (.send req uri method body (clj->js headers))
-      (.send req uri method (params-to-str params)))))
->>>>>>> fd589e5... add support for specifying headers. body needs to be strings.
 
 (defn GET
   "accepts the URI and an optional map of options, options include:
