@@ -2,6 +2,7 @@
   (:require [goog.net.XhrIo :as xhr]
             [goog.Uri :as uri]
             [goog.Uri.QueryData :as query-data]
+            [goog.json.Serializer]
             [goog.events :as events]
             [goog.structs :as structs]
             [cljs.reader :as reader]))
@@ -9,41 +10,54 @@
 (defn success? [status]
   (some #{status} [200 201 202 204 205 206]))
 
-(def edn-format
-  {:read (fn read-edn [target]
-           (reader/read-string (.getResponseText target)))
-   :description "EDN"})
+(defn read-edn [target]
+  (reader/read-string (.getResponseText target)))
 
-(def raw-format
+(defn edn-format []
+  {:read read-edn
+   :description "EDN"
+   :write pr-str
+   :content-type "text/edn"})
+
+(defn raw-format []
   {:read (fn read-text [target] (.getResponseText target))
    :description "raw text"})
 
-(defn get-json-format [{:keys [prefix keywordize-keys]}]
+(defn write-json [data]
+  (.log js/console "WRITE JSON" data)
+  (.serialize (goog.json.Serializer.) (clj->js data)))
+
+(defn json-format [{:keys [prefix keywordize-keys]}]
   {:read (fn read-json [target]
-           (let [json (if prefix
-                        (.getResponseJson target prefix)
-                        (.getResponseJson target))]
+           (let [json (.getResponseJson target prefix)]
              (js->clj json :keywordize-keys keywordize-keys)))
    :description (str "JSON"
                      (if prefix (str " prefix '" prefix "'"))
-                     (if keywordize-keys " keywordize"))})
+                     (if keywordize-keys " keywordize"))
+   :write write-json
+   :content-type "application/json"})
 
 (defn get-default-format [target]
   (let [ct (.getResponseHeader target "Content-Type")
         format (if (and ct (.indexOf ct "json"))
-                (get-json-format {:keywordize-keys true})
-                :else edn-format)]
+                (json-format {})
+                (edn-format))]
     (update-in format [:description] #(str % " (default)"))))
+
+(defn keyword-format [format format-params]
+  (case format
+    :json (json-format format-params)
+    :edn (edn-format)
+    :raw (raw-format)
+    (throw (js/Error. (str "unrecognized format: " format)))))
 
 (defn get-format [{:keys [format] :as format-params}]
   (cond
+   (keyword? format) (keyword-format format format-params)
    (nil? format) nil ; i.e. use get-default-format later
    (map? format) format
    (ifn? format) {:read format :description "custom"}
-   (= format :json) (get-json-format format-params)
-   (= format :edn) edn-format
-   (= format :raw raw-format)
-   (throw (js/Error. (str "unrecognized format: " format)))))
+   :else (throw (js/Error. (str "unrecognized format: " format)))))
 
 (defn exception-response [e status format target]
   (let [response {:status status
@@ -61,31 +75,31 @@
         :status-text (.getStatusText target)
         :parse-error parse-error))))
 
-(defn base-handler [{:keys [format handler error-handler]}]
+(defn interpret-response [format response]
+  (try
+    (let [target (.-target response)
+          status (.getStatus target)
+          format (or format (get-default-format target))
+          parse  (get format :read)]
+      (try
+        (let [response (parse target)]
+          (if (success? status)
+            [true response]
+            [false {:status status
+                    :status-text (.getStatusText target)
+                    :response response}]))
+        (catch js/Object e
+          [false (exception-response e status format target)])))
+    (catch js/Object e               ; These errors should never happen
+      [false {:status 0
+              :status-text (.-message e)
+              :response nil}])))
+
+(defn base-handler [format {:keys [handler error-handler]}]
   (fn [response]
-    (try
-      (let [target (.-target response)
-            status (.getStatus target)
-            format (or format (get-default-format target))
-            parse  (get format :read)]
-        (try
-          (let [response (parse target)]
-            (if (success? status)
-              (if handler
-                (handler response))
-              (if error-handler
-                (error-handler {:status status
-                                :status-text (.getStatusText target)
-                                :response response}))))
-          (catch js/Object e
-            (if error-handler
-              (error-handler
-               (exception-response e status format target))))))
-      (catch js/Object e            ; These errors should never happen
-        (if error-handler
-          (error-handler {:status 0
-                          :status-text (.-message e)
-                          :response nil}))))))
+    (let [[ok result] (interpret-response format response)
+          h (if ok handler error-handler)]
+      (if h (h result)))))
 
 (defn params-to-str [params]
   (if params
@@ -100,15 +114,36 @@
     (str uri "?" (params-to-str params))
     uri))
 
-(defn ajax-request [uri method
-                    {:keys [params body headers] :as opts}]
-  (let [req              (new goog.net.XhrIo)
-        opts             (assoc opts :format (get-format opts))
-        response-handler (base-handler opts)]
+<<<<<<< HEAD
+(defn payload-and-headers [format {:keys [params body headers data]}]
+  (let [payload (or body
+                    (if-let [write (:write format)] (write data))
+                    (params-to-str params))
+        _ (.log js/console "PAYLOAD " payload)
+        _ (.log js/console "FORMAT " format)
+        content-type (if (and (nil? body) data)
+                       (if-let [ct (:content-type format)]
+                         {"Content-Type" ct}))
+        headers (merge (or headers {}) content-type)]
+    [payload headers]))
+
+(defn ajax-request [uri method opts]
+  (let [req (new goog.net.XhrIo)
+        format (get-format opts)
+        response-handler (base-handler format opts)
+        [payload headers] (payload-and-headers format opts)]
     (events/listen req goog.net.EventType/COMPLETE response-handler)
-    (.send req uri method
-           (or body (params-to-str params))
-           (if headers (clj->js headers)))))
+    (.send req uri method payload
+           (clj->js headers) (:timeout opts))))
+=======
+(defn ajax-request [uri method {:keys [format keywordize-keys handler error-handler params body headers]}]
+  (let [req              (new goog.net.XhrIo)
+        response-handler (base-handler format handler error-handler keywordize-keys)]
+    (events/listen req goog.net.EventType/COMPLETE response-handler)
+    (if headers
+      (.send req uri method body (clj->js headers))
+      (.send req uri method (params-to-str params)))))
+>>>>>>> fd589e5... add support for specifying headers. body needs to be strings.
 
 (defn GET
   "accepts the URI and an optional map of options, options include:
