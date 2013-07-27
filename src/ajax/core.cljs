@@ -17,7 +17,7 @@
   {:read read-edn
    :description "EDN"
    :write pr-str
-   :content-type "text/edn"})
+   :content-type "application/edn"})
 
 (defn params-to-str [params]
   (if params
@@ -49,7 +49,7 @@
 
 (defn get-default-format [target]
   (let [ct (.getResponseHeader target "Content-Type")
-        format (if (and ct (.indexOf ct "json"))
+        format (if (and ct (>= (.indexOf ct "json") 0))
                 (json-format {})
                 (edn-format))]
     (update-in format [:description] #(str % " (default)"))))
