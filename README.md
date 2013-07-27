@@ -5,7 +5,7 @@ simple Ajax client for ClojureScript
 ### Leiningen
 
 ```clojure
-[cljs-ajax "0.1.4"]
+[cljs-ajax "0.1.6"]
 ```
 
 ### Usage
