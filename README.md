@@ -78,3 +78,9 @@ The error handler function has a map with the following keys passed to it:
 * `:original-text` The response as raw text (if parsing failed)
 * `:is-parse-error` Is true if this is feedback from a parse failure
 * `:parse-error` If the server returned an error, and that then failed to parse, the map contains the error, and this contains the parse failure
+
+### Contributing
+
+All pull requests are welcome, but we do ask that any changes come with tests that demonstrate the original problem.  For this, you'll need to get the test environment working.  First, you need to install phantom.js somewhere on your path.  We recommend you download directly from the website [http://phantomjs.org/download.html].  (Do _not_ give into the temptation of using apt-get on Ubuntu; it installs v1.4 and won't work.)
+
+After that `lein cljsbuild test` should run the tests.
