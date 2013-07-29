@@ -5,7 +5,7 @@ simple Ajax client for ClojureScript
 ### Leiningen
 
 ```clojure
-[cljs-ajax "0.1.4"]
+[cljs-ajax "0.1.6"]
 ```
 
 ### Usage
@@ -19,11 +19,14 @@ The `ajax-request` is the base request function that accepts the following param
 
 * `:uri` - the URI for the request
 * `:method` - a string representing the HTTP request type, eg: "PUT", "DELETE", etc.
-* `:format` - a keyword indicating the response format, can be either `:json` or `:edn`, defaults to `:edn`
+* `:format` - a keyword indicating the response format, can be either `:json`, `:edn` or `:raw`\*, defaults to `:edn`
 * `:handler` - success handler, a function that accepts the response as a single argument
 * `:error-handler` - error handler, a function that accepts a map representing the error with keys `:status` and `:status-text`
 * `:params` - a map of params to be sent to the server
 * `:keywordize-keys` - true/false specifies whether keys in maps will be keywordized when using `:json` format
+
+\* when `:raw` format is selected the server response will not be parsed and is returned as is.
+
 #### GET/POST helpers
 
 The `GET` and `POST` helpers accept a URI followed by a map of options:
