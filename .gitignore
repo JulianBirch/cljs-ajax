@@ -6,3 +6,4 @@ pom.xml
 /targets/
 /target/
 .lein-deps-sum
+.#*

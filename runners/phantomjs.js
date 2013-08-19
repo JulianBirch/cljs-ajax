@@ -27,4 +27,3 @@ var success = p.evaluate(function () {
 });
 
 phantom.exit(success ? 0 : 1);
-
