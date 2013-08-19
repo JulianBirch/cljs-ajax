@@ -124,7 +124,7 @@
               :response nil}])))
 
 (defn no-format [target]
-  (throw (js/Error. (str "Format cannot be used to read result,  "))))
+  (throw (js/Error. (str "No response format was supplied."))))
 
 (defn uri-with-params [uri params]
   (if params
@@ -174,14 +174,23 @@
 (defn raw-format []
   (codec (url-request-format) (raw-response-format)))
 
-(defn keyword-format [format format-params]
+; "Easy" API beyond this point
+
+(defn keyword-request-format [format format-params]
   (case format
-    :json (json-format format-params)
-    :edn (edn-format)
-    :raw (raw-format)
+    :json (json-request-format)
+    :edn (edn-request-format)
+    :raw (url-request-format)
     :url (url-request-format)
     (throw
      (js/Error. (str "unrecognized request format: " format)))))
+
+(defn keyword-response-format [format format-params]
+  (case format
+    :json (json-response-format format-params)
+    :edn (edn-response-format)
+    :raw (raw-response-format)
+    nil))
 
 (defn base-handler [format {:keys [handler error-handler]}]
   (fn [response]
@@ -190,14 +199,19 @@
           h (if ok handler error-handler)]
       (if h (h result)))))
 
-(defn enhance-opts [{:keys [format] :as opts}]
+(defn transform-format [{:keys [format response-format] :as opts}]
+  (let [rf (keyword-response-format response-format opts)]
+    (cond (nil? format)
+          (codec (url-request-format) rf)
+          (keyword? format)
+          (codec (keyword-request-format format opts) rf)
+          :else format)))
+
+(defn enhance-opts [opts]
   "Note that if you call GET and POST, this function gets called and
    will include JSON and EDN code in your JS.  If you don't want
    this to happen, use ajax-request directly."
-  (let [format (cond (nil? format) (url-request-format)
-                             (keyword? format)
-                             (keyword-format format opts)
-                             :else nil)]
+  (let [format (transform-format opts)]
     (assoc opts
       :handler (base-handler format opts)
       :format format)))
@@ -209,7 +223,8 @@
              response
   :error-handler - the handler function for errors, should accept a map
                    with keys :status and :status-text
-  :format - the format for the response
+  :format - the format for the request
+  :response-format - the format for the response
   :params - a map of parameters that will be sent with the request"
   [uri & [opts]]
   (ajax-request uri "GET" (enhance-opts opts)))
@@ -221,7 +236,8 @@
              response
   :error-handler - the handler function for errors, should accept a map
                    with keys :status and :status-text
-  :format - the format for the response
+  :format - the format for the request
+  :response-format - the format for the response
   :params - a map of parameters that will be sent with the request"
   [uri & [opts]]
   (ajax-request uri "POST" (enhance-opts opts)))
