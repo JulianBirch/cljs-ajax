@@ -173,20 +173,20 @@
     (str/upper-case (name method))
     method))
 
-(defn base-handler [format {:keys [get-default-format]}]
+(defn base-handler [format {:keys [handler get-default-format]}]
   (fn [xhrio]
-    (interpret-response format xhrio
-                        (or get-default-format no-format))))
+    (handler (interpret-response format xhrio
+                                 (or get-default-format no-format)))))
 
 (defn ajax-request
-  ([uri method {:keys [handler format] :as opts} js-ajax]
+  ([uri method {:keys [format] :as opts} js-ajax]
      (let [format (get-format format)
            method (normalize-method method)
            [uri body headers]
            (process-inputs uri method format opts)
            handler (base-handler format opts)]
        (-js-ajax-request js-ajax uri method body
-                        (clj->js headers) handler opts)))
+                         (clj->js headers) handler opts)))
   ([uri method opts]
      (ajax-request uri method opts (new goog.net.XhrIo))))
 

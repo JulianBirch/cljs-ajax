@@ -50,11 +50,13 @@
     (is (= payload "{\"a\":3,\"b\":\"hello\"}"))
     (is (= headers {"Content-Type" "application/json"}))))
 
+
 (deftest correct-handler
   (let [x (FakeXhrIo. "application/edn; charset blah blah"
                       "Reply" 200)
-        r (ajax-request nil nil {:handler identity
-                                 :format (raw-format)} x)]
-    (is (vector? r))
-    (is (first r) "Request should have been successful.")
-    (is (= "Reply" (second r)))))
+        r (atom nil)]
+    (ajax-request nil nil {:handler #(reset! r %)
+                           :format (raw-format)} x)
+    (is (vector? @r))
+    (is (first @r) "Request should have been successful.")
+    (is (= "Reply" (second @r)))))
