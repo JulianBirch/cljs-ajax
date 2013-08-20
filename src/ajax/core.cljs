@@ -1,5 +1,6 @@
 (ns ajax.core
   (:require [goog.net.XhrIo :as xhr]
+            [goog.net.XhrManager :as xhrm]
             [goog.Uri :as uri]
             [goog.Uri.QueryData :as query-data]
             [goog.json.Serializer]
@@ -8,12 +9,38 @@
             [cljs.reader :as reader]
             [clojure.string :as str]))
 
+(defprotocol AjaxImpl
+  "An abstraction for a javascript class that implements
+   Ajax calls."
+  (-js-ajax-request [this uri method body headers handler opts]
+    "Makes an actual ajax request.  All parameters except opts
+     are in JS format."))
+
+(extend-type goog.net.XhrIo
+  AjaxImpl
+  (-js-ajax-request
+    [this uri method body headers handler {:keys [timeout]}]
+    (doto this
+      (events/listen goog.net.EventType/COMPLETE handler)
+      (.send uri method body headers timeout))))
+
+(extend-type goog.net.XhrManager
+  AjaxImpl
+  (-js-ajax-request
+    [this uri method body headers handler
+     {:keys [id timeout priority max-retries]}]
+    (.send this id uri method body headers
+           priority handler max-retries)))
+
 (defn success? [status]
   (some #{status} [200 201 202 204 205 206]))
 
-(defn read-edn [target]
-  (reader/read-string (.getResponseText target)))
+(defn read-edn [xhrio]
+  (reader/read-string (.getResponseText xhrio)))
 
+; This code would be a heck of a lot shorter if ClojureScript
+; had macros.  As it is, a macro doesn't justify the extra build
+; complication
 (defn edn-response-format [] {:read read-edn :description "EDN"})
 (defn edn-request-format []
   {:write pr-str
@@ -27,8 +54,8 @@
         query-data/createFromMap
         .toString)))
 
-(defn read-text [target]
-  (.getResponseText target))
+(defn read-text [xhrio]
+  (.getResponseText xhrio))
 
 (defn url-request-format []
   {:write params-to-str
@@ -53,19 +80,18 @@
    you should use this.
    http://stackoverflow.com/questions/2669690/why-does-google-prepend-while1-to-their-json-responses
    http://haacked.com/archive/2009/06/24/json-hijacking.aspx"
-  ([] (json-response-format {}))
   ([{:keys [prefix keywords?]}]
-     {:read (fn read-json [target]
-              (let [json (.getResponseJson target prefix)]
+     {:read (fn read-json [xhrio]
+              (let [json (.getResponseJson xhrio prefix)]
                 (js->clj json :keywordize-keys keywords?)))
       :description (str "JSON"
                         (if prefix (str " prefix '" prefix "'"))
                         (if keywords? " keywordize"))}))
 
-(defn get-default-format [target]
-  (let [ct (.getResponseHeader target "Content-Type")
+(defn get-default-format [xhrio]
+  (let [ct (.getResponseHeader xhrio "Content-Type")
         format (if (and ct (>= (.indexOf ct "json") 0))
-                (json-response-format)
+                (json-response-format {})
                 (edn-response-format))]
     (update-in format [:description] #(str % " (default)"))))
 
@@ -85,7 +111,7 @@
                         {:read format :description "custom"})
    :else (throw (js/Error. (str "unrecognized format: " format)))))
 
-(defn exception-response [e status {:keys [description]} target]
+(defn exception-response [e status {:keys [description]} xhrio]
   (let [response {:status status
                   :response nil}
         status-text (str (.-message e)
@@ -94,37 +120,37 @@
         parse-error (assoc response
                       :status-text status-text
                       :is-parse-error true
-                      :original-text (.getResponseText target))]
+                      :original-text (.getResponseText xhrio))]
     (if (success? status)
       parse-error
       (assoc response
-        :status-text (.getStatusText target)
+        :status-text (.getStatusText xhrio)
         :parse-error parse-error))))
 
 (defn interpret-response [format response get-default-format]
   (try
-    (let [target (.-target response)
-          status (.getStatus target)
+    (let [xhrio (.-target response)
+          status (.getStatus xhrio)
           format (if (:read format)
                    format
-                   (get-default-format target))
+                   (get-default-format xhrio))
           parse  (:read format)]
       (try
-        (let [response (parse target)]
+        (let [response (parse xhrio)]
           (if (success? status)
             [true response]
             [false {:status status
-                    :status-text (.getStatusText target)
+                    :status-text (.getStatusText xhrio)
                     :response response}]))
         (catch js/Object e
-          [false (exception-response e status format target)])))
+          [false (exception-response e status format xhrio)])))
     (catch js/Object e               ; These errors should never happen
       [false {:status 0
               :status-text (.-message e)
               :response nil}])))
 
-(defn no-format [target]
-  (throw (js/Error. (str "No response format was supplied."))))
+(defn no-format [xhrio]
+  (throw (js/Error. "No response format was supplied.")))
 
 (defn uri-with-params [uri params]
   (if params
@@ -139,30 +165,30 @@
     (let [{:keys [write content-type]} format body (write params)
           content-type (if content-type
                          {"Content-Type" content-type})
-          headers (merge (or headers {}) content-type)] [uri body
-          headers])))
+          headers (merge (or headers {}) content-type)]
+      [uri body headers])))
 
 (defn normalize-method [method]
   (if (keyword? method)
     (str/upper-case (name method))
     method))
 
-(defn js-ajax-request [uri method body headers timeout handler]
-  (doto (new goog.net.XhrIo)
-    (events/listen goog.net.EventType/COMPLETE handler)
-    (.send uri method body headers timeout)))
+(defn base-handler [format {:keys [get-default-format]}]
+  (fn [xhrio]
+    (interpret-response format xhrio
+                        (or get-default-format no-format))))
 
 (defn ajax-request
-  ([uri method {:keys [handler] :as opts} js-ajax-request]
-     (let [format (get-format (:format opts))
+  ([uri method {:keys [handler format] :as opts} js-ajax]
+     (let [format (get-format format)
            method (normalize-method method)
            [uri body headers]
-           (process-inputs uri method format opts)]
-       (js-ajax-request uri method body
-                        (clj->js headers) (:timeout opts)
-                        handler)))
+           (process-inputs uri method format opts)
+           handler (base-handler format opts)]
+       (-js-ajax-request js-ajax uri method body
+                        (clj->js headers) handler opts)))
   ([uri method opts]
-     (ajax-request uri method opts js-ajax-request)))
+     (ajax-request uri method opts (new goog.net.XhrIo))))
 
 (defn json-format [format-params]
   (codec (json-request-format)
@@ -192,12 +218,10 @@
     :raw (raw-response-format)
     nil))
 
-(defn base-handler [format {:keys [handler error-handler]}]
-  (fn [response]
-    (let [[ok result]
-          (interpret-response format response get-default-format)
-          h (if ok handler error-handler)]
-      (if h (h result)))))
+(defn transform-handler [{:keys [handler error-handler]}]
+  (fn easy-handler [[ok result]]
+    (if-let [h (if ok handler error-handler)]
+      (h result))))
 
 (defn transform-format [{:keys [format response-format] :as opts}]
   (let [rf (keyword-response-format response-format opts)]
@@ -207,14 +231,14 @@
           (codec (keyword-request-format format opts) rf)
           :else format)))
 
-(defn enhance-opts [opts]
+(defn transform-opts [opts]
   "Note that if you call GET and POST, this function gets called and
    will include JSON and EDN code in your JS.  If you don't want
    this to happen, use ajax-request directly."
-  (let [format (transform-format opts)]
-    (assoc opts
-      :handler (base-handler format opts)
-      :format format)))
+  (assoc opts
+    :handler (transform-handler opts)
+    :format (transform-format opts)
+    :get-default-format get-default-format))
 
 (defn GET
   "accepts the URI and an optional map of options, options include:
@@ -227,7 +251,7 @@
   :response-format - the format for the response
   :params - a map of parameters that will be sent with the request"
   [uri & [opts]]
-  (ajax-request uri "GET" (enhance-opts opts)))
+  (ajax-request uri "GET" (transform-opts opts)))
 
 (defn POST
   "accepts the URI and an optional map of options, options include:
@@ -240,4 +264,4 @@
   :response-format - the format for the response
   :params - a map of parameters that will be sent with the request"
   [uri & [opts]]
-  (ajax-request uri "POST" (enhance-opts opts)))
+  (ajax-request uri "POST" (transform-opts opts)))
