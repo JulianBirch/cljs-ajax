@@ -24,7 +24,7 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 * `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response
 * `:error-handler` - the handler function for errors, should accept an error response (detailed below)
 * `:format` - the format for the request.  If you leave this blank, it will use `:raw`
-* `:reponse-format`  the response format.  If you leave this blank, it will detect the format from the Content-Type header
+* `:response-format`  the response format.  If you leave this blank, it will detect the format from the Content-Type header
 * `:params` - The parameters that will be sent with the request.  Format dependent: `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body.
 * `:timeout` - The ajax call's timeout.  30 seconds if left blank.
 
@@ -145,7 +145,7 @@ The following functions are provided to construct format objects:  (they have no
 ## Breaking Changes Since 0.1
 
 * `ajax-request`'s API has significantly changed.  It used to be pretty equivalent to GET and POST.
-* `keywordize-keys` is now `keywords?`
+* `:keywordize-keys` is now `:keywords?`
 * `:format` used to be the response format.  The request format used to always to be `:url`
 
 ## Contributing
