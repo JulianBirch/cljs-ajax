@@ -226,7 +226,7 @@
 (defn transform-format [{:keys [format response-format] :as opts}]
   (let [rf (keyword-response-format response-format opts)]
     (cond (nil? format)
-          (codec (url-request-format) rf)
+          (codec (edn-request-format) rf)
           (keyword? format)
           (codec (keyword-request-format format opts) rf)
           :else format)))
