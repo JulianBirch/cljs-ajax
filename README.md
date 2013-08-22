@@ -7,7 +7,7 @@ simple Ajax client for ClojureScript
 Leiningen
 
 ```clojure
-[cljs-ajax "0.1.6"]
+[cljs-ajax "0.2.0"]
 ```
 Note that there are breaking changes since 0.1, detailed near the bottom of this readme.
 
@@ -23,9 +23,9 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 
 * `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response
 * `:error-handler` - the handler function for errors, should accept an error response (detailed below)
-* `:format` - the format for the request.  If you leave this blank, it will use `:raw`
+* `:format` - the format for the request.  If you leave this blank, it will use `:edn` as the default
 * `:response-format`  the response format.  If you leave this blank, it will detect the format from the Content-Type header
-* `:params` - The parameters that will be sent with the request.  Format dependent: `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body.
+* `:params` - the parameters that will be sent with the request.  Format dependent: `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body.
 * `:timeout` - The ajax call's timeout.  30 seconds if left blank.
 
 Everything can be blank, but if you don't provide an `:error-handler` you're going to have a bad time.
