@@ -1,10 +1,12 @@
-(defproject cljs-ajax "0.1.6"
+(defproject cljs-ajax "0.2.0"
   :clojurescript? true
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/yogthos/cljs-ajax"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.5.1"]]
+  :dependencies [[org.clojure/clojure "1.5.1"]
+                 [com.cemerick/clojurescript.test "0.0.4"
+                  :score "test"]]
   :plugins [[lein-cljsbuild "0.3.2"]]
   :hooks [leiningen.cljsbuild]
   :profiles
