@@ -25,17 +25,20 @@ The `GET` and `POST` helpers accept a URI followed by a map of options:
 * `:error-handler` - the handler function for errors, should accept an error response (detailed below)
 * `:format` - the format for the request.  If you leave this blank, it will use `:edn` as the default
 * `:response-format`  the response format.  If you leave this blank, it will detect the format from the Content-Type header
-* `:params` - the parameters that will be sent with the request.  Format dependent: `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body.
-* `:timeout` - The ajax call's timeout.  30 seconds if left blank.
+* `:params` - the parameters that will be sent with the request,  format dependent: `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
+* `:timeout` - the ajax call's timeout.  30 seconds if left blank
 
 Everything can be blank, but if you don't provide an `:error-handler` you're going to have a bad time.
 
 ### JSON specific settings
+
 The following settings affect the interpretation of JSON responses:  (You must specify `:response-format` as `:json` to use these.)
+
 * `:keywords?` - true/false specifies whether keys in maps will be keywordized
 * `:prefix` - the prefix to be stripped from the start of the JSON response. e.g. `while(1);`.  You should *always* use this if you've got a GET request.
 
 ### GET/POST examples
+
 ```clojure
 (ns foo
   (:require [ajax.core :refer [GET POST]]))
@@ -141,6 +144,13 @@ The following functions are provided to construct format objects:  (they have no
          :handler handler2
          :format (codec (url-request-format) (json-response-format {:keywords? true}))})
 ```
+
+### Handling responses on the server
+
+If you're using EDN then you may wish to take a look at [ring-edn](https://github.com/tailrecursion/ring-edn) middlware. It will populate the request `:params` with the contents of the EDN request.
+
+For handling JSON requests use [ring-json](https://github.com/ring-clojure/ring-json) middleware instead.
+
 
 ## Breaking Changes Since 0.1
 
