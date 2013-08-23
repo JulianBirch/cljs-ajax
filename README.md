@@ -73,7 +73,7 @@ The following settings affect the interpretation of JSON responses:  (You must s
          :keywords? true})
 ```
 
-## Error Responses
+### Error Responses
 
 An error response is a map with the following keys passed to it:
 
@@ -85,6 +85,14 @@ An error response is a map with the following keys passed to it:
 * `:parse-error` If the server returned an error, and that then failed to parse, the map contains the error, and this contains the parse failure
 
 The `error-handler` for `GET` and `POST` is passed one parameter which is an error response.
+
+### Handling responses on the server
+
+If you're using EDN then you may wish to take a look at [ring-edn](https://github.com/tailrecursion/ring-edn) middleware. It will populate the request `:params` with the contents of the EDN request.
+
+For handling JSON requests use [ring-json](https://github.com/ring-clojure/ring-json) middleware instead.  This populates the data in the `:body` tag.  However, note that it does not provide protection against [JSON hijacking](https://github.com/ring-clojure/ring-json/issues/14) yet, so do not use it with JSON format GETs, even for internal websites.  (As an aside, if you need lower level JSON access, e.g. for formatting, we'd recommend [Cheshire](https://github.com/dakrone/cheshire) over `data.json`.)
+
+If your tastes/requirements run more to a standardized multi-format REST server, you might want to investigate [ring-middleware](https://github.com/ngrunwald/ring-middleware-format).
 
 ## ajax-request
 
@@ -123,10 +131,9 @@ The following functions are provided to construct format objects:  (they have no
 * `raw-response-format`
 * `raw-format` both of the above
 
-### Example
+### `ajax-request` examples
 
 ```clj
-
 (defn handler2 [[ok response]]
   (if ok
     (.log js/console (str response))
@@ -134,7 +141,7 @@ The following functions are provided to construct format objects:  (they have no
 
 (ajax-request "/send-message" :post
         {:params {:message "Hello World"
-                  :user    "Bob"}
+                 :user    "Bob"}
          :handler handler2
          :format (json-format {:keywords? true})})
 
@@ -144,13 +151,6 @@ The following functions are provided to construct format objects:  (they have no
          :handler handler2
          :format (codec (url-request-format) (json-response-format {:keywords? true}))})
 ```
-
-### Handling responses on the server
-
-If you're using EDN then you may wish to take a look at [ring-edn](https://github.com/tailrecursion/ring-edn) middlware. It will populate the request `:params` with the contents of the EDN request.
-
-For handling JSON requests use [ring-json](https://github.com/ring-clojure/ring-json) middleware instead.
-
 
 ## Breaking Changes Since 0.1
 
