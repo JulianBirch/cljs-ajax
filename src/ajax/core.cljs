@@ -1,5 +1,6 @@
 (ns ajax.core
-  (:require [goog.net.XhrIo :as xhr]
+  (:require goog.net.EventType
+            [goog.net.XhrIo :as xhr]
             [goog.net.XhrManager :as xhrm]
             [goog.Uri :as uri]
             [goog.Uri.QueryData :as query-data]
