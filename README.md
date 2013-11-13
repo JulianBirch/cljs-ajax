@@ -58,9 +58,6 @@ The following settings affect the interpretation of JSON responses:  (You must s
 
 (POST "/hello")
 
-(PUT "/add-item"
-     {:param {:id 1 :name "mystery item"}}
-
 (POST "/send-message"
         {:params {:message "Hello World"
                   :user    "Bob"}
@@ -74,6 +71,9 @@ The following settings affect the interpretation of JSON responses:  (You must s
          :error-handler error-handler
          :response-format :json
          :keywords? true})
+         
+(PUT "/add-item"
+     {:param {:id 1 :name "mystery item"}})         
 ```
 
 ### Error Responses
