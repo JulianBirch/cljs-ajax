@@ -92,7 +92,7 @@ If you're using EDN then you may wish to take a look at [ring-edn](https://githu
 
 For handling JSON requests use [ring-json](https://github.com/ring-clojure/ring-json) middleware instead.  This populates the data in the `:body` tag.  However, note that it does not provide protection against [JSON hijacking](https://github.com/ring-clojure/ring-json/issues/14) yet, so do not use it with JSON format GETs, even for internal websites.  (As an aside, if you need lower level JSON access, e.g. for formatting, we'd recommend [Cheshire](https://github.com/dakrone/cheshire) over `data.json`.)
 
-If your tastes/requirements run more to a standardized multi-format REST server, you might want to investigate [ring-middleware](https://github.com/ngrunwald/ring-middleware-format).
+If your tastes/requirements run more to a standardized multi-format REST server, you might want to investigate [ring-middleware-format](https://github.com/ngrunwald/ring-middleware-format).
 
 ## ajax-request
 
