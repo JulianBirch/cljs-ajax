@@ -11,15 +11,15 @@ Leiningen
 ```
 Note that there are breaking changes since 0.1, detailed near the bottom of this readme.
 
-The client provides an easy way to send Ajax queries to the server using `GET`, and `POST` functions.
+The client provides an easy way to send Ajax queries to the server using `GET`, `POST`, and `PUT` functions.
 It also provides a simple way using `ajax-request`.
 
 There are three formats currently supported for communicating with the server:  `:json`, `:edn` and `:raw`.
 (`:raw` will send parameters up using normal form submission and return the raw text.)
 
-## GET/POST
+## GET/POST/PUT
 
-The `GET` and `POST` helpers accept a URI followed by a map of options:
+The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 
 * `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response
 * `:error-handler` - the handler function for errors, should accept an error response (detailed below)
@@ -58,6 +58,9 @@ The following settings affect the interpretation of JSON responses:  (You must s
 
 (POST "/hello")
 
+(PUT "/add-item"
+     {:param {:id 1 :name "mystery item"}}
+
 (POST "/send-message"
         {:params {:message "Hello World"
                   :user    "Bob"}
@@ -84,7 +87,7 @@ An error response is a map with the following keys passed to it:
 * `:is-parse-error` Is true if this is feedback from a parse failure
 * `:parse-error` If the server returned an error, and that then failed to parse, the map contains the error, and this contains the parse failure
 
-The `error-handler` for `GET` and `POST` is passed one parameter which is an error response.
+The `error-handler` for `GET`, `POST`, and `PUT` is passed one parameter which is an error response.
 
 ### Handling responses on the server
 
