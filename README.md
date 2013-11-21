@@ -6,9 +6,8 @@ simple Ajax client for ClojureScript
 
 Leiningen
 
-```clojure
-[cljs-ajax "0.2.2"]
-```
+!["Leiningen version"](https://clojars.org/cljs-ajax/latest-version.svg)
+
 Note that there are breaking changes since 0.1, detailed near the bottom of this readme.
 
 The client provides an easy way to send Ajax queries to the server using `GET`, `POST`, and `PUT` functions.
