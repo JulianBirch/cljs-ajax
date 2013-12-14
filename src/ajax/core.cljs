@@ -219,10 +219,12 @@
     :raw (raw-response-format)
     nil))
 
-(defn transform-handler [{:keys [handler error-handler]}]
+(defn transform-handler [{:keys [handler error-handler finally]}]
   (fn easy-handler [[ok result]]
     (if-let [h (if ok handler error-handler)]
-      (h result))))
+      (h result))
+    (when (fn? finally)
+      (finally))))
 
 (defn transform-format [{:keys [format response-format] :as opts}]
   (let [rf (keyword-response-format response-format opts)]
