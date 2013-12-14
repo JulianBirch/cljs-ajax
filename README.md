@@ -24,6 +24,7 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:error-handler` - the handler function for errors, should accept an error response (detailed below)
 * `:format` - the format for the request.  If you leave this blank, it will use `:edn` as the default
 * `:response-format`  the response format.  If you leave this blank, it will detect the format from the Content-Type header
+* `:finally` - a function that takes no parameters and will be triggered during the callback in addition to any other handlers
 * `:params` - the parameters that will be sent with the request,  format dependent: `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 
