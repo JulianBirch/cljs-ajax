@@ -1,6 +1,6 @@
 (ns cljs-ajax.test.browser
   (:require
-   [ajax.core :refer [ajax-request edn-format]]))
+   [ajax.core :refer [abort ajax-request edn-format]]))
 
 (defn handle-response [res]
   (.log js/console (pr-str res)))
@@ -16,3 +16,5 @@
 (request {:id 3 :timeout 0 :input "Hello"})
 
 (request {:id 7 :timeout 5000 :input "Should Timeout"} 100)
+
+(abort (request {:id 7 :timeout 5000 :input "Should Abort"} 1000))

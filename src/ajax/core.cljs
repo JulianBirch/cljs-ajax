@@ -1,5 +1,6 @@
 (ns ajax.core
   (:require goog.net.EventType
+            goog.net.ErrorCode
             [goog.net.XhrIo :as xhr]
             [goog.net.XhrManager :as xhrm]
             [goog.Uri :as uri]
@@ -15,7 +16,12 @@
    Ajax calls."
   (-js-ajax-request [this uri method body headers handler opts]
     "Makes an actual ajax request.  All parameters except opts
-     are in JS format."))
+     are in JS format.  Should return an AjaxRequest."))
+
+(defprotocol AjaxRequest
+  "An abstraction for a running ajax request."
+  (-abort [this error-code]
+    "Aborts a running ajax request, if possible."))
 
 (extend-type goog.net.XhrIo
   AjaxImpl
@@ -24,7 +30,10 @@
     (doto this
       (events/listen goog.net.EventType/COMPLETE handler)
       (.setTimeoutInterval (or timeout 0))
-      (.send uri method body headers))))
+      (.send uri method body headers)))
+  AjaxRequest
+  (-abort [this error-code]
+    (.abort this error-code)))
 
 (extend-type goog.net.XhrManager
   AjaxImpl
@@ -33,6 +42,9 @@
      {:keys [id timeout priority max-retries]}]
     (.send this id uri method body headers
            priority handler max-retries)))
+
+(defn abort
+  ([this] (-abort this goog.net.ErrorCode/ABORT)))
 
 (defn success? [status]
   (some #{status} [200 201 202 204 205 206]))
@@ -131,12 +143,17 @@
 
 (defn interpret-response [format response get-default-format]
   (try
+    #_(.log js/console response)
     (let [xhrio (.-target response)
           status (.getStatus xhrio)]
       (if (= -1 status)
-        [false {:status -1
-                :status-text "Request timed out."
-                :timeout? true}]
+        (if (= (.getLastErrorCode xhrio) goog.net.ErrorCode/ABORT)
+          [false  {:status -1
+                   :status-text "Request aborted by client."
+                   :aborted? true}]
+          [false  {:status -1
+                   :status-text "Request timed out."
+                   :timeout? true}])
         (let [format (if (:read format)
                        format
                        (get-default-format xhrio))
@@ -242,7 +259,8 @@
           :else format)))
 
 (defn transform-opts [opts]
-  "Note that if you call GET and POST, this function gets called and
+  "Note that if you call GET, POST or PUT, this function gets
+   called and
    will include JSON and EDN code in your JS.  If you don't want
    this to happen, use ajax-request directly."
   (assoc opts
