@@ -175,9 +175,11 @@
     method))
 
 (defn base-handler [format {:keys [handler get-default-format]}]
-  (fn [xhrio]
-    (handler (interpret-response format xhrio
-                                 (or get-default-format no-format)))))
+  (if handler
+    (fn [xhrio]
+      (handler (interpret-response format xhrio
+                                   (or get-default-format no-format))))
+    (throw (js/Error. "No ajax handler provided."))))
 
 (defn ajax-request
   ([uri method {:keys [format] :as opts} js-ajax]
