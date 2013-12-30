@@ -7,3 +7,5 @@ pom.xml
 /target/
 .lein-deps-sum
 .#*
+*.orig
+.lein-repl-history

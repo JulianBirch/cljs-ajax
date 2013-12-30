@@ -23,7 +23,8 @@
     [this uri method body headers handler {:keys [timeout]}]
     (doto this
       (events/listen goog.net.EventType/COMPLETE handler)
-      (.send uri method body headers timeout))))
+      (.setTimeoutInterval (or timeout 0))
+      (.send uri method body headers))))
 
 (extend-type goog.net.XhrManager
   AjaxImpl
@@ -131,21 +132,25 @@
 (defn interpret-response [format response get-default-format]
   (try
     (let [xhrio (.-target response)
-          status (.getStatus xhrio)
-          format (if (:read format)
-                   format
-                   (get-default-format xhrio))
-          parse  (:read format)]
-      (try
-        (let [response (parse xhrio)]
-          (if (success? status)
-            [true response]
-            [false {:status status
-                    :status-text (.getStatusText xhrio)
-                    :response response}]))
-        (catch js/Object e
-          [false (exception-response e status format xhrio)])))
-    (catch js/Object e               ; These errors should never happen
+          status (.getStatus xhrio)]
+      (if (= -1 status)
+        [false {:status -1
+                :status-text "Request timed out."
+                :timeout? true}]
+        (let [format (if (:read format)
+                       format
+                       (get-default-format xhrio))
+              parse  (:read format)]
+          (try
+            (let [response (parse xhrio)]
+              (if (success? status)
+                [true response]
+                [false {:status status
+                        :status-text (.getStatusText xhrio)
+                        :response response}]))
+            (catch js/Object e
+              [false (exception-response e status format xhrio)])))))
+    (catch js/Object e                ; These errors should never happen
       [false {:status 0
               :status-text (.-message e)
               :response nil}])))

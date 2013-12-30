@@ -21,7 +21,6 @@
   (getStatus [_] status)
   (getResponseText [_] response))
 
-
 (deftest default-format
   (let [t (FakeXhrIo. "application/edn; charset blah blah" nil nil)
         f (get-default-format t)]
@@ -49,7 +48,6 @@
     (is (= uri "/test"))
     (is (= payload "{\"a\":3,\"b\":\"hello\"}"))
     (is (= headers {"Content-Type" "application/json"}))))
-
 
 (deftest correct-handler
   (let [x (FakeXhrIo. "application/edn; charset blah blah"
