@@ -52,9 +52,16 @@
 (deftest correct-handler
   (let [x (FakeXhrIo. "application/edn; charset blah blah"
                       "Reply" 200)
-        r (atom nil)]
-    (ajax-request nil nil {:handler #(reset! r %)
+        r1 (atom nil)
+        r2 (atom nil)]
+    ;; Old usage of ajax-request.
+    (ajax-request nil nil {:handler #(reset! r1 %)
                            :format (raw-format)} x)
-    (is (vector? @r))
-    (is (first @r) "Request should have been successful.")
-    (is (= "Reply" (second @r)))))
+    ;; New usage with unrolled arguments.
+    (ajax-request nil nil :handler #(reset! r2 %)
+                          :format (raw-format)
+                          :manager x)
+    (doseq [r [r1 r2]]
+      (is (vector? @r))
+      (is (first @r) "Request should have been successful.")
+      (is (= "Reply" (second @r))))))

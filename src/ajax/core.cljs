@@ -203,17 +203,27 @@
                                    (or get-default-format no-format))))
     (throw (js/Error. "No ajax handler provided."))))
 
+(defn- ajax-request-internal
+  [uri method {:keys [format manager] :as opts}]
+  (let [format (get-format format)
+        method (normalize-method method)
+        [uri body headers]
+        (process-inputs uri method format opts)
+        handler (base-handler format opts)]
+    (-js-ajax-request manager uri method body
+                      (clj->js headers) handler opts)))
+
 (defn ajax-request
-  ([uri method {:keys [format] :as opts} js-ajax]
-     (let [format (get-format format)
-           method (normalize-method method)
-           [uri body headers]
-           (process-inputs uri method format opts)
-           handler (base-handler format opts)]
-       (-js-ajax-request js-ajax uri method body
-                         (clj->js headers) handler opts)))
-  ([uri method opts]
-     (ajax-request uri method opts (new goog.net.XhrIo))))
+  [uri method & args]
+    (if (keyword? (first args))
+      ;; New usage: unrolled keyword args.
+      (ajax-request-internal uri method (apply hash-map args))
+
+      ;; Assume old usage: an explicit options map, followed optionally by a
+      ;; manager argument.
+      (let [manager (or (second args) (new goog.net.XhrIo))]
+        (ajax-request-internal uri method (assoc (first args)
+                                                 :manager manager)))))
 
 (defn json-format [format-params]
   (codec (json-request-format)
