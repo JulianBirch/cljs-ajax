@@ -9,7 +9,8 @@
             [goog.events :as events]
             [goog.structs :as structs]
             [cljs.reader :as reader]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:require-macros [ajax.macros :as m]))
 
 (defprotocol AjaxImpl
   "An abstraction for a javascript class that implements
@@ -203,27 +204,19 @@
                                    (or get-default-format no-format))))
     (throw (js/Error. "No ajax handler provided."))))
 
-(defn- ajax-request-internal
-  [uri method {:keys [format manager] :as opts}]
-  (let [format (get-format format)
+(defn ajax-request
+  [uri method & args]
+  (let [f (first args)
+        {:keys [format manager] :as opts}
+        (if (keyword? f) (apply hash-map args) f)
+        format (get-format format)
         method (normalize-method method)
         [uri body headers]
         (process-inputs uri method format opts)
         handler (base-handler format opts)]
-    (-js-ajax-request manager uri method body
+    (-js-ajax-request (or manager (new goog.net.XhrIo))
+                      uri method body
                       (clj->js headers) handler opts)))
-
-(defn ajax-request
-  [uri method & args]
-    (if (keyword? (first args))
-      ;; New usage: unrolled keyword args.
-      (ajax-request-internal uri method (apply hash-map args))
-
-      ;; Assume old usage: an explicit options map, followed optionally by a
-      ;; manager argument.
-      (let [manager (or (second args) (new goog.net.XhrIo))]
-        (ajax-request-internal uri method (assoc (first args)
-                                                 :manager manager)))))
 
 (defn json-format [format-params]
   (codec (json-request-format)
@@ -269,7 +262,7 @@
           :else format)))
 
 (defn transform-opts [opts]
-  "Note that if you call GET, POST or PUT, this function gets
+  "Note that if you call GET, POST et al, this function gets
    called and
    will include JSON and EDN code in your JS.  If you don't want
    this to happen, use ajax-request directly."
@@ -278,41 +271,10 @@
     :format (transform-format opts)
     :get-default-format get-default-format))
 
-(defn GET
-  "accepts the URI and an optional map of options, options include:
-  :handler - the handler function for successful operation
-             should accept a single parameter which is the deserialized
-             response
-  :error-handler - the handler function for errors, should accept a map
-                   with keys :status and :status-text
-  :format - the format for the request
-  :response-format - the format for the response
-  :params - a map of parameters that will be sent with the request"
-  [uri & [opts]]
-  (ajax-request uri "GET" (transform-opts opts)))
-
-(defn PUT
-  "accepts the URI and an optional map of options, options include:
-  :handler - the handler function for successful operation
-             should accept a single parameter which is the deserialized
-             response
-  :error-handler - the handler function for errors, should accept a map
-                   with keys :status and :status-text
-  :format - the format for the request
-  :response-format - the format for the response
-  :params - a map of parameters that will be sent with the request"
-  [uri & [opts]]
-  (ajax-request uri "PUT" (transform-opts opts)))
-
-(defn POST
-  "accepts the URI and an optional map of options, options include:
-  :handler - the handler function for successful operation
-             should accept a single parameter which is the deserialized
-             response
-  :error-handler - the handler function for errors, should accept a map
-                   with keys :status and :status-text
-  :format - the format for the request
-  :response-format - the format for the response
-  :params - a map of parameters that will be sent with the request"
-  [uri & [opts]]
-  (ajax-request uri "POST" (transform-opts opts)))
+(m/easy-api GET)
+(m/easy-api HEAD)
+(m/easy-api POST)
+(m/easy-api PUT)
+(m/easy-api DELETE)
+(m/easy-api OPTIONS)
+(m/easy-api TRACE)

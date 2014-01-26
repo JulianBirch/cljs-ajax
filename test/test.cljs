@@ -2,7 +2,7 @@
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)])
   (:require
    [cemerick.cljs.test :as t]
-   [ajax.core.AjaxImpl :as ai]
+   [ajax.core/AjaxImpl :as ai]
    [ajax.core :refer [get-default-format
                       normalize-method process-inputs
                       edn-format json-format raw-format
@@ -13,7 +13,7 @@
   (is (= "POST" (normalize-method "POST"))))
 
 (deftype FakeXhrIo [content-type response status]
-  ajax.core.AjaxImpl
+  ajax.core/AjaxImpl
   (-js-ajax-request [this _ _ _ _ h _]
     (h (clj->js {:target this})))
   Object
@@ -54,9 +54,10 @@
                       "Reply" 200)
         r1 (atom nil)
         r2 (atom nil)]
-    ;; Old usage of ajax-request.
+    ;; Rolled usage of ajax-request
     (ajax-request nil nil {:handler #(reset! r1 %)
-                           :format (raw-format)} x)
+                           :format (raw-format)
+                           :manager x})
     ;; New usage with unrolled arguments.
     (ajax-request nil nil :handler #(reset! r2 %)
                           :format (raw-format)
