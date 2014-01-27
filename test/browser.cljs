@@ -1,6 +1,8 @@
-(ns cljs-ajax.test.browser
+(ns test.browser
   (:require
-   [ajax.core :refer [abort ajax-request edn-format GET POST]]))
+   [ajax.core :refer [abort ajax-request edn-format GET POST]]
+   [ajax.async :as a])
+  (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (defn handle-response [res]
   (.log js/console (pr-str res)))
@@ -29,3 +31,11 @@
 (request {:id 7 :timeout 5000 :input "Should Timeout"} 100)
 
 (abort (request {:id 7 :timeout 5000 :input "Should Abort"} 1000))
+
+#_(let [opts {:format (edn-format)
+            :params {:id 3 :input "Async Hello" :timeout 500}}
+      [c r] (a/ajax-request "/ajax" "POST" opts)]
+  (go
+   (.log js/console "Pre block")
+   (.log js/console (pr-str (<! c)))
+   (.log js/console "Unblock")))

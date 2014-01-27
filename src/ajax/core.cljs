@@ -24,14 +24,16 @@
   (-abort [this error-code]
     "Aborts a running ajax request, if possible."))
 
-(extend-type goog.net.XhrIo
+(extend-type nil
   AjaxImpl
   (-js-ajax-request
     [this uri method body headers handler {:keys [timeout]}]
-    (doto this
+    (doto (new goog.net.XhrIo)
       (events/listen goog.net.EventType/COMPLETE handler)
       (.setTimeoutInterval (or timeout 0))
-      (.send uri method body headers)))
+      (.send uri method body headers))))
+
+(extend-type goog.net.XhrIo
   AjaxRequest
   (-abort [this error-code]
     (.abort this error-code)))
@@ -205,18 +207,18 @@
     (throw (js/Error. "No ajax handler provided."))))
 
 (defn ajax-request
-  [uri method & args]
-  (let [f (first args)
-        {:keys [format manager] :as opts}
-        (if (keyword? f) (apply hash-map args) f)
-        format (get-format format)
-        method (normalize-method method)
-        [uri body headers]
-        (process-inputs uri method format opts)
-        handler (base-handler format opts)]
-    (-js-ajax-request (or manager (new goog.net.XhrIo))
-                      uri method body
-                      (clj->js headers) handler opts)))
+  ([{:keys [uri method format manager] :as opts}]
+     (let [format (get-format format)
+           method (normalize-method method)
+           [uri body headers]
+           (process-inputs uri method format opts)
+           handler (base-handler format opts)]
+       (-js-ajax-request manager uri method body
+                         (clj->js headers) handler opts)))
+  ([uri method & args]
+     (let [f (first args)
+           opts (if (keyword? f) (apply hash-map args) f)]
+       (ajax-request (assoc opts :uri uri :method method)))))
 
 (defn json-format [format-params]
   (codec (json-request-format)
@@ -262,7 +264,7 @@
           :else format)))
 
 (defn transform-opts [opts]
-  "Note that if you call GET, POST et al, this function gets
+  "Note that if you call GET, POST or PUT, this function gets
    called and
    will include JSON and EDN code in your JS.  If you don't want
    this to happen, use ajax-request directly."

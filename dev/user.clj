@@ -30,7 +30,8 @@
                 [:h1 "Ajax Tester"]
                 [:script {:src "/js.js" :type "text/javascript"}])}
     "/js.js" (rur/file-response "target/unit-test.js")
-    "/ajax" (ajax-handler request)))
+    "/ajax" (ajax-handler request)
+    "/favicon.ico" (rur/not-found "")))
 
 (defn sc-system [] nil)
 

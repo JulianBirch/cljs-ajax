@@ -1,12 +1,12 @@
 (ns test.core
-  (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)])
   (:require
    [cemerick.cljs.test :as t]
-   [ajax.core/AjaxImpl :as ai]
+   ajax.core.AjaxImpl
    [ajax.core :refer [get-default-format
                       normalize-method process-inputs
                       edn-format json-format raw-format
-                      ajax-request]]))
+                      ajax-request]])
+  (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
 (deftest normalize
   (is (= "GET" (normalize-method :get)))
