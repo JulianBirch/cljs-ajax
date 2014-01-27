@@ -115,16 +115,10 @@
 (defn use-content-type [format]
   (dissoc format :write))
 
-(defn codec [request-format
-             {:keys [read description] :as response-format}]
-  (assoc request-format
-    :read read
-    :description description))
-
 (defn get-format [format]
   (cond
    (map? format) format
-   (ifn? format) (codec (url-request-format)
+   (ifn? format) (merge (url-request-format)
                         {:read format :description "custom"})
    :else (throw (js/Error. (str "unrecognized format: " format)))))
 
@@ -221,14 +215,14 @@
        (ajax-request (assoc opts :uri uri :method method)))))
 
 (defn json-format [format-params]
-  (codec (json-request-format)
+  (merge (json-request-format)
                  (json-response-format format-params)))
 
 (defn edn-format []
-  (codec (edn-request-format) (edn-response-format)))
+  (merge (edn-request-format) (edn-response-format)))
 
 (defn raw-format []
-  (codec (url-request-format) (raw-response-format)))
+  (merge (url-request-format) (raw-response-format)))
 
 ; "Easy" API beyond this point
 
@@ -258,9 +252,9 @@
 (defn transform-format [{:keys [format response-format] :as opts}]
   (let [rf (keyword-response-format response-format opts)]
     (cond (nil? format)
-          (codec (edn-request-format) rf)
+          (merge (edn-request-format) rf)
           (keyword? format)
-          (codec (keyword-request-format format opts) rf)
+          (merge (keyword-request-format format opts) rf)
           :else format)))
 
 (defn transform-opts [opts]
