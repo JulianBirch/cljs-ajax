@@ -1,7 +1,7 @@
 (ns test.core
   (:require
    [cemerick.cljs.test :as t]
-   ajax.core.AjaxImpl
+   ajax.core/AjaxImpl
    [ajax.core :refer [get-default-format
                       normalize-method process-inputs
                       edn-format json-format raw-format
