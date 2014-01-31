@@ -1,6 +1,7 @@
 (ns user
   (:require [ring.server.standalone :as rsa]
             [ring.middleware.edn :as rme]
+            [ring.middleware.file :as rmf]
             [clojure.tools.namespace.repl
              :refer (refresh refresh-all)]
             [ring.util.response :as rur]
@@ -21,22 +22,25 @@
     (edn-response {:id id :output (apply str (reverse input))})
     (rur/not-found "")))
 
+
 (defn sc-handler [{:keys [uri] :as request}]
   (println uri)
   (case uri
-    "/" {
-         :status 200
+    "/" {:status 200
          :body (html
                 [:h1 "Ajax Tester"]
-                [:script {:src "/js.js" :type "text/javascript"}])}
-    "/js.js" (rur/file-response "target/unit-test.js")
+                [:script {:src "/unit-test.js" :type "text/javascript"}])}
+    ;;; "/js/unit-test.js" (rur/file-response "target/unit-test.js")
     "/ajax" (ajax-handler request)
     "/favicon.ico" (rur/not-found "")))
 
 (defn sc-system [] nil)
 
 (defn sc-start [config]
-  (rsa/serve (rme/wrap-edn-params sc-handler)))
+  (-> sc-handler
+      (rmf/wrap-file "target-test")
+      rme/wrap-edn-params
+      rsa/serve))
 
 (defn init
   "Constructs the current development system."

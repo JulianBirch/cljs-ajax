@@ -21,12 +21,16 @@
   {:builds
    {:dev  {:source-paths ["src"]
            :compiler {:output-to "target/main.js"
+                      :output-dir "target"
+                      :source-map "target/main.js.map"
                       :optimizations :whitespace
                       :pretty-print true}}
     :test {:source-paths ["src" "test"]
            :incremental? true
-           :compiler {:output-to "target/unit-test.js"
+           :compiler {:output-to "target-test/unit-test.js"
+                      :output-dir "target-test"
+                      :source-map "target-test/unit-test.js.map"
                       :optimizations :whitespace
                       :pretty-print true}}}
    :test-commands {"unit-tests"
-                   ["phantomjs" :runner "target/unit-test.js"]}})
+                   ["phantomjs" :runner "target-test/unit-test.js"]}})

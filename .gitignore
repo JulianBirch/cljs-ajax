@@ -5,6 +5,7 @@ pom.xml
 /classes/
 /targets/
 /target/
+/target-test/
 .lein-deps-sum
 .#*
 *.orig
