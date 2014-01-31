@@ -258,7 +258,7 @@
           :else format)))
 
 (defn transform-opts [opts]
-  "Note that if you call GET, POST or PUT, this function gets
+  "Note that if you call GET, POST et al, this function gets
    called and
    will include JSON and EDN code in your JS.  If you don't want
    this to happen, use ajax-request directly."
