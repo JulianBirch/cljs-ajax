@@ -141,7 +141,7 @@ The following functions are provided to construct format objects:  (they have no
 (defn handler2 [[ok response]]
   (if ok
     (.log js/console (str response))
-    (.error js/console (str response)))
+    (.error js/console (str response))))
 
 (ajax-request "/send-message" :post
         {:params {:message "Hello World"
