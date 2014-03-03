@@ -169,3 +169,9 @@ All pull requests are welcome, but we do ask that any changes come with tests th
 Second, you need to install [ClojureScript.test](https://github.com/cemerick/clojurescript.test) as a leiningen plugin.  The instructions are in the README.
 
 After that `lein test` should run the tests.
+
+## License
+
+Distributed under the Eclipse Public License, the same as Clojure.
+
+
