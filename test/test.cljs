@@ -5,7 +5,9 @@
    [ajax.core :refer [get-default-format
                       normalize-method process-inputs
                       edn-format json-format raw-format
-                      ajax-request]])
+                      ajax-request
+                      keyword-request-format
+                      keyword-response-format]])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
 (deftest normalize
@@ -66,3 +68,6 @@
       (is (vector? @r))
       (is (first @r) "Request should have been successful.")
       (is (= "Reply" (second @r))))))
+
+(deftest format-interpretation
+  (is (map? (keyword-response-format {} {}))))

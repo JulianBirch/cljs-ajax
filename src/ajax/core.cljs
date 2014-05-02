@@ -236,11 +236,14 @@
      (js/Error. (str "unrecognized request format: " format)))))
 
 (defn keyword-response-format [format format-params]
-  (case format
-    :json (json-response-format format-params)
-    :edn (edn-response-format)
-    :raw (raw-response-format)
-    nil))
+  (cond
+   (map? format) format
+   (ifn? format) {:read format :description "custom"}
+   :else (case format
+           :json (json-response-format format-params)
+           :edn (edn-response-format)
+           :raw (raw-response-format)
+           nil)))
 
 (defn transform-handler [{:keys [handler error-handler finally]}]
   (fn easy-handler [[ok result]]
