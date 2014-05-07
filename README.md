@@ -74,7 +74,7 @@ The following settings affect the interpretation of JSON responses:  (You must s
          :keywords? true})
          
 (PUT "/add-item"
-     {:param {:id 1 :name "mystery item"}})         
+     {:params {:id 1 :name "mystery item"}})         
 ```
 
 ### Error Responses
