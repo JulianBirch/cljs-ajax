@@ -1,5 +1,6 @@
 (ns user
   (:require [ring.server.standalone :as rsa]
+            [ring.middleware.params :as params]
             [ring.middleware.edn :as rme]
             [ring.middleware.file :as rmf]
             [clojure.tools.namespace.repl
@@ -19,12 +20,15 @@
     (println "Timeout " timeout)
     (Thread/sleep timeout))
   (if id
-    (edn-response {:id id :output (apply str (reverse input))})
+    (edn-response {:id id :output (str "INPUT:  " input)})
     (rur/not-found "")))
 
 
 (defn sc-handler [{:keys [uri] :as request}]
   (println uri)
+  (println request)
+  (println)
+  (println (:params request))
   (case uri
     "/" {:status 200
          :body (html
@@ -40,6 +44,7 @@
   (-> sc-handler
       (rmf/wrap-file "target-test")
       rme/wrap-edn-params
+      params/wrap-params
       rsa/serve))
 
 (defn init
