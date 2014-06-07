@@ -106,11 +106,15 @@
                         (if keywords? " keywordize"))}))
 
 (defn get-default-format [xhrio]
-  (let [ct (.getResponseHeader xhrio "Content-Type")
-        format (if (and ct (>= (.indexOf ct "json") 0))
-                (json-response-format {})
-                (edn-response-format))]
-    (update-in format [:description] #(str % " (default)"))))
+  (let [ct (or (.getResponseHeader xhrio "Content-Type") "")]
+    (letfn [(detect [s] (>= (.indexOf ct s) 0))]
+      (update-in (cond
+                      (detect "application/json") (json-response-format {})
+                      (detect "application/edn") (edn-response-format)
+                      (detect "text/plain") (raw-response-format)
+                      (detect "text/html") (raw-response-format)
+                      :else (raw-response-format))
+                 [:description] #(str % " (default)")))))
 
 (defn use-content-type [format]
   (dissoc format :write))
