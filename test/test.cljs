@@ -31,7 +31,8 @@
     (detects {:format "JSON (default)"     :from "application/json;..."})
     (detects {:format "raw text (default)" :from "text/plain;..."})
     (detects {:format "raw text (default)" :from "text/html;..."})
-    (detects {:format "raw text (default)" :from "application/xml;..."})))
+    ;;TODO: change default to raw on next major version
+    (detects {:format "EDN (default)" :from "application/xml;..."})))
 
 (deftest test-process-inputs-as-json
   (let [[uri payload headers]
@@ -53,7 +54,7 @@
 
 (deftest test-process-inputs-as-raw
   (let [[uri payload headers]
-        (process-inputs "/test" "POST" (raw-format {})
+        (process-inputs "/test" "POST" (raw-format)
                         {:params {:a 3 :b "hello"}
                          :headers nil})]
     (is (= uri "/test"))

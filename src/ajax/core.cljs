@@ -113,8 +113,14 @@
                       (detect "application/edn") (edn-response-format)
                       (detect "text/plain") (raw-response-format)
                       (detect "text/html") (raw-response-format)
-                      :else (raw-response-format))
+                      ;;TODO: change default to raw on next major version
+                      :else (do (warn-default-format-change)
+                                 (edn-response-format)))
                  [:description] #(str % " (default)")))))
+
+;;TODO: remove this function on next major version
+(defn warn-default-format-change []
+  (.log js/console "WARNING: default response format will change to raw on next major version"))
 
 (defn use-content-type [format]
   (dissoc format :write))
