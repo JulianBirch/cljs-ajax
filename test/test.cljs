@@ -23,33 +23,43 @@
   (getStatus [_] status)
   (getResponseText [_] response))
 
-(deftest default-format
-  (let [t (FakeXhrIo. "application/edn; charset blah blah" nil nil)
-        f (get-default-format t)]
-    (is (= (:description f) "EDN (default)"))))
+(deftest test-get-default-format
+  (letfn [(make-format [content-type]
+            (get-default-format (FakeXhrIo. content-type nil nil)))
+          (detects [{:keys [from format]}] (is (= (:description (make-format from)) format)) )]
+    (detects {:format "EDN (default)"      :from "application/edn;..."})
+    (detects {:format "JSON (default)"     :from "application/json;..."})
+    (detects {:format "raw text (default)" :from "text/plain;..."})
+    (detects {:format "raw text (default)" :from "text/html;..."})
+    ;;TODO: change default to raw on next major version
+    (detects {:format "EDN (default)" :from "application/xml;..."})))
 
-(deftest test-process-inputs
-  (let [[uri payload headers]
-        (process-inputs "/test" "GET" (edn-format)
-                        {:params {:a 3 :b "hello"}
-                         :headers nil})]
-    (is (= uri "/test?a=3&b=hello"))
-    (is (nil? payload))
-    (is (nil? headers)))
+(deftest test-process-inputs-as-json
   (let [[uri payload headers]
         (process-inputs "/test" "POST" (edn-format)
                         {:params {:a 3 :b "hello"}
                          :headers nil})]
     (is (= uri "/test"))
     (is (= payload "{:a 3, :b \"hello\"}"))
-    (is (= headers {"Content-Type" "application/edn"})))
+    (is (= headers {"Content-Type" "application/edn"}))))
+
+(deftest test-process-inputs-as-edn
   (let [[uri payload headers]
-        (process-inputs "/test" "POST" (json-format {})
+        (process-inputs "/test" "GET" (edn-format)
+                        {:params {:a 3 :b "hello"}
+                         :headers nil})]
+    (is (= uri "/test?a=3&b=hello"))
+    (is (nil? payload))
+    (is (nil? headers))))
+
+(deftest test-process-inputs-as-raw
+  (let [[uri payload headers]
+        (process-inputs "/test" "POST" (raw-format)
                         {:params {:a 3 :b "hello"}
                          :headers nil})]
     (is (= uri "/test"))
-    (is (= payload "{\"a\":3,\"b\":\"hello\"}"))
-    (is (= headers {"Content-Type" "application/json"}))))
+    (is (= payload "a=3&b=hello"))
+    (is (= headers {"Content-Type" "application/x-www-form-urlencoded"}))))
 
 (deftest correct-handler
   (let [x (FakeXhrIo. "application/edn; charset blah blah"
