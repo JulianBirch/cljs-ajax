@@ -107,33 +107,14 @@ The `ajax-request` is the simple interface.  It differs from the GET and POST AP
 * It doesn't do Content-Type discovery.
 * There's only one handler, so you have to handle errors.
 
+It has a single parameter, which is a map with the following members:
 The parameters are: uri, method (`:get` or `:post` etcetera) and options.
-* `:format` - a keyword indicating the response format, can be either `:json`, `:edn` or `:raw`\*, defaults to `:edn`
+* `:uri`
+* `:method` - (`:get` or `:post` etcetera)  
+* `:format` and `:response-format`, documented in the [formats documentation](formats.md)
 * `:handler` - A function that takes a single argument `[ok result]`.  The result will be the response if true and the error response if false.
-* `:params` - The parameters that will be sent with the request.  Same as GET and POST.
+* `:params` - The parameters that will be sent with the request.  Same as for GET and POST.
 * `:timeout` - The ajax call's timeout.  30 seconds if left blank.
-
-### Formats
-
-A format is a map with the following keys:
-* `:content-type` - The content type to send to the server
-* `:write` - A function taking params and returning a string
-* `:description` - A description of the format, for use in error messages.
-* `:read` - A function that takes the underlying `goog.net.XhrIo` and converts it to a response.  Exceptions thrown by this will be caught.
-
-A request format is just a `:content-type` and `:write`.  A response format is a `:description` and `:read`.
-The function `codec` takes a request format and a response format and creates a single format map.
-
-The following functions are provided to construct format objects:  (they have no parameters except where specified)
-* `json-request-format`
-* `json-response-format` takes a map of JSON specific settings (see above)
-* `json-format` both of the above:  takes a map of JSON specific settings
-* `edn-request-format`
-* `edn-response-format`
-* `edn-format` both of the above
-* `url-request-format`  (submits parameters as a normal form submission)
-* `raw-response-format`
-* `raw-format` both of the above
 
 ### `ajax-request` examples
 

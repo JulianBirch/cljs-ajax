@@ -94,7 +94,7 @@
    :keywords? Returns the keys as keywords
    :prefix A prefix that needs to be stripped off.  This is to
    combat JSON hijacking.  If you're using JSON with GET request,
-   you should use this.
+   you should think about using this.
    http://stackoverflow.com/questions/2669690/why-does-google-prepend-while1-to-their-json-responses
    http://haacked.com/archive/2009/06/24/json-hijacking.aspx"
   ([{:keys [prefix keywords?]}]
@@ -117,15 +117,18 @@
                       :else (edn-response-format))
                  [:description] #(str % " (default)")))))
 
-(defn use-content-type [format]
-  (dissoc format :write))
-
-(defn get-format [format]
+(defn get-request-format [format]
   (cond
    (map? format) format
-   (ifn? format) (merge (url-request-format)
-                        {:read format :description "custom"})
-   :else (throw (js/Error. (str "unrecognized format: " format)))))
+
+   (ifn? format) {:write format :content-type "text/plain"}
+   :else (throw (js/Error. (str "unrecognized request format: " format)))))
+
+(defn get-response-format [format]
+  (cond
+   (map? format) format
+   (ifn? format) {:read format :description "custom"}
+   :else (throw (js/Error. (str "unrecognized response format: " format)))))
 
 (defn exception-response [e status {:keys [description]} xhrio]
   (let [response {:status status
@@ -143,19 +146,23 @@
         :status-text (.getStatusText xhrio)
         :parse-error parse-error))))
 
+(defn fail [status status-text keyword value]
+  [false {:status status
+          :status-text status-text}])
+
 (defn interpret-response [format response get-default-format]
   (try
-    #_(.log js/console response)
+    (.log js/console response)
     (let [xhrio (.-target response)
-          status (.getStatus xhrio)]
+          status (.getStatus xhrio)
+          fail (fn fail [status-text keyword value]
+                 {:status status
+                  :status-text status-text
+                  keyword value})]
       (if (= -1 status)
         (if (= (.getLastErrorCode xhrio) goog.net.ErrorCode/ABORT)
-          [false  {:status -1
-                   :status-text "Request aborted by client."
-                   :aborted? true}]
-          [false  {:status -1
-                   :status-text "Request timed out."
-                   :timeout? true}])
+          (fail "Request aborted by client." :aborted? true)
+          (fail "Request timed out." :timeout? true))
         (let [format (if (:read format)
                        format
                        (get-default-format xhrio))
@@ -164,9 +171,7 @@
             (let [response (parse xhrio)]
               (if (success? status)
                 [true response]
-                [false {:status status
-                        :status-text (.getStatusText xhrio)
-                        :response response}]))
+                (fail (.getStatusText xhrio) :response response)))
             (catch js/Object e
               [false (exception-response e status format xhrio)])))))
     (catch js/Object e                ; These errors should never happen
@@ -198,36 +203,27 @@
     (str/upper-case (name method))
     method))
 
-(defn base-handler [format {:keys [handler get-default-format]}]
+(defn base-handler [response-format
+                    {:keys [handler get-default-format]}]
   (if handler
     (fn [xhrio]
-      (handler (interpret-response format xhrio
-                                   (or get-default-format no-format))))
+      (let [response
+            (interpret-response response-format xhrio
+                                (or get-default-format no-format))]
+        #_(.log js/console (str "RES:  " response))
+        (handler response)))
     (throw (js/Error. "No ajax handler provided."))))
 
 (defn ajax-request
-  ([{:keys [uri method format manager] :as opts}]
-     (let [format (get-format format)
-           method (normalize-method method)
-           [uri body headers]
-           (process-inputs uri method format opts)
-           handler (base-handler format opts)]
-       (-js-ajax-request manager uri method body
-                         (clj->js headers) handler opts)))
-  ([uri method & args]
-     (let [f (first args)
-           opts (if (keyword? f) (apply hash-map args) f)]
-       (ajax-request (assoc opts :uri uri :method method)))))
-
-(defn json-format [format-params]
-  (merge (json-request-format)
-                 (json-response-format format-params)))
-
-(defn edn-format []
-  (merge (edn-request-format) (edn-response-format)))
-
-(defn raw-format []
-  (merge (url-request-format) (raw-response-format)))
+  [{:keys [uri method format response-format manager] :as opts}]
+  (let [format (get-request-format format)
+        response-format (get-response-format response-format)
+        method (normalize-method method)
+        [uri body headers]
+        (process-inputs uri method format opts)
+        handler (base-handler response-format opts)]
+    (-js-ajax-request manager uri method body
+                      (clj->js headers) handler opts)))
 
 ; "Easy" API beyond this point
 
@@ -238,7 +234,8 @@
     :raw (url-request-format)
     :url (url-request-format)
     (throw
-     (js/Error. (str "unrecognized request format: " format)))))
+     (js/Error. (str "unrecognized request format: '"
+                     (or format "NIL") "'")))))
 
 (defn keyword-response-format [format format-params]
   (cond
@@ -274,6 +271,13 @@
     :handler (transform-handler opts)
     :format (transform-format opts)
     :get-default-format get-default-format))
+
+(defn easy-ajax-request [uri method opts]
+  (-> opts
+      ajax.core/transform-opts
+      (assoc :uri uri
+             :method method)
+      ajax.core/ajax-request))
 
 (m/easy-api GET)
 (m/easy-api HEAD)

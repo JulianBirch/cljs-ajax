@@ -1,13 +1,18 @@
 (ns test.core
   (:require
-   [cemerick.cljs.test :as t]
+   [cemerick.cljs.test]
    ajax.core/AjaxImpl
    [ajax.core :refer [get-default-format
                       normalize-method process-inputs
-                      edn-format json-format raw-format
                       ajax-request
+                      url-request-format
+                      edn-response-format
+                      edn-request-format
+                      raw-response-format
                       keyword-request-format
-                      keyword-response-format]])
+                      keyword-response-format
+                      interpret-response
+                      POST]])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
 (deftest normalize
@@ -36,7 +41,7 @@
 
 (deftest test-process-inputs-as-json
   (let [[uri payload headers]
-        (process-inputs "/test" "POST" (edn-format)
+        (process-inputs "/test" "POST" (edn-request-format)
                         {:params {:a 3 :b "hello"}
                          :headers nil})]
     (is (= uri "/test"))
@@ -45,7 +50,7 @@
 
 (deftest test-process-inputs-as-edn
   (let [[uri payload headers]
-        (process-inputs "/test" "GET" (edn-format)
+        (process-inputs "/test" "GET" (edn-request-format)
                         {:params {:a 3 :b "hello"}
                          :headers nil})]
     (is (= uri "/test?a=3&b=hello"))
@@ -54,30 +59,39 @@
 
 (deftest test-process-inputs-as-raw
   (let [[uri payload headers]
-        (process-inputs "/test" "POST" (raw-format)
+        (process-inputs "/test" "POST" (url-request-format)
                         {:params {:a 3 :b "hello"}
                          :headers nil})]
     (is (= uri "/test"))
     (is (= payload "a=3&b=hello"))
     (is (= headers {"Content-Type" "application/x-www-form-urlencoded"}))))
 
+(def simple-reply
+  (FakeXhrIo.
+   "application/edn; charset blah blah"
+   "Reply" 200))
+
+(defn expect-simple-reply [r]
+  (is (vector? r))
+  (is (first r) "Request should have been successful.")
+  (is (= "Reply" (second r))))
+
 (deftest correct-handler
-  (let [x (FakeXhrIo. "application/edn; charset blah blah"
-                      "Reply" 200)
-        r1 (atom nil)
+  (let [r1 (atom nil)
         r2 (atom nil)]
     ;; Rolled usage of ajax-request
-    (ajax-request nil nil {:handler #(reset! r1 %)
-                           :format (raw-format)
-                           :manager x})
-    ;; New usage with unrolled arguments.
-    (ajax-request nil nil :handler #(reset! r2 %)
-                          :format (raw-format)
-                          :manager x)
-    (doseq [r [r1 r2]]
-      (is (vector? @r))
-      (is (first @r) "Request should have been successful.")
-      (is (= "Reply" (second @r))))))
+    (ajax-request {:handler #(reset! r1 %)
+                   :format (url-request-format)
+                   :response-format (raw-response-format)
+                   :manager simple-reply})
+    (expect-simple-reply @r1)
+    ;; Alternative usage with unrolled arguments.
+    (POST nil
+          :handler #(reset! r2 %)
+          :format (url-request-format)
+          :response-format (raw-response-format)
+          :manager simple-reply)
+    (is (= "Reply" @r2))))
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))
