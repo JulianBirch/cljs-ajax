@@ -65,6 +65,18 @@ The following settings affect the interpretation of JSON responses:  (You must s
          :handler handler
          :error-handler error-handler})
 
+; Will send file inputs that are in the form
+(POST "/send-form-modern" {:params (js/FormData. form-element)})
+
+; Send file explicitly
+(let [form-data (doto
+                    (js/FormData.)
+                  (.append "id" "10")
+                  (.append "file" js-file-value "filename.txt"))]
+  (POST "/send-file" {:params form-data
+                      :response-format (raw-response-format)
+                      :timeout 100}))
+
 (POST "/send-message"
         {:params {:message "Hello World"
                   :user    "Bob"}
@@ -76,6 +88,8 @@ The following settings affect the interpretation of JSON responses:  (You must s
 (PUT "/add-item"
      {:params {:id 1 :name "mystery item"}})         
 ```
+
+Note that `js/FormData` is not supported before IE10, so if you need to support those browsers, don't use it.  `cljs-ajax` doesn't have any other support for file uploads (although pull requests are welcome).
 
 ### Error Responses
 
