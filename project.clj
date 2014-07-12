@@ -7,7 +7,7 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [com.cemerick/clojurescript.test "0.3.1"
                   :scope "test"]
-                 [org.clojure/clojurescript "0.0-2202"]
+                 [org.clojure/clojurescript "0.0-2268"]
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]]
   :plugins [[lein-cljsbuild "1.0.0-SNAPSHOT"]
             [com.cemerick/clojurescript.test "0.3.1"]]
@@ -32,6 +32,13 @@
                       :output-dir "target-test"
                       :source-map "target-test/unit-test.js.map"
                       :optimizations :whitespace
-                      :pretty-print true}}}
+                      :pretty-print true}}
+    :int {:source-paths ["src" "browser-test"]
+          :incremental? true
+          :compiler {:output-to "target-int/integration.js"
+                     :output-dir "target-int"
+                     :source-map "target-int/integration.js.map"
+                     :optimizations :whitespace
+                     :pretty-print true}}}
    :test-commands {"unit-tests"
                    ["phantomjs" :runner "target-test/unit-test.js"]}})

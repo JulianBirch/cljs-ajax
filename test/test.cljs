@@ -41,27 +41,33 @@
 
 (deftest test-process-inputs-as-json
   (let [[uri payload headers]
-        (process-inputs "/test" "POST" (edn-request-format)
-                        {:params {:a 3 :b "hello"}
-                         :headers nil})]
+        (process-inputs {:params {:a 3 :b "hello"}
+                         :headers nil
+                         :uri "/test"
+                         :method "POST"
+                         :format (edn-request-format)})]
     (is (= uri "/test"))
     (is (= payload "{:a 3, :b \"hello\"}"))
     (is (= headers {"Content-Type" "application/edn"}))))
 
 (deftest test-process-inputs-as-edn
   (let [[uri payload headers]
-        (process-inputs "/test" "GET" (edn-request-format)
-                        {:params {:a 3 :b "hello"}
-                         :headers nil})]
+        (process-inputs {:params {:a 3 :b "hello"}
+                         :headers nil
+                         :uri "/test"
+                         :method "GET"
+                         :format (edn-request-format)})]
     (is (= uri "/test?a=3&b=hello"))
     (is (nil? payload))
     (is (nil? headers))))
 
 (deftest test-process-inputs-as-raw
   (let [[uri payload headers]
-        (process-inputs "/test" "POST" (url-request-format)
-                        {:params {:a 3 :b "hello"}
-                         :headers nil})]
+        (process-inputs {:params {:a 3 :b "hello"}
+                         :headers nil
+                         :uri "/test"
+                         :method "POST"
+                         :format (url-request-format)})]
     (is (= uri "/test"))
     (is (= payload "a=3&b=hello"))
     (is (= headers {"Content-Type" "application/x-www-form-urlencoded"}))))
@@ -88,7 +94,7 @@
     ;; Alternative usage with unrolled arguments.
     (POST nil
           :handler #(reset! r2 %)
-          :format (url-request-format)
+          :format :url
           :response-format (raw-response-format)
           :manager simple-reply)
     (is (= "Reply" @r2))))
