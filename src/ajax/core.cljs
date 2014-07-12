@@ -24,6 +24,12 @@
   (-abort [this error-code]
     "Aborts a running ajax request, if possible."))
 
+(defprotocol DirectlySubmittable
+  "A marker interface for types that can be directly sent to XhrIo")
+
+(extend-type js/String DirectlySubmittable)
+(extend-type js/FormData DirectlySubmittable)
+
 (extend-type nil
   AjaxImpl
   (-js-ajax-request
@@ -107,22 +113,14 @@
 
 (defn get-default-format [xhrio]
   (let [ct (or (.getResponseHeader xhrio "Content-Type") "")]
-    (letfn [(detect [s] (>= (.indexOf ct s) 0))]
-      (update-in (cond
-                      (detect "application/json") (json-response-format {})
-                      (detect "application/edn") (edn-response-format)
-                      (detect "text/plain") (raw-response-format)
-                      (detect "text/html") (raw-response-format)
-                      ;;TODO: change default to raw on next major version
-                      :else (edn-response-format))
-                 [:description] #(str % " (default)")))))
-
-(defn get-request-format [format]
-  (cond
-   (map? format) format
-
-   (ifn? format) {:write format :content-type "text/plain"}
-   :else (throw (js/Error. (str "unrecognized request format: " format)))))
+    (let [detect (fn detect [s] (>= (.indexOf ct s) 0))
+          format (cond
+                  (detect "application/json") (json-response-format {})
+                  (detect "application/edn") (edn-response-format)
+                  (detect "text/plain") (raw-response-format)
+                  (detect "text/html") (raw-response-format)
+                  :else (edn-response-format))]
+      (update-in format [:description] #(str % " (default)")))))
 
 (defn get-response-format [format]
   (cond
@@ -148,11 +146,12 @@
 
 (defn fail [status status-text keyword value]
   [false {:status status
-          :status-text status-text}])
+          :status-text status-text
+          keyword value}])
 
 (defn interpret-response [format response get-default-format]
   (try
-    (.log js/console response)
+    #_(.log js/console response)
     (let [xhrio (.-target response)
           status (.getStatus xhrio)
           fail (fn fail [status-text keyword value]
@@ -187,21 +186,30 @@
     (str uri "?" (params-to-str params))
     uri))
 
-(defn process-inputs [uri method
-                      {:keys [write content-type] :as format}
-                      {:keys [params headers]}]
-  (if (= method "GET")
-    [(uri-with-params uri params) nil headers]
-    (let [{:keys [write content-type]} format body (write params)
-          content-type (if content-type
-                         {"Content-Type" content-type})
-          headers (merge (or headers {}) content-type)]
-      [uri body headers])))
+(defn get-request-format [format]
+  (cond
+   (map? format) format
+   (ifn? format) {:write format :content-type "text/plain"}
+   :else nil))
 
 (defn normalize-method [method]
   (if (keyword? method)
     (str/upper-case (name method))
     method))
+
+(defn process-inputs [{:keys [uri method format params headers]}]
+  (if (= (normalize-method method) "GET")
+    [(uri-with-params uri params) nil headers]
+    (let [{:keys [write content-type]}
+          (get-request-format format)
+          body (cond
+                (not (nil? write)) (write params)
+                (satisfies? DirectlySubmittable params) params
+                :else (throw (js/Error. (str "unrecognized request format: " format))))
+          content-type (if content-type
+                         {"Content-Type" content-type})
+          headers (merge (or headers {}) content-type)]
+      [uri body headers])))
 
 (defn base-handler [response-format
                     {:keys [handler get-default-format]}]
@@ -215,12 +223,10 @@
     (throw (js/Error. "No ajax handler provided."))))
 
 (defn ajax-request
-  [{:keys [uri method format response-format manager] :as opts}]
-  (let [format (get-request-format format)
-        response-format (get-response-format response-format)
+  [{:keys [uri method response-format manager] :as opts}]
+  (let [response-format (get-response-format response-format)
         method (normalize-method method)
-        [uri body headers]
-        (process-inputs uri method format opts)
+        [uri body headers] (process-inputs opts)
         handler (base-handler response-format opts)]
     (-js-ajax-request manager uri method body
                       (clj->js headers) handler opts)))
@@ -228,14 +234,15 @@
 ; "Easy" API beyond this point
 
 (defn keyword-request-format [format format-params]
-  (case format
-    :json (json-request-format)
-    :edn (edn-request-format)
-    :raw (url-request-format)
-    :url (url-request-format)
-    (throw
-     (js/Error. (str "unrecognized request format: '"
-                     (or format "NIL") "'")))))
+  (cond
+   (map? format) format
+   (ifn? format) {:write format}
+   :else (case format
+           :json (json-request-format)
+           :edn (edn-request-format)
+           :raw (url-request-format)
+           :url (url-request-format)
+           nil)))
 
 (defn keyword-response-format [format format-params]
   (cond
@@ -254,23 +261,23 @@
     (when (fn? finally)
       (finally))))
 
-(defn transform-format [{:keys [format response-format] :as opts}]
-  (let [rf (keyword-response-format response-format opts)]
-    (cond (nil? format)
-          (merge (edn-request-format) rf)
-          (keyword? format)
-          (merge (keyword-request-format format opts) rf)
-          :else format)))
-
-(defn transform-opts [opts]
+(defn transform-opts [{:keys [method format response-format params]
+                       :as opts}]
   "Note that if you call GET, POST et al, this function gets
-   called and
-   will include JSON and EDN code in your JS.  If you don't want
-   this to happen, use ajax-request directly."
-  (assoc opts
-    :handler (transform-handler opts)
-    :format (transform-format opts)
-    :get-default-format get-default-format))
+   called and will include JSON and EDN code in your JS.
+   If you don't want this to happen, use ajax-request directly
+   (and use advanced optimisation)."
+  (let [rf (keyword-request-format format opts)
+        needs-format
+        (not (or (satisfies? DirectlySubmittable params)
+                 (= method "GET")))]
+    (assoc opts
+      :handler (transform-handler opts)
+      :format (or rf (if needs-format
+                       (js/Error. (str "unrecognized request format: '"
+                                       (or format "NIL") "'"))))
+      :response-format (keyword-response-format response-format opts)
+      :get-default-format get-default-format)))
 
 (defn easy-ajax-request [uri method opts]
   (-> opts
