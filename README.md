@@ -89,7 +89,9 @@ The following settings affect the interpretation of JSON responses:  (You must s
      {:params {:id 1 :name "mystery item"}})         
 ```
 
-Note that `js/FormData` is not supported before IE10, so if you need to support those browsers, don't use it.  `cljs-ajax` doesn't have any other support for file uploads (although pull requests are welcome).
+### FormData support
+
+Note that `js/FormData` is not supported before IE10, so if you need to support those browsers, don't use it.  `cljs-ajax` doesn't have any other support for file uploads (although pull requests are welcome).  Also note that you *must* include `ring.middleware.multipart-params\wrap-multipart-params` in your ring handlers as FormData always submits as multipart even if you don't use it to submit files.
 
 ### Error Responses
 
