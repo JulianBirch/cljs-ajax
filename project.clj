@@ -4,11 +4,12 @@
   :url "https://github.com/yogthos/cljs-ajax"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.5.1"]
+  :dependencies [[org.clojure/clojure "1.6.0"]
                  [com.cemerick/clojurescript.test "0.3.1"
                   :scope "test"]
-                 [org.clojure/clojurescript "0.0-2268"]
-                 [org.clojure/core.async "0.1.267.0-0d7780-alpha"]]
+                 [org.clojure/clojurescript "0.0-2311"]
+                 [org.clojure/core.async "0.1.303.0-886421-alpha"]
+                 [com.cognitect/transit-cljs "0.8.182"]]
   :plugins [[lein-cljsbuild "1.0.0-SNAPSHOT"]
             [com.cemerick/clojurescript.test "0.3.1"]]
   :hooks [leiningen.cljsbuild]
@@ -17,7 +18,8 @@
          :dependencies [[ring-server "0.3.1"]
                         [fogus/ring-edn "0.2.0"]
                         [ring/ring-json "0.3.1"]
-                        [org.clojure/tools.namespace "0.2.4"]]}}
+                        [ring-transit "0.1.2"]
+                        [org.clojure/tools.namespace "0.2.5"]]}}
   :cljsbuild
   {:builds
    {:dev  {:source-paths ["src"]

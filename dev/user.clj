@@ -1,9 +1,12 @@
 (ns user
+  (:import (java.io ByteArrayOutputStream))
   (:require [ring.server.standalone :as rsa]
             [ring.middleware.params :as params]
             [ring.middleware.edn :as rme]
             [ring.middleware.file :as rmf]
             [ring.middleware.multipart-params :as rmmp]
+            [ring.middleware.transit :as tr]
+            [cognitect.transit :as t]
             [clojure.tools.namespace.repl
              :refer (refresh refresh-all)]
             [ring.util.response :as rur]
@@ -16,15 +19,33 @@
 
 (def system nil)
 
+(defn write-transit [x]
+  (let [baos (ByteArrayOutputStream.)
+        w    (t/writer baos :json)
+        _    (t/write w x)
+        ret  (.toString baos)]
+    (.reset baos)
+    ret))
+
+(defn transit-response [response]
+  {:status 200
+   :headers {"Content-Type" "application/transit+json; charset=utf-8"}
+   :body (write-transit response)})
+
 (defn ajax-handler
-  ([{{:keys [id timeout input]} :params}]
-     (ajax-handler id timeout input))
+  ([{{:keys [id timeout input output]} :params}]
+     (ajax-handler id timeout input output))
   ([id timeout input]
+     (ajax-handler id timeout input nil))
+  ([id timeout input output]
      (when timeout
        (println "Timeout " timeout)
        (Thread/sleep timeout))
      (if id
-       (edn-response {:id id :output (str "INPUT:  " input)})
+       (doto
+           ((or output edn-response)
+            {:id id :output (str "INPUT:  " input)})
+         println)
        (rur/not-found ""))))
 
 (defn ajax-uri-handler [{{:strs [id timeout input]} :params}]
@@ -41,6 +62,9 @@
                 [:script {:src "/integration.js" :type "text/javascript"}])}
     ;;; "/js/unit-test.js" (rur/file-response "target/unit-test.js")
     "/ajax" (ajax-handler request)
+    "/ajax-transit" (ajax-handler
+                     (update-in request [:params]
+                                #(assoc % :output transit-response)))
     "/ajax-url" (ajax-uri-handler request)
     "/ajax-form-data" (ajax-form-data-handler request)
     "/favicon.ico" (rur/not-found "")))
@@ -53,6 +77,7 @@
       rme/wrap-edn-params
       params/wrap-params
       rmmp/wrap-multipart-params
+      tr/wrap-transit-params
       rsa/serve))
 
 (defn init

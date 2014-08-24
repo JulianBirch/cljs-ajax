@@ -9,7 +9,8 @@
             [goog.events :as events]
             [goog.structs :as structs]
             [cljs.reader :as reader]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [cognitect.transit :as t])
   (:require-macros [ajax.macros :as m]))
 
 (defprotocol AjaxImpl
@@ -69,6 +70,21 @@
   {:write pr-str
    :content-type "application/edn"})
 
+(def transit-content-type "application/transit+json; charset=utf-8")
+
+(defn transit-request-format [{:keys [type writer] :as opts}]
+  (let [writer (or writer (t/writer (or type :json) opts))]
+    {:write (fn transit-writer [params] (t/write writer params))
+     :content-type transit-content-type}))
+
+(defn transit-response-format [{:keys [type reader raw] :as opts}]
+  (let [reader (or reader (t/reader (or reader :json) opts))]
+    {:read (fn transit-reader [xhrio]
+             (let [text (.getResponseText xhrio)
+                   data (t/read reader text)]
+               (if raw data (js->clj data))))
+     :description "Transit"}))
+
 (defn params-to-str [params]
   (if params
     (-> params
@@ -103,10 +119,12 @@
    you should think about using this.
    http://stackoverflow.com/questions/2669690/why-does-google-prepend-while1-to-their-json-responses
    http://haacked.com/archive/2009/06/24/json-hijacking.aspx"
-  ([{:keys [prefix keywords?]}]
+  ([{:keys [prefix keywords? raw]}]
      {:read (fn read-json [xhrio]
               (let [json (.getResponseJson xhrio prefix)]
-                (js->clj json :keywordize-keys keywords?)))
+                (if raw
+                  json
+                  (js->clj json :keywordize-keys keywords?))))
       :description (str "JSON"
                         (if prefix (str " prefix '" prefix "'"))
                         (if keywords? " keywordize"))}))
@@ -119,7 +137,9 @@
                   (detect "application/edn") (edn-response-format)
                   (detect "text/plain") (raw-response-format)
                   (detect "text/html") (raw-response-format)
-                  :else (edn-response-format))]
+                  (detect "application/transit+json")
+                  (transit-response-format {})
+                  :else (transit-response-format {}))]
       (update-in format [:description] #(str % " (default)")))))
 
 (defn get-response-format [format]
@@ -155,9 +175,9 @@
     (let [xhrio (.-target response)
           status (.getStatus xhrio)
           fail (fn fail [status-text keyword value]
-                 {:status status
-                  :status-text status-text
-                  keyword value})]
+                 [false {:status status
+                         :status-text status-text
+                         keyword value}])]
       (if (= -1 status)
         (if (= (.getLastErrorCode xhrio) goog.net.ErrorCode/ABORT)
           (fail "Request aborted by client." :aborted? true)
@@ -238,6 +258,7 @@
    (map? format) format
    (ifn? format) {:write format}
    :else (case format
+           :transit (transit-request-format format-params)
            :json (json-request-format)
            :edn (edn-request-format)
            :raw (url-request-format)
@@ -249,6 +270,7 @@
    (map? format) format
    (ifn? format) {:read format :description "custom"}
    :else (case format
+           :transit (transit-response-format format-params)
            :json (json-response-format format-params)
            :edn (edn-response-format)
            :raw (raw-response-format)

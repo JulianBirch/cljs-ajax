@@ -9,6 +9,8 @@
                       edn-response-format
                       edn-request-format
                       raw-response-format
+                      transit-response-format
+                      transit-request-format
                       keyword-request-format
                       keyword-response-format
                       interpret-response
@@ -71,6 +73,21 @@
     (is (= uri "/test"))
     (is (= payload "a=3&b=hello"))
     (is (= headers {"Content-Type" "application/x-www-form-urlencoded"}))))
+
+(defn fake-from-request [{:keys [params format]}]
+  (let [{:keys [content-type write]} format]
+    (FakeXhrIo. content-type (write params) 200)))
+
+(defn round-trip-test [request-format
+                  {:keys [read] :as response-format} request]
+  (let [response (fake-from-request {:params request
+                                     :format request-format})]
+    (is (= request (read response)))))
+
+(deftest transit-round-trip
+  (round-trip-test (transit-request-format {})
+                   (transit-response-format {})
+                   {:id 3 :content "Hello"}))
 
 (def simple-reply
   (FakeXhrIo.

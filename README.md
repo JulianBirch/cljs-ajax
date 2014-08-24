@@ -13,7 +13,7 @@ Note that there are breaking changes since 0.1, detailed near the bottom of this
 The client provides an easy way to send Ajax queries to the server using `GET`, `POST`, and `PUT` functions.
 It also provides a simple way using `ajax-request`.
 
-There are three formats currently supported for communicating with the server:  `:json`, `:edn` and `:raw`.
+There are three formats currently supported for communicating with the server:  `:transit`, `:json`, `:edn` and `:raw`.
 (`:raw` will send parameters up using normal form submission and return the raw text.)
 
 ## GET/POST/PUT
@@ -23,9 +23,9 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response
 * `:error-handler` - the handler function for errors, should accept an error response (detailed below)
 * `:finally` - a function that takes no parameters and will be triggered during the callback in addition to any other handlers
-* `:format` - the format for the request.  If you leave this blank, it will use `:edn` as the default
+* `:format` - the format for the request.  If you leave this blank, it will use `:transit` as the default
 * `:response-format`  the response format.  If you leave this blank, it will detect the format from the Content-Type header
-* `:params` - the parameters that will be sent with the request,  format dependent: `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
+* `:params` - the parameters that will be sent with the request,  format dependent: `:transit` and `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
 
@@ -99,7 +99,7 @@ An error response is a map with the following keys passed to it:
 
 * `:status` - the HTTP status code
 * `:status-text` - the HTTP status message, or feedback from a parse failure
-* `:response` - the EDN/JSON response if it's valid
+* `:response` - the transit/EDN/JSON response if it's valid
 * `:original-text` The response as raw text (if parsing failed)
 * `:is-parse-error` Is true if this is feedback from a parse failure
 * `:parse-error` If the server returned an error, and that then failed to parse, the map contains the error, and this contains the parse failure
@@ -108,9 +108,13 @@ The `error-handler` for `GET`, `POST`, and `PUT` is passed one parameter which i
 
 ### Handling responses on the server
 
-If you're using EDN then you may wish to take a look at [ring-edn](https://github.com/tailrecursion/ring-edn) middleware. It will populate the request `:params` with the contents of the EDN request.
+If you're looking for working examples of how to reply to cljs-ajax from a ring server, take a look at [the integration test server source code](dev/user.clj).
+
+If you're using transit, take a look at [ring-transit](https://github.com/jalehman/ring-transit).  It will populate the request `:params` with the contents of the transit request.
 
 For handling JSON requests use [ring-json](https://github.com/ring-clojure/ring-json) middleware instead.  This populates the data in the `:body` tag.  However, note that it does not provide protection against [JSON hijacking](https://github.com/ring-clojure/ring-json/issues/14) yet, so do not use it with JSON format GETs, even for internal websites.  (As an aside, if you need lower level JSON access, e.g. for formatting, we'd recommend [Cheshire](https://github.com/dakrone/cheshire) over `data.json`.)
+
+For using EDN then you may wish to take a look at [ring-edn](https://github.com/tailrecursion/ring-edn) middleware. It will populate the request `:params` with the contents of the EDN request.
 
 If your tastes/requirements run more to a standardized multi-format REST server, you might want to investigate [ring-middleware-format](https://github.com/ngrunwald/ring-middleware-format).
 
@@ -152,6 +156,12 @@ The parameters are: uri, method (`:get` or `:post` etcetera) and options.
          :handler handler2
          :format (codec (url-request-format) (json-response-format {:keywords? true}))})
 ```
+
+## Breaking Changes Since 0.2
+
+* The default response format is now transit.
+* `ajax-request` now has `:format` and `:response-format` parameters, same as `POST`
+* The functions that returned merged request/response formats have been removed.
 
 ## Breaking Changes Since 0.1
 
