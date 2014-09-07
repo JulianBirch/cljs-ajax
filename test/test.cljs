@@ -38,8 +38,14 @@
     (detects {:format "JSON (default)"     :from "application/json;..."})
     (detects {:format "raw text (default)" :from "text/plain;..."})
     (detects {:format "raw text (default)" :from "text/html;..."})
-    ;;TODO: change default to raw on next major version
-    (detects {:format "EDN (default)" :from "application/xml;..."})))
+    (detects {:format "Transit (default)" :from "application/transit+json;xxx"})
+    (detects {:format "Transit (default)" :from "application/xml;..."})))
+
+(deftest keywords
+  (is (= (:content-type (keyword-response-format :transit {}))
+         (:content-type (transit-response-format {}))))
+  (is (= (:content-type (keyword-request-format :transit {}))
+         (:content-type (transit-request-format)))))
 
 (deftest test-process-inputs-as-json
   (let [[uri payload headers]

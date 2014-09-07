@@ -256,7 +256,7 @@
 (defn keyword-request-format [format format-params]
   (cond
    (map? format) format
-   (ifn? format) {:write format}
+   (fn? format) {:write format}
    :else (case format
            :transit (transit-request-format format-params)
            :json (json-request-format)
@@ -268,7 +268,7 @@
 (defn keyword-response-format [format format-params]
   (cond
    (map? format) format
-   (ifn? format) {:read format :description "custom"}
+   (fn? format) {:read format :description "custom"}
    :else (case format
            :transit (transit-response-format format-params)
            :json (json-response-format format-params)
