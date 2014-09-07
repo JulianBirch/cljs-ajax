@@ -72,18 +72,22 @@
 
 (def transit-content-type "application/transit+json; charset=utf-8")
 
-(defn transit-request-format [{:keys [type writer] :as opts}]
-  (let [writer (or writer (t/writer (or type :json) opts))]
-    {:write (fn transit-writer [params] (t/write writer params))
-     :content-type transit-content-type}))
+(defn transit-request-format
+  ([] (transit-request-format {}))
+  ([{:keys [type writer] :as opts}]
+     (let [writer (or writer (t/writer (or type :json) opts))]
+       {:write (fn transit-writer [params] (t/write writer params))
+        :content-type transit-content-type})))
 
-(defn transit-response-format [{:keys [type reader raw] :as opts}]
-  (let [reader (or reader (t/reader (or reader :json) opts))]
-    {:read (fn transit-reader [xhrio]
-             (let [text (.getResponseText xhrio)
-                   data (t/read reader text)]
-               (if raw data (js->clj data))))
-     :description "Transit"}))
+(defn transit-response-format
+  ([] (transit-response-format {}))
+  ([{:keys [type reader raw] :as opts}]
+   (let [reader (or reader (t/reader (or reader :json) opts))]
+     {:read (fn transit-reader [xhrio]
+              (let [text (.getResponseText xhrio)
+                    data (t/read reader text)]
+                (if raw data (js->clj data))))
+      :description "Transit"})))
 
 (defn params-to-str [params]
   (if params
@@ -119,6 +123,7 @@
    you should think about using this.
    http://stackoverflow.com/questions/2669690/why-does-google-prepend-while1-to-their-json-responses
    http://haacked.com/archive/2009/06/24/json-hijacking.aspx"
+  ([] (json-response-format {}))
   ([{:keys [prefix keywords? raw]}]
      {:read (fn read-json [xhrio]
               (let [json (.getResponseJson xhrio prefix)]
