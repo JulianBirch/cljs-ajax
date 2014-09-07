@@ -104,7 +104,9 @@ An error response is a map with the following keys passed to it:
 * `:is-parse-error` Is true if this is feedback from a parse failure
 * `:parse-error` If the server returned an error, and that then failed to parse, the map contains the error, and this contains the parse failure
 
-The `error-handler` for `GET`, `POST`, and `PUT` is passed one parameter which is an error response.
+In the event of a timeout, you'll get `:status`, `:status-text` and `:timeout?` set to `true`.  In the case that you cancelled the request you'll get `:aborted?` set to `true`.
+
+The `error-handler` for `GET`, `POST`, and `PUT` is passed one parameter which is an error response.  Note that *in all cases* either `handler` or `error-handler` will be called.  You should never get an exception returned by `GET`, `POST` etcetera.
 
 ### Handling responses on the server
 
