@@ -21,6 +21,7 @@ There are functions that return request and response formats.  Most of these fun
 | `:edn`  | `edn-request-format` | `edn-response-format` |
 | `:url`  | `url-request-format` | |
 | `:raw`  | | `raw-response-format` |
+| `:detect` | | `detect-response-format` |
 
 ### Transit parameters
 
@@ -35,6 +36,10 @@ There are functions that return request and response formats.  Most of these fun
 * `:keywords?`, which if true returns the keys as keywords and if false or unprovided returns them as strings.
 * `:raw`, if true, returns a JS object rather than a CLJS object.
 
+### Detect parameters
+
+`detect-response-format` has one parameter: `:defaults`, which is a list of pairs.  The first item in the pair is a substring that starts the content type.  The second item is the response format function to call.  It will be passed the options in.  So, you can, for instance, have `:raw` set to `true` and content detection available at the same time.  If you use the zero-arity version, `:defaults` is set to `default-formats`.
+
 ## Non-standard formats
 
 To get the raw XhrIo object back:
@@ -44,3 +49,4 @@ To get the raw XhrIo object back:
 ```
 
 Incidentally, if anyone wants to implement a response format that returns the response in a ring-style format, I accept pull requests.
+

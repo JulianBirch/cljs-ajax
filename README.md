@@ -59,11 +59,13 @@ The following settings affect the interpretation of JSON responses:  (You must s
 
 (POST "/hello")
 
+; Post a transit format message
 (POST "/send-message"
         {:params {:message "Hello World"
                   :user    "Bob"}
          :handler handler
          :error-handler error-handler})
+
 
 ; Will send file inputs that are in the form
 (POST "/send-form-modern" {:params (js/FormData. form-element)})
@@ -162,6 +164,8 @@ The parameters are: uri, method (`:get` or `:post` etcetera) and options.
 ## Breaking Changes Since 0.2
 
 * The default response format is now transit.
+* The default request format is now transit.
+* Format detection is now "opt in" with `ajax-request`.  See [formats.md](formats.md).  It remains the default with `GET` and `POST`.  This means that code using `ajax-request` will be smaller with advanced optimizations.
 * `ajax-request` now has `:format` and `:response-format` parameters, same as `POST`
 * The functions that returned merged request/response formats have been removed.
 

@@ -14,6 +14,7 @@
                       keyword-request-format
                       keyword-response-format
                       interpret-response
+                      default-formats
                       POST]])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
@@ -32,14 +33,15 @@
 
 (deftest test-get-default-format
   (letfn [(make-format [content-type]
-            (get-default-format (FakeXhrIo. content-type nil nil)))
-          (detects [{:keys [from format]}] (is (= (:description (make-format from)) format)) )]
-    (detects {:format "EDN (default)"      :from "application/edn;..."})
-    (detects {:format "JSON (default)"     :from "application/json;..."})
-    (detects {:format "raw text (default)" :from "text/plain;..."})
-    (detects {:format "raw text (default)" :from "text/html;..."})
-    (detects {:format "Transit (default)" :from "application/transit+json;xxx"})
-    (detects {:format "Transit (default)" :from "application/xml;..."})))
+            (get-default-format (FakeXhrIo. content-type nil nil)
+                                {:defaults default-formats}))
+          (detects [{:keys [from format]}] (is (= (:description (make-format from)) format)))]
+    (detects {:format "EDN"      :from "application/edn;..."})
+    (detects {:format "JSON"     :from "application/json;..."})
+    (detects {:format "raw text" :from "text/plain;..."})
+    (detects {:format "raw text" :from "text/html;..."})
+    (detects {:format "Transit" :from "application/transit+json;xxx"})
+    (detects {:format "raw text" :from "application/xml;..."})))
 
 (deftest keywords
   (is (= (:content-type (keyword-response-format :transit {}))
@@ -98,29 +100,35 @@
 (def simple-reply
   (FakeXhrIo.
    "application/edn; charset blah blah"
-   "Reply" 200))
+   "{:a 1}" 200))
 
-(defn expect-simple-reply [r]
+(defn expect-simple-reply [r value]
   (is (vector? r))
   (is (first r) "Request should have been successful.")
-  (is (= "Reply" (second r))))
+  (is (= value (second r))))
 
 (deftest correct-handler
   (let [r1 (atom nil)
-        r2 (atom nil)]
+        r2 (atom nil)
+        r3 (atom nil)]
     ;; Rolled usage of ajax-request
     (ajax-request {:handler #(reset! r1 %)
                    :format (url-request-format)
                    :response-format (raw-response-format)
                    :manager simple-reply})
-    (expect-simple-reply @r1)
+    (expect-simple-reply @r1 "{:a 1}")
     ;; Alternative usage with unrolled arguments.
     (POST nil
           :handler #(reset! r2 %)
           :format :url
           :response-format (raw-response-format)
           :manager simple-reply)
-    (is (= "Reply" @r2))))
+    (is (= "{:a 1}" @r2))
+    ;; Test format detection runs all the way through
+    (POST nil {:handler #(reset! r3 %)
+               :format :url
+               :manager simple-reply})
+    (is (= {:a 1} @r3) "Format detection didn't work")))
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))
