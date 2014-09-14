@@ -285,25 +285,27 @@
   (cond
    (map? format) format
    (fn? format) {:write format}
+   (nil? format) (transit-request-format format-params)
    :else (case format
            :transit (transit-request-format format-params)
            :json (json-request-format)
            :edn (edn-request-format)
            :raw (url-request-format)
            :url (url-request-format)
-           (transit-request-format format-params))))
+           nil)))
 
 (defn keyword-response-format [format format-params]
   (cond
    (map? format) format
    (fn? format) {:read format :description "custom"}
+   (nil? format) (detect-response-format)
    :else (case format
            :transit (transit-response-format format-params)
            :json (json-response-format format-params)
            :edn (edn-response-format)
            :raw (raw-response-format)
            :detect (detect-response-format)
-           (detect-response-format))))
+           nil)))
 
 (defn transform-handler [{:keys [handler error-handler finally]}]
   (fn easy-handler [[ok result]]
@@ -318,10 +320,11 @@
    called and will include JSON and EDN code in your JS.
    If you don't want this to happen, use ajax-request directly
    (and use advanced optimisation)."
-  (let [rf (keyword-request-format format opts)
-        needs-format
+  (let [needs-format
         (not (or (satisfies? DirectlySubmittable params)
-                 (= method "GET")))]
+                 (= method "GET")))
+        rf (if (or format needs-format)
+             (keyword-request-format format opts))]
     (assoc opts
       :handler (transform-handler opts)
       :format (or rf (if needs-format

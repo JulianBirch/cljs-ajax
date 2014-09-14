@@ -128,7 +128,9 @@
     (POST nil {:handler #(reset! r3 %)
                :format :url
                :manager simple-reply})
-    (is (= {:a 1} @r3) "Format detection didn't work")))
+    (is (= {:a 1} @r3) "Format detection didn't work")
+    (ajax.core/POST nil {:params (js/FormData.)
+                         :manager simple-reply})))
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))
