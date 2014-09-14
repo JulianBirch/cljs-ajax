@@ -154,13 +154,14 @@
 
 (defn exception-response [e status {:keys [description]} xhrio]
   (let [response {:status status
+                  :failure :error
                   :response nil}
         status-text (str (.-message e)
                          "  Format should have been "
                          description)
         parse-error (assoc response
                       :status-text status-text
-                      :is-parse-error true
+                      :failure :parse
                       :original-text (.getResponseText xhrio))]
     (if (success? status)
       parse-error
@@ -168,31 +169,33 @@
         :status-text (.getStatusText xhrio)
         :parse-error parse-error))))
 
-(p/defn-curried fail [status status-text keyword value]
-  [false {:status status
-          :status-text status-text
-          keyword value}])
+(defn fail [status status-text failure & params]
+  (let [response {:status status
+                  :status-text status-text
+                  :failure failure}]
+    [false (reduce conj
+                   response
+                   (map vec (partition 2 params)))]))
 
 (defn interpret-response [{:keys [read] :as format} response]
   (try
     (let [xhrio (.-target response)
           status (.getStatus xhrio)
-          fail (fail status)]
+          fail (partial fail status)]
       (if (= -1 status)
         (if (= (.getLastErrorCode xhrio) goog.net.ErrorCode/ABORT)
-          (fail "Request aborted by client." :aborted? true)
-          (fail "Request timed out." :timeout? true))
+          (fail "Request aborted by client." :aborted)
+          (fail "Request timed out." :timeout))
         (try
           (let [response (read xhrio)]
             (if (success? status)
               [true response]
-              (fail (.getStatusText xhrio) :response response)))
+              (fail (.getStatusText xhrio) :error :response response)))
           (catch js/Object e
             [false (exception-response e status format xhrio)]))))
-    (catch js/Object e                ; These errors should never happen
-      [false {:status 0
-              :status-text (.-message e)
-              :response nil}])))
+    (catch js/Object e
+      ; These errors should never happen
+      (fail 0 (.-message e) :exception :exception e))))
 
 (defn no-format [xhrio]
   (throw (js/Error. "No response format was supplied.")))

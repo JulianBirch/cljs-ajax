@@ -99,14 +99,19 @@ Note that `js/FormData` is not supported before IE10, so if you need to support 
 
 An error response is a map with the following keys passed to it:
 
-* `:status` - the HTTP status code
+* `:status` - the HTTP status code, numeric.  A dummy number is provided if you didn't get to the server.
 * `:status-text` - the HTTP status message, or feedback from a parse failure
-* `:response` - the transit/EDN/JSON response if it's valid
-* `:original-text` The response as raw text (if parsing failed)
-* `:is-parse-error` Is true if this is feedback from a parse failure
-* `:parse-error` If the server returned an error, and that then failed to parse, the map contains the error, and this contains the parse failure
+* `:failure` - a keyword describing the type of failure
+  * `:error` an error on the server
+  * `:parse` the response from the server failed to parse
+  * `:aborted` the client aborted the request
+  * `:timeout` the request timed out
 
-In the event of a timeout, you'll get `:status`, `:status-text` and `:timeout?` set to `true`.  In the case that you cancelled the request you'll get `:aborted?` set to `true`.
+If the failure had a valid response, it will be stored in the `:response` key.
+
+If the error is `:parse` then the raw text of the response will be stored in `:original-text`.
+
+Finally, if the server returned an error, and that then failed to parse, it will return the error map, but add a key `:parse-error` that contains the parse failure.
 
 The `error-handler` for `GET`, `POST`, and `PUT` is passed one parameter which is an error response.  Note that *in all cases* either `handler` or `error-handler` will be called.  You should never get an exception returned by `GET`, `POST` etcetera.
 
@@ -166,6 +171,7 @@ The parameters are: uri, method (`:get` or `:post` etcetera) and options.
 * The default response format is now transit.
 * The default request format is now transit.
 * Format detection is now "opt in" with `ajax-request`.  See [formats.md](formats.md).  It remains the default with `GET` and `POST`.  This means that code using `ajax-request` will be smaller with advanced optimizations.
+* `:is-parse-error`, `:timeout?` and `:aborted?` have been removed, in favour of `:failure`
 * `ajax-request` now has `:format` and `:response-format` parameters, same as `POST`
 * The functions that returned merged request/response formats have been removed.
 
