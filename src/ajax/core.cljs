@@ -307,12 +307,12 @@
            :detect (detect-response-format)
            nil)))
 
-(defn transform-handler [{:keys [handler error-handler finally]}]
-  (fn easy-handler [[ok result]]
-    (if-let [h (if ok handler error-handler)]
-      (h result))
-    (when (fn? finally)
-      (finally))))
+(p/defn-curried transform-handler
+  [{:keys [handler error-handler finally]} [ok result]]
+  (if-let [h (if ok handler error-handler)]
+    (h result))
+  (when (fn? finally)
+    (finally)))
 
 (defn transform-opts [{:keys [method format response-format params]
                        :as opts}]
