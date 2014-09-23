@@ -95,7 +95,7 @@
 (defn transit-response-format
   ([] (transit-response-format {}))
   ([{:keys [type reader raw] :as opts}]
-   (let [reader (or reader (t/reader (or reader :json) opts))]
+   (let [reader (or reader (t/reader (or type :json) opts))]
      {:read (transit-read reader raw)
       :description "Transit"})))
 
