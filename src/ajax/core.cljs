@@ -29,7 +29,7 @@
 (defprotocol DirectlySubmittable
   "A marker interface for types that can be directly sent to XhrIo")
 
-(extend-type js/String DirectlySubmittable)
+(extend-type string DirectlySubmittable)
 (extend-type js/FormData DirectlySubmittable)
 
 (extend-type nil
