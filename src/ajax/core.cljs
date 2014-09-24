@@ -29,7 +29,7 @@
 (defprotocol DirectlySubmittable
   "A marker interface for types that can be directly sent to XhrIo")
 
-(extend-type js/String DirectlySubmittable)
+(extend-type string DirectlySubmittable)
 (extend-type js/FormData DirectlySubmittable)
 
 (extend-type nil
@@ -95,7 +95,7 @@
 (defn transit-response-format
   ([] (transit-response-format {}))
   ([{:keys [type reader raw] :as opts}]
-   (let [reader (or reader (t/reader (or reader :json) opts))]
+   (let [reader (or reader (t/reader (or type :json) opts))]
      {:read (transit-read reader raw)
       :description "Transit"})))
 
