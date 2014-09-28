@@ -15,6 +15,7 @@
                       keyword-response-format
                       interpret-response
                       default-formats
+                      submittable?
                       POST]])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
@@ -107,6 +108,11 @@
   (is (first r) "Request should have been successful.")
   (is (= value (second r))))
 
+(deftest submittable
+  (is (submittable? (js/FormData.)))
+  (is (submittable? ""))
+  (is (not (submittable? {}))))
+
 (deftest correct-handler
   (let [r1 (atom nil)
         r2 (atom nil)
@@ -129,8 +135,8 @@
                :format :url
                :manager simple-reply})
     (is (= {:a 1} @r3) "Format detection didn't work")
-    (ajax.core/POST nil {:params (js/FormData.)
-                         :manager simple-reply})))
+    (POST nil {:params (js/FormData.)
+               :manager simple-reply})))
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))

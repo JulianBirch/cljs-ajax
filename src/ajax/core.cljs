@@ -29,8 +29,11 @@
 (defprotocol DirectlySubmittable
   "A marker interface for types that can be directly sent to XhrIo")
 
-(extend-type string DirectlySubmittable)
 (extend-type js/FormData DirectlySubmittable)
+
+(defn submittable? [params]
+  (or (satisfies? DirectlySubmittable params)
+      (string? params)))
 
 (extend-type nil
   AjaxImpl
@@ -223,7 +226,7 @@
           (get-request-format format)
           body (cond
                 (not (nil? write)) (write params)
-                (satisfies? DirectlySubmittable params) params
+                (submittable? params) params
                 :else (throw (js/Error. (str "unrecognized request format: " format))))
           content-type (if content-type
                          {"Content-Type" content-type})
@@ -321,7 +324,7 @@
    If you don't want this to happen, use ajax-request directly
    (and use advanced optimisation)."
   (let [needs-format
-        (not (or (satisfies? DirectlySubmittable params)
+        (not (or (submittable? params)
                  (= method "GET")))
         rf (if (or format needs-format)
              (keyword-request-format format opts))]

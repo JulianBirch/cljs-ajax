@@ -1,8 +1,10 @@
 pom.xml
 .lein-failures
 *jar
-/lib/
 /classes/
+/out/
+/.repl/
+/lib/
 /targets/
 /target/
 /target-int/
