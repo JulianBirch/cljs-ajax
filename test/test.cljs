@@ -16,7 +16,7 @@
                       interpret-response
                       default-formats
                       submittable?
-                      POST]])
+                      POST GET]])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
 (deftest normalize
@@ -136,7 +136,9 @@
                :manager simple-reply})
     (is (= {:a 1} @r3) "Format detection didn't work")
     (POST nil {:params (js/FormData.)
-               :manager simple-reply})))
+               :manager simple-reply})
+    (GET "/" {:params {:a 3}
+              :manager simple-reply})))
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))

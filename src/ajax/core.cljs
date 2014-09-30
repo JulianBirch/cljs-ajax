@@ -330,17 +330,14 @@
              (keyword-request-format format opts))]
     (assoc opts
       :handler (transform-handler opts)
-      :format (or rf (if needs-format
-                       (throw (js/Error.
-                               (str "unrecognized request format: '"
-                                    (or format "NIL") "'")))))
+      :format rf
       :response-format (keyword-response-format response-format opts))))
 
 (defn easy-ajax-request [uri method opts]
   (-> opts
-      ajax.core/transform-opts
       (assoc :uri uri
              :method method)
+      ajax.core/transform-opts
       ajax.core/ajax-request))
 
 (m/easy-api GET)
