@@ -29,7 +29,8 @@
 (defprotocol DirectlySubmittable
   "A marker interface for types that can be directly sent to XhrIo")
 
-(extend-type js/FormData DirectlySubmittable)
+(when (exists? js/FormData)
+  (extend-type js/FormData DirectlySubmittable))
 
 (defn submittable? [params]
   (or (satisfies? DirectlySubmittable params)
