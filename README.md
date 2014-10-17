@@ -155,15 +155,17 @@ The parameters are: uri, method (`:get` or `:post` etcetera) and options.
 
 (ajax-request "/send-message" :post
         {:params {:message "Hello World"
-                 :user    "Bob"}
+                  :user    "Bob"}
          :handler handler2
-         :format (json-format {:keywords? true})})
+         :format (json-request-format)
+         :response-format (json-response-format {:keywords? true})})
 
 (ajax-request "/send-message" :post
         {:params {:message "Hello World"
                   :user    "Bob"}
          :handler handler2
-         :format (codec (url-request-format) (json-response-format {:keywords? true}))})
+         :format (url-request-format) 
+         :response-format (json-response-format {:keywords? true})})
 ```
 
 ## Breaking Changes Since 0.2
