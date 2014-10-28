@@ -153,15 +153,19 @@ The parameters are: uri, method (`:get` or `:post` etcetera) and options.
     (.log js/console (str response))
     (.error js/console (str response))))
 
-(ajax-request "/send-message" :post
-        {:params {:message "Hello World"
+(ajax-request
+        {:uri "/send-message"
+         :method :post
+         :params {:message "Hello World"
                   :user    "Bob"}
          :handler handler2
          :format (json-request-format)
          :response-format (json-response-format {:keywords? true})})
 
-(ajax-request "/send-message" :post
-        {:params {:message "Hello World"
+(ajax-request
+        {:uri "/send-message"
+         :method :post
+         :params {:message "Hello World"
                   :user    "Bob"}
          :handler handler2
          :format (url-request-format) 
