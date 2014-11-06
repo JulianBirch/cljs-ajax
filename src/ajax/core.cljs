@@ -39,10 +39,12 @@
 (extend-type nil
   AjaxImpl
   (-js-ajax-request
-    [this uri method body headers handler {:keys [timeout]}]
+    [this uri method body headers handler {:keys [timeout with-credentials]
+                                           :or {with-credentials false}}]
     (doto (new goog.net.XhrIo)
       (events/listen goog.net.EventType/COMPLETE handler)
       (.setTimeoutInterval (or timeout 0))
+      (.setWidthCredentials with-credentials)
       (.send uri method body headers))))
 
 (extend-type goog.net.XhrIo
