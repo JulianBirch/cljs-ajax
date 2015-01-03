@@ -54,6 +54,8 @@ The following settings affect the interpretation of JSON responses:  (You must s
 
 (GET "/hello" {:params {:foo "foo"}})
 
+(GET "/hello" {:params {"foo-array[]" "foo"}})
+
 (GET "/hello" {:handler handler
                :error-handler error-handler})
 
