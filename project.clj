@@ -1,4 +1,4 @@
-(defproject cljs-ajax "0.3.3"
+(defproject cljs-ajax "0.3.4"
   :clojurescript? true
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/yogthos/cljs-ajax"
@@ -7,20 +7,20 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [com.cemerick/clojurescript.test "0.3.1"
                   :scope "test"]
-                 [org.clojure/clojurescript "0.0-2356"]
+                 [org.clojure/clojurescript "0.0-2644"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
-                 [com.cognitect/transit-cljs "0.8.188"]
+                 [com.cognitect/transit-cljs "0.8.194"]
                  [net.colourcoding/poppea "0.2.0"]]
   :plugins [[lein-cljsbuild "1.0.0-SNAPSHOT"]
-            [com.cemerick/clojurescript.test "0.3.1"]]
+            [com.cemerick/clojurescript.test "0.3.3"]]
   :hooks [leiningen.cljsbuild]
   :profiles
   {:dev {:source-paths ["dev"]
          :dependencies [[ring-server "0.3.1"]
                         [fogus/ring-edn "0.2.0"]
                         [ring/ring-json "0.3.1"]
-                        [ring-transit "0.1.2"]
-                        [org.clojure/tools.namespace "0.2.5"]]}}
+                        [ring-transit "0.1.3"]
+                        [org.clojure/tools.namespace "0.2.8"]]}}
   :cljsbuild
   {:builds
    {:dev  {:source-paths ["src"]
