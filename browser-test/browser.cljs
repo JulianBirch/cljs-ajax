@@ -72,3 +72,9 @@
                :response-format (raw-response-format)
                :handler handle-response
                :timeout 100})
+
+(POST "/ajax-transit" {:params {:id 15 :timeout 0 :input "Can use multiple response formats"}
+               :format (transit-request-format {})
+               :response-format [:transit :edn]
+               :handler handle-response
+               :timeout 10000})

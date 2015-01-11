@@ -1,4 +1,4 @@
-(defproject cljs-ajax "0.3.4"
+(defproject cljs-ajax "0.3.9"
   :clojurescript? true
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/yogthos/cljs-ajax"
@@ -26,14 +26,14 @@
    {:dev  {:source-paths ["src"]
            :compiler {:output-to "target/main.js"
                       :output-dir "target"
-                      :source-map "target/main.js.map"
+                      ; :source-map "target/main.js.map"
                       :optimizations :whitespace
                       :pretty-print true}}
     :test {:source-paths ["src" "test"]
            :incremental? true
            :compiler {:output-to "target-test/unit-test.js"
                       :output-dir "target-test"
-                      :source-map "target-test/unit-test.js.map"
+                      ; :source-map "target-test/unit-test.js.map"
                       :optimizations :whitespace
                       :pretty-print true}}
     :int {:source-paths ["src" "browser-test"]

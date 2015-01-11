@@ -8,10 +8,14 @@
                       edn-response-format
                       edn-request-format
                       raw-response-format
+                      json-response-format
                       transit-response-format
                       transit-request-format
                       keyword-request-format
                       keyword-response-format
+                      detect-response-format
+                      accept-entry
+                      accept-header
                       interpret-response
                       default-formats
                       submittable?
@@ -25,6 +29,7 @@
 (deftype FakeXhrIo [content-type response status]
   ajax.core/AjaxImpl
   (-js-ajax-request [this _ _ _ _ h _]
+    ; (.log js/Console (str "-js-ajax-request " argument))
     (h (clj->js {:target this})))
   Object
   (getResponseHeader [this header] content-type)
@@ -34,20 +39,32 @@
 (deftest test-get-default-format
   (letfn [(make-format [content-type]
             (get-default-format (FakeXhrIo. content-type nil nil)
-                                {:defaults default-formats}))
+                                {:response-format default-formats}))
           (detects [{:keys [from format]}] (is (= (:description (make-format from)) format)))]
     (detects {:format "EDN"      :from "application/edn;..."})
     (detects {:format "JSON"     :from "application/json;..."})
     (detects {:format "raw text" :from "text/plain;..."})
     (detects {:format "raw text" :from "text/html;..."})
-    (detects {:format "Transit" :from "application/transit+json;xxx"})
+    (detects {:format "Transit"  :from "application/transit+json;xxx"})
     (detects {:format "raw text" :from "application/xml;..."})))
+
+(defn multi-content-type [input]
+  (let [a (keyword-response-format input {})
+        a2 (detect-response-format {:response-format a})]
+    (:content-type a2)))
 
 (deftest keywords
   (is (= (:content-type (keyword-response-format :transit {}))
          (:content-type (transit-response-format {}))))
   (is (= (:content-type (keyword-request-format :transit {}))
-         (:content-type (transit-request-format)))))
+         (:content-type (transit-request-format))))
+  (is (vector? (keyword-response-format [:json :transit] {})))
+  (is (map? (first (keyword-response-format [:json :transit] {}))))
+  (is (= "application/json" (accept-header {:response-format [(json-response-format {})]})))
+  (is (= (multi-content-type [:json :transit])
+         "application/json, application/transit+json"))
+  (is (= (multi-content-type [:json ["text/plain" :raw]])
+         "application/json, text/plain")))
 
 (deftest test-process-inputs-as-json
   (let [[uri payload headers]
@@ -55,10 +72,12 @@
                          :headers nil
                          :uri "/test"
                          :method "POST"
-                         :format (edn-request-format)})]
+                         :format (edn-request-format)}
+                        (edn-response-format))]
     (is (= uri "/test"))
     (is (= payload "{:a 3, :b \"hello\"}"))
-    (is (= headers {"Content-Type" "application/edn"}))))
+    (is (= headers {"Content-Type" "application/edn"
+                    "Accept" "application/edn"}))))
 
 (deftest test-process-inputs-as-edn
   (let [[uri payload headers]
@@ -66,10 +85,11 @@
                          :headers nil
                          :uri "/test"
                          :method "GET"
-                         :format (edn-request-format)})]
+                         :format (edn-request-format)}
+                        (edn-response-format))]
     (is (= uri "/test?a=3&b=hello"))
     (is (nil? payload))
-    (is (nil? headers))))
+    (is (= {"Accept" "application/edn"} headers))))
 
 (deftest test-process-inputs-as-raw
   (let [[uri payload headers]
@@ -77,10 +97,13 @@
                          :headers nil
                          :uri "/test"
                          :method "POST"
-                         :format (url-request-format)})]
+                         :format (url-request-format)}
+                        (json-response-format))]
     (is (= uri "/test"))
     (is (= payload "a=3&b=hello"))
-    (is (= headers {"Content-Type" "application/x-www-form-urlencoded"}))))
+    (is (= headers {"Content-Type"
+                    "application/x-www-form-urlencoded"
+                    "Accept" "application/json"}))))
 
 (defn fake-from-request [{:keys [params format]}]
   (let [{:keys [content-type write]} format]
@@ -137,7 +160,13 @@
     (POST nil {:params (js/FormData.)
                :manager simple-reply})
     (GET "/" {:params {:a 3}
-              :manager simple-reply})))
+              :manager simple-reply}
+    (GET "/" {:params {:a 3}
+              :manager simple-reply}
+         :response-format [:json :raw])
+    (GET "/" {:params {:a 3}
+              :manager simple-reply}
+              :response-format [:json ["text/plain" :raw]]))))
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))

@@ -66,14 +66,15 @@
 (defn success? [status]
   (some #{status} [200 201 202 204 205 206]))
 
+;;; Standard Formats
+
 (defn read-edn [xhrio]
   (reader/read-string (.getResponseText xhrio)))
 
-; This code would be a heck of a lot shorter if ClojureScript
-; had macros.  As it is, a macro doesn't justify the extra build
-; complication
 (defn edn-response-format
-  ([] {:read read-edn :description "EDN"})
+  ([] {:read read-edn
+       :description "EDN"
+       :content-type "application/edn"})
   ([opts] (edn-response-format)))
 
 (defn edn-request-format []
@@ -103,7 +104,8 @@
   ([{:keys [type reader raw] :as opts}]
    (let [reader (or reader (t/reader (or type :json) opts))]
      {:read (transit-read reader raw)
-      :description "Transit"})))
+      :description "Transit"
+      :content-type "application/transit+json"})))
 
 (defn params-to-str [params]
   (if params
@@ -121,7 +123,7 @@
    :content-type "application/x-www-form-urlencoded"})
 
 (defn raw-response-format
-  ([] {:read read-text :description "raw text"})
+  ([] {:read read-text :description "raw text" :content-type "*/*"})
   ([opts] (raw-response-format)))
 
 (defn write-json [data]
@@ -150,13 +152,73 @@
      {:read (json-read prefix raw keywords?)
       :description (str "JSON"
                         (if prefix (str " prefix '" prefix "'"))
-                        (if keywords? " keywordize"))}))
+                        (if keywords? " keywordize"))
+      :content-type "application/json"}))
 
-(defn get-response-format [format]
+;;; Detection and Accept Code
+
+(def default-formats
+  [json-response-format
+   edn-response-format
+   transit-response-format
+   ["text/plain" raw-response-format]
+   ["text/html" raw-response-format]
+   raw-response-format])
+
+(p/defn-curried get-format [opts format-entry]
+  (cond (vector? format-entry) (get-format opts
+                                           (second format-entry))
+        (map? format-entry) format-entry
+        ; Must be a format generating function
+        :else (format-entry opts)))
+
+(p/defn-curried accept-entry [opts format-entry]
+  (or (if (vector? format-entry)
+        (first format-entry)
+        (:content-type (get-format opts format-entry)))
+      "*/*"))
+
+(p/defn-curried detect-content-type [content-type opts format-entry]
+  (let [accept (accept-entry opts format-entry)]
+    (or (= accept "*/*")
+        (>= (.indexOf content-type accept) 0))))
+
+(defn get-default-format [xhrio {:keys [response-format] :as opts}]
+  (let [f (detect-content-type
+           (or (.getResponseHeader xhrio "Content-Type") "")
+           opts)]
+    (->> response-format
+         (filter f)
+         first
+         (get-format opts))))
+
+(p/defn-curried detect-response-format-read
+  [opts xhrio]
+  ((:read (get-default-format xhrio opts)) xhrio))
+
+(defn accept-header [{:keys [response-format] :as opts}]
+  (if (vector? response-format)
+    (str/join ", " (map (accept-entry opts) response-format))
+    (accept-entry opts response-format)))
+
+(defn detect-response-format
+  ([] (detect-response-format {:response-format default-formats}))
+  ([opts]
+     (let [accept (accept-header opts)]
+       {:read (detect-response-format-read opts)
+        :format (str "(from " accept ")")
+        :content-type accept})))
+
+;;; AJAX calls
+
+(defn get-response-format [{:keys [response-format] :as opts}]
   (cond
-   (map? format) format
-   (ifn? format) {:read format :description "custom"}
-   :else (throw (js/Error. (str "unrecognized response format: " format)))))
+   (vector? response-format) (detect-response-format opts)
+   (map? response-format) response-format
+   (ifn? response-format) {:read response-format
+                           :description "custom"
+                           :content-type "*/*"}
+   :else (throw (js/Error. (str "unrecognized response format: " response-format)))))
 
 (defn exception-response [e status {:keys [description]} xhrio]
   (let [response {:status status
@@ -222,19 +284,22 @@
     (str/upper-case (name method))
     method))
 
-(defn process-inputs [{:keys [uri method format params headers]}]
-  (if (= (normalize-method method) "GET")
-    [(uri-with-params uri params) nil headers]
-    (let [{:keys [write content-type]}
-          (get-request-format format)
-          body (cond
-                (not (nil? write)) (write params)
-                (submittable? params) params
-                :else (throw (js/Error. (str "unrecognized request format: " format))))
-          content-type (if content-type
-                         {"Content-Type" content-type})
-          headers (merge (or headers {}) content-type)]
-      [uri body headers])))
+(defn process-inputs [{:keys [uri method format params headers]}
+                      {:keys [content-type]}]
+  (let [headers (merge {"Accept" content-type}
+                       (or headers {}))]
+    (if (= (normalize-method method) "GET")
+      [(uri-with-params uri params) nil headers]
+      (let [{:keys [write content-type]}
+            (get-request-format format)
+            body (cond
+                  (not (nil? write)) (write params)
+                  (submittable? params) params
+                  :else (throw (js/Error. (str "unrecognized request format: " format))))
+            content-type (if content-type
+                           {"Content-Type" content-type})
+            headers (merge headers content-type)]
+        [uri body headers]))))
 
 (p/defn-curried js-handler [response-format handler xhrio]
   (let [response
@@ -247,45 +312,15 @@
     (throw (js/Error. "No ajax handler provided."))))
 
 (defn ajax-request
-  [{:keys [uri method response-format manager] :as opts}]
-  (let [response-format (get-response-format response-format)
+  [{:keys [method manager] :as opts}]
+  (let [response-format (get-response-format opts)
         method (normalize-method method)
-        [uri body headers] (process-inputs opts)
+        [uri body headers] (process-inputs opts response-format)
         handler (base-handler response-format opts)]
     (-js-ajax-request manager uri method body
                       (clj->js headers) handler opts)))
 
-; "Easy" API beyond this point
-
-(def default-formats
-  [["application/json" json-response-format]
-   ["application/edn" edn-response-format]
-   ["text/plain" raw-response-format]
-   ["text/html" raw-response-format]
-   ["application/transit+json" transit-response-format]
-   [nil raw-response-format]])
-
-(p/defn-curried detect-content-type [content-type [substring]]
-  (or (nil? substring)
-      (>= (.indexOf content-type substring) 0)))
-
-(defn get-default-format [xhrio {:keys [defaults] :as opts}]
-  (let [f (detect-content-type
-           (or (.getResponseHeader xhrio "Content-Type") ""))]
-    ((->> defaults
-          (filter f)
-          first
-          second) opts)))
-
-(p/defn-curried detect-response-format-read
-  [opts xhrio]
-  ((:read (get-default-format xhrio opts)) xhrio))
-
-(defn detect-response-format
-  ([] (detect-response-format {:defaults default-formats}))
-  ([opts]
-     {:read (detect-response-format-read opts)
-      :format "(from content type)"}))
+;;; "Easy" API beyond this point
 
 (defn keyword-request-format [format format-params]
   (cond
@@ -300,8 +335,11 @@
            :url (url-request-format)
            nil)))
 
-(defn keyword-response-format [format format-params]
+(defn keyword-response-format-2 [format format-params]
   (cond
+   (vector? format) [(first format)
+                  (keyword-response-format-2 (second format)
+                                             format-params)]
    (map? format) format
    (fn? format) {:read format :description "custom"}
    (nil? format) (detect-response-format)
@@ -312,6 +350,13 @@
            :raw (raw-response-format)
            :detect (detect-response-format)
            nil)))
+
+(defn keyword-response-format [format format-params]
+  (if (vector? format)
+    (->> format
+         (map #(keyword-response-format-2 % format-params))
+         (apply vector))
+    (keyword-response-format-2 format format-params)))
 
 (p/defn-curried transform-handler
   [{:keys [handler error-handler finally]} [ok result]]

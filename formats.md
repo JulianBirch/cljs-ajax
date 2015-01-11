@@ -9,7 +9,8 @@ A request format (given by `:format`) has two keys:
 A response format (given by `:response-format`) also has two keys:
 * `:description` - A description of the format, for use in error messages.
 * `:read` - A function that takes the underlying `goog.net.XhrIo` and converts it to a response.  Exceptions thrown by this will be caught.
-
+* `:content-type` The content type to put in the `Accept` header.
+ 
 ## Standard Formats
 
 There are functions that return request and response formats.  Most of these functions don't take parameters.  These correspond to the keywords mentioned in the main documentation.
