@@ -30,11 +30,11 @@
   ajax.core/AjaxImpl
   (-js-ajax-request [this _ _ _ _ h _]
     ; (.log js/Console (str "-js-ajax-request " argument))
-    (h (clj->js {:target this})))
-  Object
-  (getResponseHeader [this header] content-type)
-  (getStatus [_] status)
-  (getResponseText [_] response))
+    (h this))
+  ajax.core/AjaxResponse
+  (-get-response-header [this header] content-type)
+  (-status [_] status)
+  (-body [_] response))
 
 (deftest test-get-default-format
   (letfn [(make-format [content-type]

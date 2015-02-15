@@ -27,7 +27,20 @@
     "Aborts a running ajax request, if possible."))
 
 (defprotocol DirectlySubmittable
-  "A marker interface for types that can be directly sent to XhrIo")
+  "A marker interface for types that can be directly sent to XhrIo.")
+
+(defprotocol AjaxResponse
+  "An abstraction for an ajax response."
+  (-status [this]
+    "Returns the HTTP Status of the response as an integer.")
+  (-status-text [this]
+    "Returns the HTTP Status Text of the response as a string.")
+  (-body [this]
+    "Returns the response body as a string.")
+  (-get-response-header [this header]
+    "Gets the specified response header (specified by a string) as a string.")
+  (-was-aborted [this]
+    "Was the response aborted."))
 
 (when (exists? js/FormData)
   (extend-type js/FormData DirectlySubmittable))
@@ -36,21 +49,29 @@
   (or (satisfies? DirectlySubmittable params)
       (string? params)))
 
-(extend-type nil
+(extend-type goog.net.XhrIo
   AjaxImpl
   (-js-ajax-request
-    [this uri method body headers handler {:keys [timeout with-credentials]
-                                           :or {with-credentials false}}]
-    (doto (new goog.net.XhrIo)
-      (events/listen goog.net.EventType/COMPLETE handler)
+    [this uri method body headers handler
+     {:keys [timeout with-credentials]
+      :or {with-credentials false}}]
+    (doto this
+      (events/listen goog.net.EventType/COMPLETE
+                     #(handler (.-target %)))
       (.setTimeoutInterval (or timeout 0))
       (.setWithCredentials with-credentials)
-      (.send uri method body headers))))
-
-(extend-type goog.net.XhrIo
+      (.send uri method body headers)))
   AjaxRequest
   (-abort [this error-code]
-    (.abort this error-code)))
+    (.abort this error-code))
+  AjaxResponse
+  (-body [this] (.getResponseText this))
+  (-status [this] (.getStatus this))
+  (-status-text [this] (.getStatusText this))
+  (-get-response-header [this header]
+    (.getResponseHeader this header))
+  (-was-aborted [this]
+    (= (.getLastErrorCode this) goog.net.ErrorCode/ABORT)))
 
 (extend-type goog.net.XhrManager
   AjaxImpl
@@ -69,7 +90,7 @@
 ;;; Standard Formats
 
 (defn read-edn [xhrio]
-  (reader/read-string (.getResponseText xhrio)))
+  (reader/read-string (-body xhrio)))
 
 (defn edn-response-format
   ([] {:read read-edn
@@ -95,7 +116,7 @@
         :content-type transit-content-type})))
 
 (p/defn-curried transit-read [reader raw xhrio]
-  (let [text (.getResponseText xhrio)
+  (let [text (-body xhrio)
         data (t/read reader text)]
     (if raw data (js->clj data))))
 
@@ -115,15 +136,12 @@
         query-data/createFromMap
         .toString)))
 
-(defn read-text [xhrio]
-  (.getResponseText xhrio))
-
 (defn url-request-format []
   {:write params-to-str
    :content-type "application/x-www-form-urlencoded"})
 
 (defn raw-response-format
-  ([] {:read read-text :description "raw text" :content-type "*/*"})
+  ([] {:read -body :description "raw text" :content-type "*/*"})
   ([opts] (raw-response-format)))
 
 (defn write-json [data]
@@ -134,7 +152,11 @@
    :content-type "application/json"})
 
 (p/defn-curried json-read [prefix raw keywords? xhrio]
-  (let [json (.getResponseJson xhrio prefix)]
+  (let [text (-body xhrio)
+        text (if (and prefix (= 0 (.indexOf text prefix)))
+               (.substring text (.length prefix))
+               text)
+        json (.parse (.json goog) text)]
     (if raw
       json
       (js->clj json :keywordize-keys keywords?))))
@@ -185,7 +207,7 @@
 
 (defn get-default-format [xhrio {:keys [response-format] :as opts}]
   (let [f (detect-content-type
-           (or (.getResponseHeader xhrio "Content-Type") "")
+           (or (-get-response-header xhrio "Content-Type") "")
            opts)]
     (->> response-format
          (filter f)
@@ -230,11 +252,11 @@
         parse-error (assoc response
                       :status-text status-text
                       :failure :parse
-                      :original-text (.getResponseText xhrio))]
+                      :original-text (-body xhrio))]
     (if (success? status)
       parse-error
       (assoc response
-        :status-text (.getStatusText xhrio)
+        :status-text (-status-text xhrio)
         :parse-error parse-error))))
 
 (defn fail [status status-text failure & params]
@@ -245,20 +267,19 @@
                    response
                    (map vec (partition 2 params)))]))
 
-(defn interpret-response [{:keys [read] :as format} response]
+(defn interpret-response [{:keys [read] :as format} xhrio]
   (try
-    (let [xhrio (.-target response)
-          status (.getStatus xhrio)
+    (let [status (-status xhrio)
           fail (partial fail status)]
       (if (= -1 status)
-        (if (= (.getLastErrorCode xhrio) goog.net.ErrorCode/ABORT)
+        (if (-was-aborted xhrio)
           (fail "Request aborted by client." :aborted)
           (fail "Request timed out." :timeout))
         (try
           (let [response (read xhrio)]
             (if (success? status)
               [true response]
-              (fail (.getStatusText xhrio) :error :response response)))
+              (fail (-status-text xhrio) :error :response response)))
           (catch js/Object e
             [false (exception-response e status format xhrio)]))))
     (catch js/Object e
@@ -316,7 +337,8 @@
   (let [response-format (get-response-format opts)
         method (normalize-method method)
         [uri body headers] (process-inputs opts response-format)
-        handler (base-handler response-format opts)]
+        handler (base-handler response-format opts)
+        manager (or manager (new goog.net.XhrIo))]
     (-js-ajax-request manager uri method body
                       (clj->js headers) handler opts)))
 
