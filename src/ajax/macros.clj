@@ -20,3 +20,9 @@
                             (if (keyword? f#)
                               (apply hash-map ~opts)
                               f#))))))
+
+(defmacro register-directly-submittable [& types]
+  (let [f (fn [type] `(when (cljs.core/exists? ~type)
+                       (extend-type ~type
+                         ajax.core/DirectlySubmittable)))]
+    (cons 'do (map f types))))

@@ -42,6 +42,9 @@
   (-was-aborted [this]
     "Was the response aborted."))
 
+(m/register-directly-submittable js/FormData js/ArrayBufferView
+                                 js/Blob js/Document)
+
 (when (exists? js/FormData)
   (extend-type js/FormData DirectlySubmittable))
 
