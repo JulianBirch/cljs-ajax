@@ -33,7 +33,8 @@
    :body (write-transit response)})
 
 (defn ajax-handler
-  ([{{:keys [id timeout input output]} :params}]
+  ([{{:keys [id timeout input output]} :params :as x}]
+     (println x)
      (ajax-handler id timeout input output))
   ([id timeout input]
      (ajax-handler id timeout input nil))

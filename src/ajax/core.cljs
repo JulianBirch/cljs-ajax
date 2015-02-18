@@ -4,6 +4,7 @@
             [goog.net.XhrIo :as xhr]
             [goog.net.XhrManager :as xhrm]
             [goog.Uri :as uri]
+            [goog.json :as goog-json]
             [goog.Uri.QueryData :as query-data]
             [goog.json.Serializer]
             [goog.events :as events]
@@ -23,7 +24,7 @@
 
 (defprotocol AjaxRequest
   "An abstraction for a running ajax request."
-  (-abort [this error-code]
+  (-abort [this]
     "Aborts a running ajax request, if possible."))
 
 (defprotocol DirectlySubmittable
@@ -45,9 +46,6 @@
 (m/register-directly-submittable js/FormData js/ArrayBufferView
                                  js/Blob js/Document)
 
-(when (exists? js/FormData)
-  (extend-type js/FormData DirectlySubmittable))
-
 (defn submittable? [params]
   (or (satisfies? DirectlySubmittable params)
       (string? params)))
@@ -57,16 +55,16 @@
   (-js-ajax-request
     [this uri method body headers handler
      {:keys [timeout with-credentials]
-      :or {with-credentials false}}]
+      :or {with-credentials false
+           timeout 0}}]
     (doto this
       (events/listen goog.net.EventType/COMPLETE
                      #(handler (.-target %)))
-      (.setTimeoutInterval (or timeout 0))
+      (.setTimeoutInterval timeout)
       (.setWithCredentials with-credentials)
-      (.send uri method body headers)))
+      (.send uri method body (clj->js headers))))
   AjaxRequest
-  (-abort [this error-code]
-    (.abort this error-code))
+  (-abort [this] (.abort this goog.net.ErrorCode/ABORT))
   AjaxResponse
   (-body [this] (.getResponseText this))
   (-status [this] (.getStatus this))
@@ -76,16 +74,41 @@
   (-was-aborted [this]
     (= (.getLastErrorCode this) goog.net.ErrorCode/ABORT)))
 
+(extend-type js/XMLHttpRequest
+  AjaxImpl
+  (-js-ajax-request
+    [this uri method body headers handler
+     {:keys [timeout with-credentials]
+      :or {with-credentials false
+           timeout 0}}]
+    (set! (.-timeout this) timeout)
+    (set! (.-withCredentials this) with-credentials)
+    (set! (.-onreadystatechange this) #(handler this))
+    (doto this
+      (.open method uri true)
+      (as-> t
+            (doseq [[k v] headers]
+              (.setRequestHeader t k v)))
+      (.send (or body ""))))
+  AjaxRequest
+  (-abort [this] (.abort this))
+  AjaxResponse
+  (-body [this] (.-response this))
+  (-status [this] (.-status this))
+  (-status-text [this] (.-statusText this))
+  (-get-response-header [this header]
+    (.getResponseHeader this header))
+  (-was-aborted [this] (= 0 (.-readyState this))))
+
 (extend-type goog.net.XhrManager
   AjaxImpl
   (-js-ajax-request
     [this uri method body headers handler
      {:keys [id timeout priority max-retries]}]
-    (.send this id uri method body headers
+    (.send this id uri method body (clj->js headers)
            priority handler max-retries)))
 
-(defn abort
-  ([this] (-abort this goog.net.ErrorCode/ABORT)))
+(defn abort ([this] (-abort this)))
 
 (defn success? [status]
   (some #{status} [200 201 202 204 205 206]))
@@ -159,7 +182,7 @@
         text (if (and prefix (= 0 (.indexOf text prefix)))
                (.substring text (.length prefix))
                text)
-        json (.parse (.json goog) text)]
+        json (goog-json/parse text)]
     (if raw
       json
       (js->clj json :keywordize-keys keywords?))))
@@ -336,14 +359,14 @@
     (throw (js/Error. "No ajax handler provided."))))
 
 (defn ajax-request
-  [{:keys [method manager] :as opts}]
+  [{:keys [method api] :as opts}]
   (let [response-format (get-response-format opts)
         method (normalize-method method)
         [uri body headers] (process-inputs opts response-format)
         handler (base-handler response-format opts)
-        manager (or manager (new goog.net.XhrIo))]
-    (-js-ajax-request manager uri method body
-                      (clj->js headers) handler opts)))
+        api (or api (new goog.net.XhrIo))]
+    (-js-ajax-request api uri method body
+                      headers handler opts)))
 
 ;;; "Easy" API beyond this point
 

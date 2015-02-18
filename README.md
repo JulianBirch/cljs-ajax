@@ -174,6 +174,8 @@ The parameters are: uri, method (`:get` or `:post` etcetera) and options.
          :response-format (json-response-format {:keywords? true})})
 ```
 
+These examples will use the Google Closure library `XhrIo` API. If you want to use `XMLHttpRequest` API directly, add `:api (js/XMLHttpRequest.)` to the map.
+
 ## Breaking Changes Since 0.2
 
 * The default response format is now transit.
