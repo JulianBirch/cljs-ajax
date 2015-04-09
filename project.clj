@@ -1,4 +1,4 @@
-(defproject cljs-ajax "0.3.10"
+(defproject cljs-ajax "0.3.11"
   :clojurescript? true
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/JulianBirch/cljs-ajax"
