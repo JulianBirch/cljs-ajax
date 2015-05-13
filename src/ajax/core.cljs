@@ -37,7 +37,8 @@
   (-status-text [this]
     "Returns the HTTP Status Text of the response as a string.")
   (-body [this]
-    "Returns the response body as a string.")
+    "Returns the response body as a string or as type specified in response-format
+    such as a blob or arraybuffer.")
   (-get-response-header [this header]
     "Gets the specified response header (specified by a string) as a string.")
   (-was-aborted [this]
@@ -86,18 +87,19 @@
   AjaxImpl
   (-js-ajax-request
     [this uri method body headers handler
-     {:keys [timeout with-credentials]
+     {:keys [timeout with-credentials response-format]
       :or {with-credentials false
            timeout 0}}]
+    (when-let [response-type (:type response-format)]
+      (set! (.-responseType this) (name response-type)))
     (set! (.-timeout this) timeout)
     (set! (.-withCredentials this) with-credentials)
     (set! (.-onreadystatechange this) #(when (= :response-ready (ready-state %)) (handler this)))
-    (doto this
-      (.open method uri true)
-      (as-> t
-            (doseq [[k v] headers]
-              (.setRequestHeader t k v)))
-      (.send (or body ""))))
+    (.open this method uri true)
+    (doseq [[k v] headers]
+      (.setRequestHeader this k v))
+    (.send this (or body ""))
+    this)
   AjaxRequest
   (-abort [this] (.abort this))
   AjaxResponse

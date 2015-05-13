@@ -32,6 +32,12 @@
    :headers {"Content-Type" "application/transit+json; charset=utf-8"}
    :body (write-transit response)})
 
+(defn png-response [response]
+  {:status 200
+   :headers {"Content-Type" "image/png"
+             "Content-Disposition" "inline; filename=\"foo.png\""}
+   :body "im not even a real png!"})
+
 (defn ajax-handler
   ([{{:keys [id timeout input output]} :params :as x}]
      (println x)
@@ -68,6 +74,7 @@
                                 #(assoc % :output transit-response)))
     "/ajax-url" (ajax-uri-handler request)
     "/ajax-form-data" (ajax-form-data-handler request)
+    "/ajax-form-data-png" (png-response request)
     "/favicon.ico" (rur/not-found "")))
 
 (defn sc-system [] nil)

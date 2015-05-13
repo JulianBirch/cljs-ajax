@@ -8,8 +8,9 @@
                       raw-response-format
                       transit-request-format
                       transit-response-format
-                      GET POST]])
+                      GET POST -body]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
+
 
 (.log js/console "Test Results:")
 
@@ -109,3 +110,23 @@
                :response-format [:transit :edn]
                :handler handle-response
                :timeout 10000})
+
+(defn blob-response-handler
+  [[status res]]
+  (.log js/console (pr-str "status should be true:" status 
+                           "res should get a blob: " (type res) 
+                           "blob type should be application/png:" (.-type res))))
+
+(ajax-request {:uri "/ajax-form-data-png"
+               :method "POST"
+               :params (doto
+                         (js/FormData.)
+                         (.append "id" "10")
+                         (.append "timeout" "0")
+                         (.append "input" "Hello form-data POST"))
+               :api (js/XMLHttpRequest.)
+               :handler blob-response-handler
+               :response-format {:content-type "image/png"
+                                 :type :blob
+                                 :description "PNG file"
+                                 :read -body}})
