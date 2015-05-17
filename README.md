@@ -28,6 +28,7 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:params` - the parameters that will be sent with the request,  format dependent: `:transit` and `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
+* `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
 
 Everything can be blank, but if you don't provide an `:error-handler` you're going to have a bad time.
 
