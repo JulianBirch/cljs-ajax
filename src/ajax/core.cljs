@@ -90,12 +90,12 @@
      {:keys [timeout with-credentials response-format]
       :or {with-credentials false
            timeout 0}}]
-    (when-let [response-type (:type response-format)]
-      (set! (.-responseType this) (name response-type)))
     (set! (.-timeout this) timeout)
     (set! (.-withCredentials this) with-credentials)
     (set! (.-onreadystatechange this) #(when (= :response-ready (ready-state %)) (handler this)))
     (.open this method uri true)
+    (when-let [response-type (:type response-format)]
+      (set! (.-responseType this) (name response-type)))
     (doseq [[k v] headers]
       (.setRequestHeader this k v))
     (.send this (or body ""))
