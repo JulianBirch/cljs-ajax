@@ -9,7 +9,7 @@
                   :scope "test"]
                  [org.clojure/clojurescript "0.0-2850"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
-                 [com.cognitect/transit-cljs "0.8.271"]
+                 [com.cognitect/transit-cljs "0.8.215"]
                  [net.colourcoding/poppea "0.2.0"]]
   :plugins [[lein-cljsbuild "1.0.0-SNAPSHOT"]
             [com.cemerick/clojurescript.test "0.3.3"]]
