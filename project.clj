@@ -1,4 +1,4 @@
-(defproject cljs-ajax "0.3.11"
+(defproject cljs-ajax "0.3.12"
   :clojurescript? true
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/JulianBirch/cljs-ajax"
@@ -7,9 +7,9 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [com.cemerick/clojurescript.test "0.3.3"
                   :scope "test"]
-                 [org.clojure/clojurescript "0.0-2850"]
+                 [org.clojure/clojurescript "0.0-3308"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
-                 [com.cognitect/transit-cljs "0.8.215"]
+                 [com.cognitect/transit-cljs "0.8.220"]
                  [net.colourcoding/poppea "0.2.0"]]
   :plugins [[lein-cljsbuild "1.0.0-SNAPSHOT"]
             [com.cemerick/clojurescript.test "0.3.3"]]
