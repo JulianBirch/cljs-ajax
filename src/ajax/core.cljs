@@ -138,8 +138,6 @@
   {:write pr-str
    :content-type "application/edn"})
 
-(def transit-content-type "application/transit+json; charset=utf-8")
-
 (p/defn-curried transit-write
   [writer params]
   (t/write writer params))
@@ -149,7 +147,7 @@
   ([{:keys [type writer] :as opts}]
      (let [writer (or writer (t/writer (or type :json) opts))]
        {:write (transit-write writer)
-        :content-type transit-content-type})))
+        :content-type "application/transit+json"})))
 
 (p/defn-curried transit-read [reader raw xhrio]
   (let [text (-body xhrio)
@@ -354,7 +352,7 @@
                   (submittable? params) params
                   :else (throw (js/Error. (str "unrecognized request format: " format))))
             content-type (if content-type
-                           {"Content-Type" content-type})
+                           {"Content-Type" (str content-type "; charset=utf-8)})")})
             headers (merge headers content-type)]
         [uri body headers]))))
 
