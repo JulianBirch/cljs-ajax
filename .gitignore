@@ -7,8 +7,9 @@ pom.xml.asc
 /.repl/
 /lib/
 /targets/
-/target/
 /target-int/
+/target-int2/
+/target/
 /target-test/
 .lein-deps-sum
 .#*
