@@ -352,7 +352,7 @@
                   (submittable? params) params
                   :else (throw (js/Error. (str "unrecognized request format: " format))))
             content-type (if content-type
-                           {"Content-Type" (str content-type "; charset=utf-8)})")})
+                           {"Content-Type" (str content-type "; charset=utf-8")})
             headers (merge headers content-type)]
         [uri body headers]))))
 

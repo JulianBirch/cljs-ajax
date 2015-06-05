@@ -76,7 +76,7 @@
                         (edn-response-format))]
     (is (= uri "/test"))
     (is (= payload "{:a 3, :b \"hello\"}"))
-    (is (= headers {"Content-Type" "application/edn"
+    (is (= headers {"Content-Type" "application/edn; charset=utf-8"
                     "Accept" "application/edn"}))))
 
 (deftest test-process-inputs-as-edn
@@ -102,7 +102,7 @@
     (is (= uri "/test"))
     (is (= payload "a=3&b=hello"))
     (is (= headers {"Content-Type"
-                    "application/x-www-form-urlencoded"
+                    "application/x-www-form-urlencoded; charset=utf-8"
                     "Accept" "application/json"}))))
 
 (defn fake-from-request [{:keys [params format]}]
