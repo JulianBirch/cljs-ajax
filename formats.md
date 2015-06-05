@@ -3,14 +3,15 @@
 The ajax commands in the main API can take arbitrary maps as request and response formats.  Indeed, `ajax-request` requires that you do this rather than use keywords as formats.  This file documents the behaviour.
 
 A request format (given by `:format`) has two keys:
-* `:content-type` - The content type to send to the server
-* `:write` - A function taking `:params` and returning a string
+* `:content-type` The content type to send to the server
+* `:write` A function taking `:params` and returning a string
 
-A response format (given by `:response-format`) also has two keys:
-* `:description` - A description of the format, for use in error messages.
-* `:read` - A function that takes the underlying `goog.net.XhrIo` and converts it to a response.  Exceptions thrown by this will be caught.
+A response format (given by `:response-format`) is a bit more complex:
+* `:description` A description of the format, for use in error messages.
+* `:read` A function that takes the underlying `goog.net.XhrIo` and converts it to a response.  Exceptions thrown by this will be caught.
 * `:content-type` The content type to put in the `Accept` header.
- 
+* `:response-type` Optional.  One of `:blob`, `:document`, `:json` (which uses the browser's JSON decoding to a JS object), `:text` (same as blank), `:arraybuffer`. Set `:read` to `-body` if you want to use this. 
+
 ## Standard Formats
 
 There are functions that return request and response formats.  Most of these functions don't take parameters.  These correspond to the keywords mentioned in the main documentation.
