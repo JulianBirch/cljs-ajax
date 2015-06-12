@@ -6,7 +6,7 @@ simple Ajax client for ClojureScript
 
 Leiningen
 
-!["Leiningen version"](https://clojars.org/cljs-ajax/latest-version.svg)
+[![Leiningen version](http://clojars.org/cljs-ajax/latest-version.svg)](http://clojars.org/cljs-ajax)
 
 Note that there are breaking changes since 0.1, detailed near the bottom of this readme.
 
