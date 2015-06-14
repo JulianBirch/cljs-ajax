@@ -1,10 +1,10 @@
-(defproject cljs-ajax "0.3.12"
+(defproject cljs-ajax "0.3.13"
   :clojurescript? true
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/JulianBirch/cljs-ajax"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.7.0-beta2"]
+  :dependencies [[org.clojure/clojure "1.7.0-RC1"]
                  [com.cemerick/clojurescript.test "0.3.3"
                   :scope "test"]
                  [org.clojure/clojurescript "0.0-3308"]
@@ -16,11 +16,11 @@
   :hooks [leiningen.cljsbuild]
   :profiles
   {:dev {:source-paths ["dev"]
-         :dependencies [[ring-server "0.3.1"]
-                        [fogus/ring-edn "0.2.0"]
+         :dependencies [[ring-server "0.4.0"]
+                        [fogus/ring-edn "0.3.0"]
                         [ring/ring-json "0.3.1"]
                         [ring-transit "0.1.3"]
-                        [org.clojure/tools.namespace "0.2.8"]]}}
+                        [org.clojure/tools.namespace "0.2.10"]]}}
   :cljsbuild
   {:builds
    {:dev  {:source-paths ["src"]

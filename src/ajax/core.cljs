@@ -325,11 +325,10 @@
 
 (defn uri-with-params [uri params]
   (if params
-    (if (re-find #"\?" uri) ;;already has some query parameters
-      (str uri "&" (params-to-str params))
-      (str uri "?" (params-to-str params)))
+    (str uri
+         (if (re-find #"\?" uri) "&" "?") ; add & if uri contains ?
+         (params-to-str params))
     uri))
-
 
 (defn get-request-format [format]
   (cond

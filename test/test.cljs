@@ -79,6 +79,15 @@
     (is (= headers {"Content-Type" "application/edn; charset=utf-8"
                     "Accept" "application/edn"}))))
 
+(deftest can-add-to-query-string
+  (let [[uri]
+        (process-inputs {:params {:a 3 :b "hello"}
+                         :headers nil
+                         :uri "/test?extra=true"
+                         :method "GET"}
+                         (edn-response-format))]
+    (is (= uri "/test?extra=true&a=3&b=hello"))))
+
 (deftest test-process-inputs-as-edn
   (let [[uri payload headers]
         (process-inputs {:params {:a 3 :b "hello"}
@@ -86,7 +95,7 @@
                          :uri "/test"
                          :method "GET"
                          :format (edn-request-format)}
-                        (edn-response-format))]
+                         (edn-response-format))]
     (is (= uri "/test?a=3&b=hello"))
     (is (nil? payload))
     (is (= {"Accept" "application/edn"} headers))))
