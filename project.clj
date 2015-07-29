@@ -4,11 +4,11 @@
   :url "https://github.com/JulianBirch/cljs-ajax"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.7.0-RC1"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [com.cemerick/clojurescript.test "0.3.3"
                   :scope "test"]
                  [org.clojure/clojurescript "0.0-3308"]
-                 [org.clojure/core.async "0.1.303.0-886421-alpha"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [com.cognitect/transit-cljs "0.8.220"]
                  [net.colourcoding/poppea "0.2.0"]]
   :plugins [[lein-cljsbuild "1.0.6"]

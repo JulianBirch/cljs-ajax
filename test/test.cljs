@@ -177,5 +177,17 @@
               :api simple-reply}
               :response-format [:json ["text/plain" :raw]]))))
 
+(deftest no-content
+  (let [r1 (atom "whatever")
+        r2 (atom "whatever")]
+    (POST "/" {:handler #(reset! r1 %)
+               :response-format (json-response-format)
+               :api (FakeXhrIo. "application/json; charset blah blah" "" 204)})
+    (is (= nil @r1))
+    (POST "/" {:handler #(reset! r2 %)
+               :response-format (json-response-format)
+               :api (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)})
+    (is (= {"a" "b"} @r2))))
+
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))
