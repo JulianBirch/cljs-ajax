@@ -209,6 +209,11 @@
                  (set! (.-response xhrio) resp-body))
                xhrio)})
 
+(def simple-interceptor-reply
+  (FakeXhrIo.
+    "application/edn; charset blah blah"
+    "{:a 1}" 200))
+
 (deftest test-request-interceptors
   (add-interceptor request-only-interceptor)
   (add-interceptor response-only-interceptor)
@@ -222,7 +227,6 @@
                          :format (edn-request-format)}
                         (edn-response-format))]
     (is (= uri "/test?a=1&test-req-interceptor=true&test-req-resp-interceptor=true"))
-    (println "@-->reset interceptors to empty list!")
     (reset! interceptors ())))
 
 (deftest test-response-interceptors
@@ -232,9 +236,12 @@
 
   (let [r1 (atom nil)]
     (ajax-request {:handler #(reset! r1 %)
-                  :format (url-request-format)
-                  :response-format (raw-response-format)
-                  :api simple-reply})
-    (println "@-->intercepted response" @r1)
-    (expect-simple-reply @r1 "{:a 1 :test-resp-interceptor=true}")
-    (reset! interceptors ())))
+                   :format (url-request-format)
+                   :response-format (raw-response-format)
+                   :api simple-interceptor-reply})
+
+    (let [resp-body (reader/read-string (second @r1))]
+      (is (= (:a resp-body) 1))
+      (is (:test-resp-interceptor resp-body))
+      (is (:test-req-resp-interceptor resp-body))
+      (reset! interceptors ()))))
