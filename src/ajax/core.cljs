@@ -94,6 +94,8 @@
     (set! (.-onreadystatechange this) #(when (= :response-ready (ready-state %)) (handler this)))
     (.open this method uri true)
     (set! (.-timeout this) timeout)
+                                        ; IE8 needs timeout to be set between open and send
+                                        ; https://msdn.microsoft.com/en-us/library/cc304105(v=vs.85).aspx
     (when-let [response-type (:type response-format)]
       (set! (.-responseType this) (name response-type)))
     (doseq [[k v] headers]
@@ -305,19 +307,21 @@
   (try
     (let [status (-status xhrio)
           fail (partial fail status)]
-      (if (= -1 status)
-        (if (-was-aborted xhrio)
-          (fail "Request aborted by client." :aborted)
-          (fail "Request timed out." :timeout))
+      (case status
+        -1 (if (-was-aborted xhrio)
+             (fail "Request aborted by client." :aborted)
+             (fail "Request timed out." :timeout))
+        204 [true nil]         ; 204 and 205 should have empty responses
+        205 [true nil]
         (try
-          (let [response (if (= status 204) nil (read xhrio))]
+          (let [response (read xhrio)]
             (if (success? status)
               [true response]
               (fail (-status-text xhrio) :error :response response)))
           (catch js/Object e
             [false (exception-response e status format xhrio)]))))
     (catch js/Object e
-      ; These errors should never happen
+                                        ; These errors should never happen
       (fail 0 (.-message e) :exception :exception e))))
 
 (defn no-format [xhrio]
