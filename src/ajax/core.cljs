@@ -310,7 +310,7 @@
           (fail "Request aborted by client." :aborted)
           (fail "Request timed out." :timeout))
         (try
-          (let [response (read xhrio)]
+          (let [response (if (= status 204) nil (read xhrio))]
             (if (success? status)
               [true response]
               (fail (-status-text xhrio) :error :response response)))
