@@ -15,6 +15,8 @@
   (:require-macros [ajax.macros :as m]
                    [poppea :as p]))
 
+(def interceptors (atom ()))
+
 (defprotocol AjaxImpl
   "An abstraction for a javascript class that implements
    Ajax calls."
@@ -342,10 +344,35 @@
     (str/upper-case (name method))
     method))
 
+(defn add-interceptor
+  "I.E. (add-interceptor {:request (fn [[uri body headers]]
+                                       (do-something-to-request uri body headers))
+                          :response (fn [resp]
+                                        (do-something-to-response resp))})"
+  [interceptor]
+  (swap! interceptors conj interceptor))
+
+(defn apply-interceptors
+  "Apply each interceptor in the `interceptors` list to the request / response."
+  [stage input]
+  (loop [remaining @interceptors
+         output input]
+    (if (empty? remaining)
+      output
+      (let [interceptor (or (->> remaining
+                                 (filter stage)
+                                 (map stage)
+                                 (first))
+                            identity)]
+        (recur (rest remaining)
+               (interceptor output))))))
+
 (defn process-inputs [{:keys [uri method format params headers]}
                       {:keys [content-type]}]
   (let [headers (merge {"Accept" content-type}
-                       (or headers {}))]
+                       (or headers {}))
+        [uri method format params headers] (apply-interceptors :request
+                                                               [uri method format params headers])]
     (if (= (normalize-method method) "GET")
       [(uri-with-params uri params) nil headers]
       (let [{:keys [write content-type]}
@@ -360,8 +387,11 @@
         [uri body headers]))))
 
 (p/defn-curried js-handler [response-format handler xhrio]
-  (let [response
-        (interpret-response response-format xhrio)]
+  (let [response (->> xhrio
+                      (interpret-response response-format)
+                      (apply-interceptors :response))]
+    (println "@-->xhrio resp" xhrio)
+    (println "@-->handling response" response)
     (handler response)))
 
 (defn base-handler [response-format {:keys [handler]}]

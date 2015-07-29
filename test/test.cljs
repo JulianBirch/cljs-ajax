@@ -19,6 +19,7 @@
                       interpret-response
                       default-formats
                       submittable?
+                      add-interceptor
                       POST GET]])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
@@ -170,3 +171,48 @@
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))
+
+
+(def request-only-interceptor
+  {:request (fn [[uri method format params headers]]
+              [uri
+               method
+               format
+               (assoc params :test-req-interceptor true)
+               headers])})
+
+(def response-only-interceptor
+  {:response (fn [response-body]
+              (assoc response-body :test-resp-interceptor true))})
+
+(def request-and-response-interceptor
+  {:request (fn [[uri method format params headers]]
+              [uri
+               method
+               format
+               (assoc params :test-req-resp-interceptor true)
+               headers])
+   :response (fn [response-body]
+               (assoc response-body :test-req-resp-interceptor true))})
+
+
+(deftype FakeInterceptorXhrIo [content-type response status]
+  ajax.core/AjaxImpl
+  (-js-ajax-request [this _ _ _ _ h _]
+    ; (.log js/Console (str "-js-ajax-request " argument))
+    (h this))
+  ajax.core/AjaxResponse
+  (-get-response-header [this header] content-type)
+  (-status [_] status)
+  (-body [_] response))
+
+(deftest interceptors
+  (add-interceptor request-only-interceptor)
+  (add-interceptor response-only-interceptor)
+  (add-interceptor request-and-response-interceptor)
+
+  (let [r (atom nil)])
+  
+  (GET "/" {:params {:a 3}
+            :api simple-reply}
+  )
