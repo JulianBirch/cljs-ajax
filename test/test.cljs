@@ -1,26 +1,28 @@
 (ns test.core
   (:require
-   [cemerick.cljs.test]
-   [ajax.core :refer [get-default-format
-                      normalize-method process-inputs
-                      ajax-request
-                      url-request-format
-                      edn-response-format
-                      edn-request-format
-                      raw-response-format
-                      json-response-format
-                      transit-response-format
-                      transit-request-format
-                      keyword-request-format
-                      keyword-response-format
-                      detect-response-format
-                      accept-entry
-                      accept-header
-                      interpret-response
-                      default-formats
-                      submittable?
-                      add-interceptor
-                      POST GET]])
+    [cemerick.cljs.test]
+    [ajax.core :refer [get-default-format
+                       normalize-method process-inputs
+                       ajax-request
+                       url-request-format
+                       edn-response-format
+                       edn-request-format
+                       raw-response-format
+                       json-response-format
+                       transit-response-format
+                       transit-request-format
+                       keyword-request-format
+                       keyword-response-format
+                       detect-response-format
+                       accept-entry
+                       accept-header
+                       interpret-response
+                       default-formats
+                       submittable?
+                       interceptors
+                       add-interceptor
+                       POST GET]]
+    [cljs.reader :as reader])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
 (deftest normalize
@@ -173,6 +175,8 @@
   (is (map? (keyword-response-format {} {}))))
 
 
+;; INTERCEPTORS
+
 (def request-only-interceptor
   {:request (fn [[uri method format params headers]]
               [uri
@@ -182,8 +186,13 @@
                headers])})
 
 (def response-only-interceptor
-  {:response (fn [response-body]
-              (assoc response-body :test-resp-interceptor true))})
+  {:response (fn [xhrio]
+               (let [resp-body (-> (.-response xhrio)
+                                   (reader/read-string)
+                                   (assoc :test-resp-interceptor true)
+                                   (str))]
+                 (set! (.-response xhrio) resp-body))
+               xhrio)})
 
 (def request-and-response-interceptor
   {:request (fn [[uri method format params headers]]
@@ -192,27 +201,40 @@
                format
                (assoc params :test-req-resp-interceptor true)
                headers])
-   :response (fn [response-body]
-               (assoc response-body :test-req-resp-interceptor true))})
+   :response (fn [xhrio]
+               (let [resp-body (-> (.-response xhrio)
+                                   (reader/read-string)
+                                   (assoc :test-req-resp-interceptor true)
+                                   (str))]
+                 (set! (.-response xhrio) resp-body))
+               xhrio)})
 
-
-(deftype FakeInterceptorXhrIo [content-type response status]
-  ajax.core/AjaxImpl
-  (-js-ajax-request [this _ _ _ _ h _]
-    ; (.log js/Console (str "-js-ajax-request " argument))
-    (h this))
-  ajax.core/AjaxResponse
-  (-get-response-header [this header] content-type)
-  (-status [_] status)
-  (-body [_] response))
-
-(deftest interceptors
+(deftest test-request-interceptors
   (add-interceptor request-only-interceptor)
   (add-interceptor response-only-interceptor)
   (add-interceptor request-and-response-interceptor)
 
-  (let [r (atom nil)])
-  
-  (GET "/" {:params {:a 3}
-            :api simple-reply}
-  )
+  (let [[uri payload headers]
+        (process-inputs {:params {:a 1}
+                         :headers nil
+                         :uri "/test"
+                         :method "GET"
+                         :format (edn-request-format)}
+                        (edn-response-format))]
+    (is (= uri "/test?a=1&test-req-interceptor=true&test-req-resp-interceptor=true"))
+    (println "@-->reset interceptors to empty list!")
+    (reset! interceptors ())))
+
+(deftest test-response-interceptors
+  (add-interceptor request-only-interceptor)
+  (add-interceptor response-only-interceptor)
+  (add-interceptor request-and-response-interceptor)
+
+  (let [r1 (atom nil)]
+    (ajax-request {:handler #(reset! r1 %)
+                  :format (url-request-format)
+                  :response-format (raw-response-format)
+                  :api simple-reply})
+    (println "@-->intercepted response" @r1)
+    (expect-simple-reply @r1 "{:a 1 :test-resp-interceptor=true}")
+    (reset! interceptors ())))

@@ -355,7 +355,7 @@
 (defn apply-interceptors
   "Apply each interceptor in the `interceptors` list to the request / response."
   [stage input]
-  (loop [remaining @interceptors
+  (loop [remaining (reverse @interceptors)
          output input]
     (if (empty? remaining)
       output
@@ -373,6 +373,7 @@
                        (or headers {}))
         [uri method format params headers] (apply-interceptors :request
                                                                [uri method format params headers])]
+
     (if (= (normalize-method method) "GET")
       [(uri-with-params uri params) nil headers]
       (let [{:keys [write content-type]}
@@ -388,10 +389,8 @@
 
 (p/defn-curried js-handler [response-format handler xhrio]
   (let [response (->> xhrio
-                      (interpret-response response-format)
-                      (apply-interceptors :response))]
-    (println "@-->xhrio resp" xhrio)
-    (println "@-->handling response" response)
+                      (apply-interceptors :response)
+                      (interpret-response response-format))]
     (handler response)))
 
 (defn base-handler [response-format {:keys [handler]}]
