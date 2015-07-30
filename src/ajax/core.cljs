@@ -347,11 +347,11 @@
     (str/upper-case (name method))
     method))
 
-(defn add-interceptor
-  "I.E. (add-interceptor {:request (fn [[uri body headers]]
-                                       (do-something-to-request uri body headers))
-                          :response (fn [resp]
-                                        (do-something-to-response resp))})"
+(defn add-default-interceptor
+  "I.E. (add-default-interceptor {:request (fn [[uri body headers]]
+                                               (do-something-to-request uri body headers))
+                                  :response (fn [resp]
+                                                (do-something-to-response resp))})"
   [interceptor]
   (swap! default-interceptors conj interceptor))
 

@@ -20,7 +20,7 @@
                        default-formats
                        submittable?
                        default-interceptors
-                       add-interceptor
+                       add-default-interceptor
                        POST GET]]
     [cljs.reader :as reader])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
@@ -147,6 +147,11 @@
   (is (submittable? ""))
   (is (not (submittable? {}))))
 
+
+(GET "/" {:params {:a 3}
+          ;; ...
+          :interceptors [interceptor]})
+
 (deftest correct-handler
   (let [r1 (atom nil)
         r2 (atom nil)
@@ -231,9 +236,9 @@
                xhrio)})
 
 (deftest test-request-interceptors
-  (add-interceptor request-only-interceptor)
-  (add-interceptor response-only-interceptor)
-  (add-interceptor request-and-response-interceptor)
+  (add-default-interceptor request-only-interceptor)
+  (add-default-interceptor response-only-interceptor)
+  (add-default-interceptor request-and-response-interceptor)
 
   ;; test global interceptors
   (let [[uri payload headers]
@@ -259,9 +264,9 @@
   (reset! default-interceptors ()))
 
 (deftest test-response-interceptors
-  (add-interceptor request-only-interceptor)
-  (add-interceptor response-only-interceptor)
-  (add-interceptor request-and-response-interceptor)
+  (add-default-interceptor request-only-interceptor)
+  (add-default-interceptor response-only-interceptor)
+  (add-default-interceptor request-and-response-interceptor)
 
   (let [r1 (atom nil)
         r2 (atom nil)]
