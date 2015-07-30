@@ -147,11 +147,6 @@
   (is (submittable? ""))
   (is (not (submittable? {}))))
 
-
-(GET "/" {:params {:a 3}
-          ;; ...
-          :interceptors [interceptor]})
-
 (deftest correct-handler
   (let [r1 (atom nil)
         r2 (atom nil)
