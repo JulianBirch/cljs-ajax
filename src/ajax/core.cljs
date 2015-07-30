@@ -92,10 +92,12 @@
      {:keys [timeout with-credentials response-format]
       :or {with-credentials false
            timeout 0}}]
-    (set! (.-timeout this) timeout)
     (set! (.-withCredentials this) with-credentials)
     (set! (.-onreadystatechange this) #(when (= :response-ready (ready-state %)) (handler this)))
     (.open this method uri true)
+    (set! (.-timeout this) timeout)
+                                        ; IE8 needs timeout to be set between open and send
+                                        ; https://msdn.microsoft.com/en-us/library/cc304105(v=vs.85).aspx
     (when-let [response-type (:type response-format)]
       (set! (.-responseType this) (name response-type)))
     (doseq [[k v] headers]
@@ -307,10 +309,12 @@
   (try
     (let [status (-status xhrio)
           fail (partial fail status)]
-      (if (= -1 status)
-        (if (-was-aborted xhrio)
-          (fail "Request aborted by client." :aborted)
-          (fail "Request timed out." :timeout))
+      (case status
+        -1 (if (-was-aborted xhrio)
+             (fail "Request aborted by client." :aborted)
+             (fail "Request timed out." :timeout))
+        204 [true nil]         ; 204 and 205 should have empty responses
+        205 [true nil]
         (try
           (let [response (read xhrio)]
             (if (success? status)
@@ -319,7 +323,7 @@
           (catch js/Object e
             [false (exception-response e status format xhrio)]))))
     (catch js/Object e
-      ; These errors should never happen
+                                        ; These errors should never happen
       (fail 0 (.-message e) :exception :exception e))))
 
 (defn no-format [xhrio]
@@ -327,11 +331,10 @@
 
 (defn uri-with-params [uri params]
   (if params
-    (if (re-find #"\?" uri) ;;already has some query parameters
-      (str uri "&" (params-to-str params))
-      (str uri "?" (params-to-str params)))
+    (str uri
+         (if (re-find #"\?" uri) "&" "?") ; add & if uri contains ?
+         (params-to-str params))
     uri))
-
 
 (defn get-request-format [format]
   (cond

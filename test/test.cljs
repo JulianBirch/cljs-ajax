@@ -82,6 +82,15 @@
     (is (= headers {"Content-Type" "application/edn; charset=utf-8"
                     "Accept" "application/edn"}))))
 
+(deftest can-add-to-query-string
+  (let [[uri]
+        (process-inputs {:params {:a 3 :b "hello"}
+                         :headers nil
+                         :uri "/test?extra=true"
+                         :method "GET"}
+                         (edn-response-format))]
+    (is (= uri "/test?extra=true&a=3&b=hello"))))
+
 (deftest test-process-inputs-as-edn
   (let [[uri payload headers]
         (process-inputs {:params {:a 3 :b "hello"}
@@ -89,7 +98,7 @@
                          :uri "/test"
                          :method "GET"
                          :format (edn-request-format)}
-                        (edn-response-format))]
+                         (edn-response-format))]
     (is (= uri "/test?a=3&b=hello"))
     (is (nil? payload))
     (is (= {"Accept" "application/edn"} headers))))
@@ -170,6 +179,18 @@
     (GET "/" {:params {:a 3}
               :api simple-reply}
               :response-format [:json ["text/plain" :raw]]))))
+
+(deftest no-content
+  (let [r1 (atom "whatever")
+        r2 (atom "whatever")]
+    (POST "/" {:handler #(reset! r1 %)
+               :response-format (json-response-format)
+               :api (FakeXhrIo. "application/json; charset blah blah" "" 204)})
+    (is (= nil @r1))
+    (POST "/" {:handler #(reset! r2 %)
+               :response-format (json-response-format)
+               :api (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)})
+    (is (= {"a" "b"} @r2))))
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))
