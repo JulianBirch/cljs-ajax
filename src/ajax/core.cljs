@@ -15,7 +15,7 @@
   (:require-macros [ajax.macros :as m]
                    [poppea :as p]))
 
-(def interceptors (atom ()))
+(def default-interceptors (atom ()))
 
 (defprotocol AjaxImpl
   "An abstraction for a javascript class that implements
@@ -350,12 +350,12 @@
                           :response (fn [resp]
                                         (do-something-to-response resp))})"
   [interceptor]
-  (swap! interceptors conj interceptor))
+  (swap! default-interceptors conj interceptor))
 
 (defn apply-interceptors
   "Apply each interceptor in the `interceptors` list to the request / response."
-  [stage input]
-  (loop [remaining (reverse @interceptors)
+  [stage interceptors input]
+  (loop [remaining (reverse interceptors)
          output input]
     (if (empty? remaining)
       output
@@ -367,11 +367,12 @@
         (recur (rest remaining)
                (interceptor output))))))
 
-(defn process-inputs [{:keys [uri method format params headers]}
+(defn process-inputs [{:keys [uri method format params headers interceptors]}
                       {:keys [content-type]}]
   (let [headers (merge {"Accept" content-type}
                        (or headers {}))
         [uri method format params headers] (apply-interceptors :request
+                                                               (or interceptors @default-interceptors)
                                                                [uri method format params headers])]
 
     (if (= (normalize-method method) "GET")
@@ -387,19 +388,19 @@
             headers (merge headers content-type)]
         [uri body headers]))))
 
-(p/defn-curried js-handler [response-format handler xhrio]
+(p/defn-curried js-handler [response-format handler interceptors xhrio]
   (let [response (->> xhrio
-                      (apply-interceptors :response)
+                      (apply-interceptors :response (or interceptors @default-interceptors))
                       (interpret-response response-format))]
     (handler response)))
 
-(defn base-handler [response-format {:keys [handler]}]
+(defn base-handler [response-format {:keys [handler interceptors]}]
   (if handler
-    (js-handler response-format handler)
+    (js-handler response-format handler interceptors)
     (throw (js/Error. "No ajax handler provided."))))
 
 (defn ajax-request
-  [{:keys [method api] :as opts}]
+  [{:keys [method api interceptors] :as opts}]
   (let [response-format (get-response-format opts)
         method (normalize-method method)
         [uri body headers] (process-inputs opts response-format)

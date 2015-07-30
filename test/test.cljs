@@ -19,7 +19,7 @@
                        interpret-response
                        default-formats
                        submittable?
-                       interceptors
+                       default-interceptors
                        add-interceptor
                        POST GET]]
     [cljs.reader :as reader])
@@ -209,16 +209,12 @@
                  (set! (.-response xhrio) resp-body))
                xhrio)})
 
-(def simple-interceptor-reply
-  (FakeXhrIo.
-    "application/edn; charset blah blah"
-    "{:a 1}" 200))
-
 (deftest test-request-interceptors
   (add-interceptor request-only-interceptor)
   (add-interceptor response-only-interceptor)
   (add-interceptor request-and-response-interceptor)
 
+  ;; test global interceptors
   (let [[uri payload headers]
         (process-inputs {:params {:a 1}
                          :headers nil
@@ -226,22 +222,54 @@
                          :method "GET"
                          :format (edn-request-format)}
                         (edn-response-format))]
-    (is (= uri "/test?a=1&test-req-interceptor=true&test-req-resp-interceptor=true"))
-    (reset! interceptors ())))
+    (is (= uri "/test?a=1&test-req-interceptor=true&test-req-resp-interceptor=true")))
+
+  ;; test interceptor overrides
+  (let [[uri payload headers]
+        (process-inputs {:params {:a 1}
+                         :headers nil
+                         :uri "/test"
+                         :method "GET"
+                         :interceptors [request-only-interceptor]
+                         :format (edn-request-format)}
+                        (edn-response-format))]
+    (is (= uri "/test?a=1&test-req-interceptor=true")))
+
+  (reset! default-interceptors ()))
 
 (deftest test-response-interceptors
   (add-interceptor request-only-interceptor)
   (add-interceptor response-only-interceptor)
   (add-interceptor request-and-response-interceptor)
 
-  (let [r1 (atom nil)]
+  (let [r1 (atom nil)
+        r2 (atom nil)]
+
+    ;; test global interceptors
     (ajax-request {:handler #(reset! r1 %)
                    :format (url-request-format)
                    :response-format (raw-response-format)
-                   :api simple-interceptor-reply})
+                   :api (FakeXhrIo.
+                          "application/edn; charset blah blah"
+                          "{:a 1}" 200)})
 
     (let [resp-body (reader/read-string (second @r1))]
       (is (= (:a resp-body) 1))
       (is (:test-resp-interceptor resp-body))
-      (is (:test-req-resp-interceptor resp-body))
-      (reset! interceptors ()))))
+      (is (:test-req-resp-interceptor resp-body)))
+
+    ;; test interceptor overrides
+    (ajax-request {:handler #(reset! r2 %)
+                   :format (url-request-format)
+                   :response-format (raw-response-format)
+                   :interceptors [response-only-interceptor]
+                   :api (FakeXhrIo.
+                          "application/edn; charset blah blah"
+                          "{:a 1}" 200)})
+
+    (let [resp-body (reader/read-string (second @r2))]
+      (is (= (:a resp-body) 1))
+      (is (:test-resp-interceptor resp-body))
+      (is (not (:test-req-resp-interceptor resp-body))))
+
+    (reset! default-interceptors ())))
