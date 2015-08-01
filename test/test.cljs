@@ -208,11 +208,12 @@
 
 (def response-only-interceptor
   {:response (fn [xhrio]
-               (let [resp-body (-> (.-response xhrio)
-                                   (reader/read-string)
-                                   (assoc :test-resp-interceptor true)
-                                   (str))]
-                 (set! (.-response xhrio) resp-body))
+               (if (.-response xhrio)
+                 (let [resp-body (-> (.-response xhrio)
+                                     (reader/read-string)
+                                     (assoc :test-resp-interceptor true)
+                                     (str))]
+                   (set! (.-response xhrio) resp-body)))
                xhrio)})
 
 (def request-and-response-interceptor
@@ -223,11 +224,12 @@
                (assoc params :test-req-resp-interceptor true)
                headers])
    :response (fn [xhrio]
-               (let [resp-body (-> (.-response xhrio)
-                                   (reader/read-string)
-                                   (assoc :test-req-resp-interceptor true)
-                                   (str))]
-                 (set! (.-response xhrio) resp-body))
+               (if (.-response xhrio)
+                (let [resp-body (-> (.-response xhrio)
+                                    (reader/read-string)
+                                    (assoc :test-req-resp-interceptor true)
+                                    (str))]
+                  (set! (.-response xhrio) resp-body)))
                xhrio)})
 
 (deftest test-request-interceptors
@@ -243,7 +245,7 @@
                          :method "GET"
                          :format (edn-request-format)}
                         (edn-response-format))]
-    (is (= uri "/test?a=1&test-req-interceptor=true&test-req-resp-interceptor=true")))
+    (is (= uri "/test?a=1&test-req-resp-interceptor=true&test-req-interceptor=true")))
 
   ;; test interceptor overrides
   (let [[uri payload headers]
