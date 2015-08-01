@@ -358,17 +358,8 @@
 (defn apply-interceptors
   "Apply each interceptor in the `interceptors` list to the request / response."
   [stage interceptors input]
-  (loop [remaining (reverse interceptors)
-         output input]
-    (if (empty? remaining)
-      output
-      (let [interceptor (or (->> remaining
-                                 (filter stage)
-                                 (map stage)
-                                 (first))
-                            identity)]
-        (recur (rest remaining)
-               (interceptor output))))))
+  (reduce #((or (%2 stage) identity) %1) input interceptors))
+
 
 (defn process-inputs [{:keys [uri method format params headers interceptors]}
                       {:keys [content-type]}]
@@ -406,7 +397,10 @@
   [{:keys [method api interceptors] :as opts}]
   (let [response-format (get-response-format opts)
         method (normalize-method method)
-        [uri body headers] (process-inputs opts response-format)
+        [uri body headers] (process-inputs (apply-interceptors :response
+                                                               (or interecptors @default-interceptors)
+                                                               opts)
+                                           response-format)
         handler (base-handler response-format opts)
         api (or api (new goog.net.XhrIo))]
     (-js-ajax-request api uri method body
