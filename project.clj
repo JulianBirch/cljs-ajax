@@ -44,4 +44,6 @@
                      :optimizations :whitespace
                      :pretty-print true}}}
    :test-commands {"unit-tests"
-                   ["phantomjs" :runner "target-test/unit-test.js"]}})
+                   ["xvfb-run" "-a" "slimerjs" :runner
+                    "window.literal_js_was_evaluated=true"
+                    "target-test/unit-test.js"]}})
