@@ -50,7 +50,7 @@
                   (.append "id" "10")
                   (.append "timeout" "0")
                   (.append "input" "Hello form-data POST"))]
-  (POST "/ajax-form-data" {:params form-data
+  (POST "/ajax-form-data" {:body form-data
                            :response-format (raw-response-format)
                            :handler handle-response
                            :timeout 100}))
@@ -59,7 +59,7 @@
                   (.append "id" "110")
                   (.append "timeout" "0")
                   (.append "input" "Hello form-data POST"))]
-  (POST "/ajax-form-data" {:params form-data
+  (POST "/ajax-form-data" {:body form-data
                            :response-format (raw-response-format)
                            :handler handle-response
                            :timeout 100
@@ -113,15 +113,15 @@
 
 (defn blob-response-handler
   [[status res]]
-  (.log js/console (pr-str "status should be true:" status 
-                           "res should get a blob: " (type res) 
+  (.log js/console (pr-str "status should be true:" status
+                           "res should get a blob: " (type res)
                            "blob type should be application/png:" (.-type res))))
 
 (ajax-request {:uri "/ajax-form-data-png"
                :method "POST"
-               :params (doto
+               :body (doto
                          (js/FormData.)
-                         (.append "id" "10")
+                         (.append "id" "19")
                          (.append "timeout" "0")
                          (.append "input" "Hello form-data POST"))
                :api (js/XMLHttpRequest.)

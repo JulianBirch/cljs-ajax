@@ -29,6 +29,8 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
+* `:body` the exact data to send with in the request. If specified, both `:params` and `:request-format` are ignored.  Note that you can submit js/FormData and other "raw" javascript types through this.
+* `:interceptors` - the [interceptors](Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](Interceptors.md).
 
 Everything can be blank, but if you don't provide an `:error-handler` you're going to have a bad time.
 
@@ -71,14 +73,14 @@ The following settings affect the interpretation of JSON responses:  (You must s
 
 
 ; Will send file inputs that are in the form
-(POST "/send-form-modern" {:params (js/FormData. form-element)})
+(POST "/send-form-modern" {:body (js/FormData. form-element)})
 
 ; Send file explicitly
 (let [form-data (doto
                     (js/FormData.)
                   (.append "id" "10")
                   (.append "file" js-file-value "filename.txt"))]
-  (POST "/send-file" {:params form-data
+  (POST "/send-file" {:body form-data
                       :response-format (raw-response-format)
                       :timeout 100}))
 
@@ -144,13 +146,18 @@ The `ajax-request` is the simple interface.  It differs from the GET and POST AP
 * There's only one handler, so you have to handle errors.
 
 It has a single parameter, which is a map with the following members:
-The parameters are: uri, method (`:get` or `:post` etcetera) and options.
+The parameters are: 
 * `:uri`
-* `:method` - (`:get` or `:post` etcetera)  
+* `:method` - (`:get`, `"GET"`, `:post` or `"POST"` etcetera)  
 * `:format` and `:response-format`, documented in the [formats documentation](formats.md)
 * `:handler` - A function that takes a single argument `[ok result]`.  The result will be the response if true and the error response if false.
-* `:params` - The parameters that will be sent with the request.  Same as for GET and POST.
-* `:timeout` - The ajax call's timeout.  30 seconds if left blank.
+
+The following parameters are the same as in the `GET`/`POST` easy api:
+* `:params` - the parameters that will be sent with the request,  format dependent: `:transit` and `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
+* `:timeout` - the ajax call's timeout.  30 seconds if left blank
+* `:headers` - a map of the HTTP headers to set with the request
+* `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
+* `:interceptors` - the [interceptors](Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](Interceptors.md).
 
 ### `ajax-request` examples
 

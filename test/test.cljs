@@ -2,7 +2,9 @@
   (:require
    [cemerick.cljs.test]
    [ajax.core :refer [get-default-format
-                      normalize-method process-inputs
+                      normalize-method
+                      normalize-request
+                      to-interceptor
                       ajax-request
                       url-request-format
                       edn-response-format
@@ -16,9 +18,13 @@
                       detect-response-format
                       accept-entry
                       accept-header
-                      interpret-response
                       default-formats
                       submittable?
+                      process-request
+                      process-response
+                      transform-opts
+                      ResponseFormat
+                      get-response-format
                       POST GET]])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
@@ -28,7 +34,7 @@
 
 (deftype FakeXhrIo [content-type response status]
   ajax.core/AjaxImpl
-  (-js-ajax-request [this _ _ _ _ h _]
+  (-js-ajax-request [this _ h]
     ; (.log js/Console (str "-js-ajax-request " argument))
     (h this))
   ajax.core/AjaxResponse
@@ -66,50 +72,69 @@
   (is (= (multi-content-type [:json ["text/plain" :raw]])
          "application/json, text/plain")))
 
+;;; Somewhat ugly that this isn't exactly the same code as runs
+;;; in ajax-request
+(defn process-inputs [request]
+  (let [{:keys [interceptors] :as request}
+        (normalize-request request)]
+    (reduce process-request request interceptors)))
+
 (deftest test-process-inputs-as-json
-  (let [[uri payload headers]
+  (let [{:keys [uri body headers]}
         (process-inputs {:params {:a 3 :b "hello"}
                          :headers nil
                          :uri "/test"
                          :method "POST"
-                         :format (edn-request-format)}
-                        (edn-response-format))]
+                         :format (edn-request-format)
+                         :response-format (edn-response-format)})]
     (is (= uri "/test"))
-    (is (= payload "{:a 3, :b \"hello\"}"))
+    (is (= body "{:a 3, :b \"hello\"}"))
     (is (= headers {"Content-Type" "application/edn; charset=utf-8"
                     "Accept" "application/edn"}))))
 
 (deftest can-add-to-query-string
-  (let [[uri]
+  (let [{:keys [uri]}
         (process-inputs {:params {:a 3 :b "hello"}
                          :headers nil
                          :uri "/test?extra=true"
-                         :method "GET"}
-                         (edn-response-format))]
+                         :method "GET"
+                         :response-format (edn-response-format)})]
     (is (= uri "/test?extra=true&a=3&b=hello"))))
 
+(deftest use-interceptor
+  (let [interceptor (to-interceptor
+                     {:request #(assoc-in % [:params :c] "world")})
+        {:keys [uri]}
+        (process-inputs {:params {:a 3 :b "hello"}
+                         :headers nil
+                         :uri "/test?extra=true"
+                         :method "GET"
+                         :response-format (edn-response-format)
+                         :interceptors [interceptor]})]
+    (is (= uri "/test?extra=true&a=3&b=hello&c=world"))))
+
 (deftest test-process-inputs-as-edn
-  (let [[uri payload headers]
+  (let [{:keys [uri body headers]}
         (process-inputs {:params {:a 3 :b "hello"}
                          :headers nil
                          :uri "/test"
                          :method "GET"
-                         :format (edn-request-format)}
-                         (edn-response-format))]
+                         :format (edn-request-format)
+                         :response-format (edn-response-format)})]
     (is (= uri "/test?a=3&b=hello"))
-    (is (nil? payload))
+    (is (nil? body))
     (is (= {"Accept" "application/edn"} headers))))
 
 (deftest test-process-inputs-as-raw
-  (let [[uri payload headers]
+  (let [{:keys [uri body headers]}
         (process-inputs {:params {:a 3 :b "hello"}
                          :headers nil
                          :uri "/test"
                          :method "POST"
-                         :format (url-request-format)}
-                        (json-response-format))]
+                         :format (url-request-format)
+                         :response-format (json-response-format)})]
     (is (= uri "/test"))
-    (is (= payload "a=3&b=hello"))
+    (is (= body "a=3&b=hello"))
     (is (= headers {"Content-Type"
                     "application/x-www-form-urlencoded; charset=utf-8"
                     "Accept" "application/json"}))))
@@ -145,37 +170,44 @@
   (is (not (submittable? {}))))
 
 (deftest correct-handler
-  (let [r1 (atom nil)
-        r2 (atom nil)
-        r3 (atom nil)]
+  (let [r (atom nil)]
     ;; Rolled usage of ajax-request
-    (ajax-request {:handler #(reset! r1 %)
+    (ajax-request {:handler #(reset! r %)
                    :format (url-request-format)
                    :response-format (raw-response-format)
                    :api simple-reply})
-    (expect-simple-reply @r1 "{:a 1}")
+    (expect-simple-reply @r "{:a 1}")))
+
+(deftest unrolled-arguments
+  (let [r (atom nil)]
     ;; Alternative usage with unrolled arguments.
     (POST nil
-          :handler #(reset! r2 %)
+          :handler #(reset! r %)
           :format :url
           :response-format (raw-response-format)
           :api simple-reply)
-    (is (= "{:a 1}" @r2))
-    ;; Test format detection runs all the way through
-    (POST nil {:handler #(reset! r3 %)
+    (is (= "{:a 1}" @r))))
+
+(deftest format-detection
+  (let [r (atom nil)]
+    (POST nil {:handler #(reset! r %)
                :format :url
                :api simple-reply})
-    (is (= {:a 1} @r3) "Format detection didn't work")
-    (POST nil {:params (js/FormData.)
-               :api simple-reply})
-    (GET "/" {:params {:a 3}
-              :api simple-reply}
-    (GET "/" {:params {:a 3}
-              :api simple-reply}
-         :response-format [:json :raw])
-    (GET "/" {:params {:a 3}
-              :api simple-reply}
-              :response-format [:json ["text/plain" :raw]]))))
+    (is (= {:a 1} @r) "Format detection didn't work")))
+
+(deftest through-run
+         ; Test format detection runs all the way through
+         ; These are basically "don't crash" tests
+  (POST nil {:params (js/FormData.)
+             :api simple-reply})
+  (GET "/" {:params {:a 3}
+            :api simple-reply})
+  (GET "/" {:params {:a 3}
+            :api simple-reply}
+       :response-format [:json :raw])
+  (GET "/" {:params {:a 3}
+            :api simple-reply}
+       :response-format [:json ["text/plain" :raw]]))
 
 (deftest no-content
   (let [r1 (atom "whatever")
@@ -191,3 +223,10 @@
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))
+
+(deftest composite-format
+  (let [request (-> {:format :raw
+                     :response-format [:transit :edn]}
+                    transform-opts
+                    get-response-format)]
+    (is (instance? ResponseFormat request))))
