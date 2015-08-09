@@ -1,25 +1,28 @@
 (ns test.core
   (:require
-   [cemerick.cljs.test]
-   [ajax.core :refer [get-default-format
-                      normalize-method process-inputs
-                      ajax-request
-                      url-request-format
-                      edn-response-format
-                      edn-request-format
-                      raw-response-format
-                      json-response-format
-                      transit-response-format
-                      transit-request-format
-                      keyword-request-format
-                      keyword-response-format
-                      detect-response-format
-                      accept-entry
-                      accept-header
-                      interpret-response
-                      default-formats
-                      submittable?
-                      POST GET]])
+    [cemerick.cljs.test]
+    [ajax.core :refer [get-default-format
+                       normalize-method process-inputs
+                       ajax-request
+                       url-request-format
+                       edn-response-format
+                       edn-request-format
+                       raw-response-format
+                       json-response-format
+                       transit-response-format
+                       transit-request-format
+                       keyword-request-format
+                       keyword-response-format
+                       detect-response-format
+                       accept-entry
+                       accept-header
+                       interpret-response
+                       default-formats
+                       submittable?
+                       default-interceptors
+                       add-default-interceptor
+                       POST GET]]
+    [cljs.reader :as reader])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
 (deftest normalize
@@ -191,3 +194,105 @@
 
 (deftest format-interpretation
   (is (map? (keyword-response-format {} {}))))
+
+
+;; INTERCEPTORS
+
+(def request-only-interceptor
+  {:request (fn [[uri method format params headers]]
+              [uri
+               method
+               format
+               (assoc params :test-req-interceptor true)
+               headers])})
+
+(def response-only-interceptor
+  {:response (fn [xhrio]
+               (if (.-response xhrio)
+                 (let [resp-body (-> (.-response xhrio)
+                                     (reader/read-string)
+                                     (assoc :test-resp-interceptor true)
+                                     (str))]
+                   (set! (.-response xhrio) resp-body)))
+               xhrio)})
+
+(def request-and-response-interceptor
+  {:request (fn [[uri method format params headers]]
+              [uri
+               method
+               format
+               (assoc params :test-req-resp-interceptor true)
+               headers])
+   :response (fn [xhrio]
+               (if (.-response xhrio)
+                (let [resp-body (-> (.-response xhrio)
+                                    (reader/read-string)
+                                    (assoc :test-req-resp-interceptor true)
+                                    (str))]
+                  (set! (.-response xhrio) resp-body)))
+               xhrio)})
+
+(deftest test-request-interceptors
+  (add-default-interceptor request-only-interceptor)
+  (add-default-interceptor response-only-interceptor)
+  (add-default-interceptor request-and-response-interceptor)
+
+  ;; test global interceptors
+  (let [[uri payload headers]
+        (process-inputs {:params {:a 1}
+                         :headers nil
+                         :uri "/test"
+                         :method "GET"
+                         :format (edn-request-format)}
+                        (edn-response-format))]
+    (is (= uri "/test?a=1&test-req-resp-interceptor=true&test-req-interceptor=true")))
+
+  ;; test interceptor overrides
+  (let [[uri payload headers]
+        (process-inputs {:params {:a 1}
+                         :headers nil
+                         :uri "/test"
+                         :method "GET"
+                         :interceptors [request-only-interceptor]
+                         :format (edn-request-format)}
+                        (edn-response-format))]
+    (is (= uri "/test?a=1&test-req-interceptor=true")))
+
+  (reset! default-interceptors ()))
+
+(deftest test-response-interceptors
+  (add-default-interceptor request-only-interceptor)
+  (add-default-interceptor response-only-interceptor)
+  (add-default-interceptor request-and-response-interceptor)
+
+  (let [r1 (atom nil)
+        r2 (atom nil)]
+
+    ;; test global interceptors
+    (ajax-request {:handler #(reset! r1 %)
+                   :format (url-request-format)
+                   :response-format (raw-response-format)
+                   :api (FakeXhrIo.
+                          "application/edn; charset blah blah"
+                          "{:a 1}" 200)})
+
+    (let [resp-body (reader/read-string (second @r1))]
+      (is (= (:a resp-body) 1))
+      (is (:test-resp-interceptor resp-body))
+      (is (:test-req-resp-interceptor resp-body)))
+
+    ;; test interceptor overrides
+    (ajax-request {:handler #(reset! r2 %)
+                   :format (url-request-format)
+                   :response-format (raw-response-format)
+                   :interceptors [response-only-interceptor]
+                   :api (FakeXhrIo.
+                          "application/edn; charset blah blah"
+                          "{:a 1}" 200)})
+
+    (let [resp-body (reader/read-string (second @r2))]
+      (is (= (:a resp-body) 1))
+      (is (:test-resp-interceptor resp-body))
+      (is (not (:test-req-resp-interceptor resp-body))))
+
+    (reset! default-interceptors ())))
