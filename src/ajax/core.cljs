@@ -124,8 +124,8 @@
     (set! (.-onreadystatechange this) #(when (= :response-ready (ready-state %)) (handler this)))
     (.open this method uri true)
     (set! (.-timeout this) timeout)
-                                        ; IE8 needs timeout to be set between open and send
-                                        ; https://msdn.microsoft.com/en-us/library/cc304105(v=vs.85).aspx
+    ;;; IE8 needs timeout to be set between open and send
+    ;;; https://msdn.microsoft.com/en-us/library/cc304105(v=vs.85).aspx
     (when-let [response-type (:type response-format)]
       (set! (.-responseType this) (name response-type)))
     (doseq [[k v] headers]
@@ -216,13 +216,39 @@
 
 ;;; Request Format Record
 
-(defn params-to-str [params]
+(defn params-to-str-old [params]
   (if params
     (-> params
         clj->js
         structs/Map.
         query-data/createFromMap
         .toString)))
+
+(declare param-to-str)
+
+(p/defn-curried vec-param-to-str [prefix key value]
+  (param-to-str prefix [key value]))
+
+(p/defn-curried param-to-str [prefix [key value]]
+  (let [k1 (if (keyword? key) (name key) key)
+        new-key (if prefix (str prefix "[" k1 "]") k1)]
+    (cond (string? value)
+          [[new-key value]]
+
+          (map? value)
+          (mapcat (param-to-str new-key) (seq value))
+
+          (sequential? value)
+          (apply concat (map-indexed (vec-param-to-str new-key)
+                                     (seq value)))
+
+          :else [[new-key value]])))
+
+(defn params-to-str [params]
+  (->> (seq params)
+       (mapcat (param-to-str nil))
+       (map (fn [[k v]] (str k "=" v)))
+       (str/join "&")))
 
 (defn uri-with-params [uri params]
   (if params
