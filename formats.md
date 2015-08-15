@@ -20,7 +20,6 @@ There are functions that return request and response formats.  Most of these fun
 | ------- | ------- | -------- |
 | `:transit`  | `transit-request-format` | `transit-response-format` |
 | `:json` | `json-request-format` | `json-response-format` |
-| `:edn`  | `edn-request-format` | `edn-response-format` |
 | `:url`  | `url-request-format` | |
 | `:raw`  | | `raw-response-format` |
 | `:detect` | | `detect-response-format` |
@@ -41,6 +40,10 @@ There are functions that return request and response formats.  Most of these fun
 ### Detect parameters
 
 `detect-response-format` has one parameter: `:defaults`, which is a list of pairs.  The first item in the pair is a substring that starts the content type.  The second item is the response format function to call.  It will be passed the options in.  So, you can, for instance, have `:raw` set to `true` and content detection available at the same time.  If you use the zero-arity version, `:defaults` is set to `default-formats`.
+
+### EDN
+
+EDN is deprecated, but the functions `edn-request-format` and `edn-response-format` are available in the `ajax.edn` namespace.
 
 ## Non-standard formats
 

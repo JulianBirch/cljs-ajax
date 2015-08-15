@@ -192,6 +192,14 @@ The following parameters are the same as in the `GET`/`POST` easy api:
 
 These examples will use the Google Closure library `XhrIo` API. If you want to use `XMLHttpRequest` API directly, add `:api (js/XMLHttpRequest.)` to the map.
 
+## Breaking Changes Since 0.3
+
+* EDN support is now in its own namespace: `ajax.edn`
+* The `:edn` keyword no longer works.
+* The definition of the `AjaxImpl` protocol has changed.
+* Submitting a `GET` with `:params {:a [10 20]}` used to produce `?a=10&a=20`. It now produces `?a[0]=10&a[1]=20`.
+* [Interceptors](interceptors.md) were added. Whilst not strictly speaking a breaking change, the optimal way of solving certain problems has definitely changed.
+
 ## Breaking Changes Since 0.2
 
 * The default response format is now transit.

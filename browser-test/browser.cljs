@@ -3,12 +3,12 @@
    [cemerick.cljs.test]
    [ajax.core :refer [abort ajax-request
                       url-request-format
-                      edn-response-format
-                      edn-request-format
                       raw-response-format
                       transit-request-format
                       transit-response-format
-                      GET POST -body]])
+                      GET POST -body]]
+   [ajax.edn :refer [edn-request-format
+                     edn-response-format]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 

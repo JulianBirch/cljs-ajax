@@ -9,7 +9,6 @@
             [goog.json.Serializer]
             [goog.events :as events]
             [goog.structs :as structs]
-            [cljs.reader :as reader]
             [clojure.string :as str]
             [cognitect.transit :as t])
   (:require-macros [ajax.macros :as m]
@@ -298,18 +297,7 @@
 
 ;;; Standard Formats
 
-(defn read-edn [xhrio]
-  (reader/read-string (-body xhrio)))
 
-(defn edn-response-format
-  ([] (map->ResponseFormat {:read read-edn
-                            :description "EDN"
-                            :content-type "application/edn"}))
-  ([_] (edn-response-format)))
-
-(defn edn-request-format []
-  {:write pr-str
-   :content-type "application/edn"})
 
 (p/defn-curried transit-write
   [writer params]
@@ -381,7 +369,6 @@
 
 (def default-formats
   [json-response-format
-   edn-response-format
    transit-response-format
    ["text/plain" raw-response-format]
    ["text/html" raw-response-format]
@@ -502,7 +489,6 @@
    :else (case format
            :transit (transit-request-format format-params)
            :json (json-request-format)
-           :edn (edn-request-format)
            :raw (url-request-format)
            :url (url-request-format)
            nil)))
@@ -518,7 +504,6 @@
    :else (case format
            :transit (transit-response-format format-params)
            :json (json-response-format format-params)
-           :edn (edn-response-format)
            :raw (raw-response-format)
            :detect (detect-response-format)
            nil)))
@@ -541,7 +526,7 @@
                               params body]
                        :as opts}]
   "Note that if you call GET, POST et al, this function gets
-   called and will include JSON and EDN code in your JS.
+   called and will include JSON code in your JS.
    If you don't want this to happen, use ajax-request directly
    (and use advanced optimisation)."
   (let [needs-format

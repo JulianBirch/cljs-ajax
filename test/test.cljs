@@ -7,8 +7,6 @@
                       to-interceptor
                       ajax-request
                       url-request-format
-                      edn-response-format
-                      edn-request-format
                       raw-response-format
                       json-response-format
                       transit-response-format
@@ -26,7 +24,8 @@
                       ResponseFormat
                       get-response-format
                       params-to-str
-                      POST GET]])
+                      POST GET]]
+   [ajax.edn :refer [edn-request-format edn-response-format]])
   (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
 
 (deftest complex-params-to-str
@@ -54,12 +53,16 @@
   (-status [_] status)
   (-body [_] response))
 
+(deftest round-trip-transit
+  (let [y ((:write (transit-request-format {})) {:a 1})
+        req (FakeXhrIo. nil y 200)]
+    (is (= [true {:a 1}] (process-response req (transit-response-format {}))))))
+
 (deftest test-get-default-format
   (letfn [(make-format [content-type]
             (get-default-format (FakeXhrIo. content-type nil nil)
                                 {:response-format default-formats}))
           (detects [{:keys [from format]}] (is (= (:description (make-format from)) format)))]
-    (detects {:format "EDN"      :from "application/edn;..."})
     (detects {:format "JSON"     :from "application/json;..."})
     (detects {:format "raw text" :from "text/plain;..."})
     (detects {:format "raw text" :from "text/html;..."})
@@ -166,10 +169,12 @@
                    (transit-response-format {})
                    {:id 3 :content "Hello"}))
 
+(def simple-response-text "[\"^ \",\"~:a\",1]")
+
 (def simple-reply
   (FakeXhrIo.
-   "application/edn; charset blah blah"
-   "{:a 1}" 200))
+   "application/transit+json; charset blah blah"
+   simple-response-text 200))
 
 (defn expect-simple-reply [r value]
   (is (vector? r))
@@ -188,7 +193,7 @@
                    :format (url-request-format)
                    :response-format (raw-response-format)
                    :api simple-reply})
-    (expect-simple-reply @r "{:a 1}")))
+    (expect-simple-reply @r simple-response-text)))
 
 (deftest unrolled-arguments
   (let [r (atom nil)]
@@ -198,7 +203,7 @@
           :format :url
           :response-format (raw-response-format)
           :api simple-reply)
-    (is (= "{:a 1}" @r))))
+    (is (= simple-response-text @r))))
 
 (deftest format-detection
   (let [r (atom nil)]
@@ -238,7 +243,7 @@
 
 (deftest composite-format
   (let [request (-> {:format :raw
-                     :response-format [:transit :edn]}
+                     :response-format [:transit :json]}
                     transform-opts
                     get-response-format)]
     (is (instance? ResponseFormat request))))
