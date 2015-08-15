@@ -26,9 +26,6 @@
   (-abort [this]
     "Aborts a running ajax request, if possible."))
 
-(defprotocol DirectlySubmittable
-  "A marker interface for types that can be directly sent to XhrIo.")
-
 (defprotocol AjaxResponse
   "An abstraction for an ajax response."
   (-status [this]
@@ -69,13 +66,6 @@
   (map->StandardInterceptor (merge
                              {:request identity :response identity}
                              m)))
-
-(m/register-directly-submittable js/FormData js/ArrayBufferView
-                                 js/Blob js/Document)
-
-(defn submittable? [params]
-  (or (satisfies? DirectlySubmittable params)
-      (string? params)))
 
 (extend-type goog.net.XhrIo
   AjaxImpl
@@ -282,10 +272,8 @@
   (-process-request
     [_ {:keys [uri method format params headers] :as request}]
     (let [{:keys [write content-type]} (get-request-format format)
-          body (cond
-                (not (nil? write)) (write params)
-                (submittable? params) params
-                :else (throw (js/Error. (str "unrecognized request format: " format))))
+          body (if-not (nil? write) (write params)
+                       (throw (js/Error. (str "unrecognized request format: " format))))
           headers (or headers {})]
       (assoc request
         :body body
@@ -529,9 +517,7 @@
    called and will include JSON code in your JS.
    If you don't want this to happen, use ajax-request directly
    (and use advanced optimisation)."
-  (let [needs-format
-        (not (or (submittable? (or body params))
-                 (= method "GET")))
+  (let [needs-format (and (nil? body) (not= method "GET"))
         rf (if (or format needs-format)
              (keyword-request-format format opts))]
     (assoc opts

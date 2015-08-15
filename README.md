@@ -8,7 +8,7 @@ Leiningen
 
 [![Leiningen version](http://clojars.org/cljs-ajax/latest-version.svg)](http://clojars.org/cljs-ajax)
 
-Note that there are breaking changes since 0.1, detailed near the bottom of this readme.
+Note that there are breaking changes since 0.3, detailed near the bottom of this readme. One of them is serious if you're using js/FormData or binary blobs.
 
 The client provides an easy way to send Ajax queries to the server using `GET`, `POST`, and `PUT` functions.
 It also provides a simple way using `ajax-request`.
@@ -198,6 +198,7 @@ These examples will use the Google Closure library `XhrIo` API. If you want to u
 * The `:edn` keyword no longer works.
 * The definition of the `AjaxImpl` protocol has changed.
 * Submitting a `GET` with `:params {:a [10 20]}` used to produce `?a=10&a=20`. It now produces `?a[0]=10&a[1]=20`.
+* `js/FormData` and `js/ArrayBuffer` &c are now submitted using a `:body` tag, not the `:params` tag
 * [Interceptors](interceptors.md) were added. Whilst not strictly speaking a breaking change, the optimal way of solving certain problems has definitely changed.
 
 ## Breaking Changes Since 0.2

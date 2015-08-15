@@ -17,7 +17,6 @@
                       accept-entry
                       accept-header
                       default-formats
-                      submittable?
                       process-request
                       process-response
                       transform-opts
@@ -46,7 +45,6 @@
 (deftype FakeXhrIo [content-type response status]
   ajax.core/AjaxImpl
   (-js-ajax-request [this _ h]
-    ; (.log js/Console (str "-js-ajax-request " argument))
     (h this))
   ajax.core/AjaxResponse
   (-get-response-header [this header] content-type)
@@ -181,11 +179,6 @@
   (is (first r) "Request should have been successful.")
   (is (= value (second r))))
 
-(deftest submittable
-  (is (submittable? (js/FormData.)))
-  (is (submittable? ""))
-  (is (not (submittable? {}))))
-
 (deftest correct-handler
   (let [r (atom nil)]
     ;; Rolled usage of ajax-request
@@ -215,7 +208,7 @@
 (deftest through-run
          ; Test format detection runs all the way through
          ; These are basically "don't crash" tests
-  (POST nil {:params (js/FormData.)
+  (POST nil {:body (js/FormData.)
              :api simple-reply})
   (GET "/" {:params {:a 3}
             :api simple-reply})
