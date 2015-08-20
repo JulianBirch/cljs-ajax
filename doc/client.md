@@ -12,7 +12,7 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:headers` - a map of the HTTP headers to set with the request
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
 * `:body` the exact data to send with in the request. If specified, both `:params` and `:request-format` are ignored.  Note that you can submit js/FormData and other "raw" javascript types through this.
-* `:interceptors` - the [interceptors](doc/Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](doc/Interceptors.md).
+* `:interceptors` - the [interceptors](interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](interceptors.md).
 
 Everything can be blank, but if you don't provide an `:error-handler` you're going to have a bad time.
 

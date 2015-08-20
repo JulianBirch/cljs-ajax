@@ -88,7 +88,7 @@ For details see [ajax-request](doc/ajax.md).
 
 * The default response format is now transit.
 * The default request format is now transit.
-* Format detection is now "opt in" with `ajax-request`.  See [formats.md](formats.md).  It remains the default with `GET` and `POST`.  This means that code using `ajax-request` will be smaller with advanced optimizations.
+* Format detection is now "opt in" with `ajax-request`.  See [doc/formats.md](formats.md).  It remains the default with `GET` and `POST`.  This means that code using `ajax-request` will be smaller with advanced optimizations.
 * `:is-parse-error`, `:timeout?` and `:aborted?` have been removed, in favour of `:failure`
 * `ajax-request` now has `:format` and `:response-format` parameters, same as `POST`
 * The functions that returned merged request/response formats have been removed.
