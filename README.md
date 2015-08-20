@@ -8,13 +8,15 @@ Leiningen
 
 [![Leiningen version](http://clojars.org/cljs-ajax/latest-version.svg)](http://clojars.org/cljs-ajax)
 
-Note that there are breaking changes since 0.3, detailed near the bottom of this readme. One of them is serious if you're using js/FormData or binary blobs.
+Note that there are breaking changes since 0.3, detailed near the bottom of this readme. One of them is serious if you're using `js/FormData` or binary blobs.
 
 The client provides an easy way to send Ajax queries to the server using `GET`, `POST`, and `PUT` functions.
 It also provides a simple way using `ajax-request`.
 
 There are three formats currently supported for communicating with the server:  `:transit`, `:json`, `:edn` and `:raw`.
 (`:raw` will send parameters up using normal form submission and return the raw text.)
+
+For advice on how to set up the server side in Clojure to work with cljs-ajax, please see the page on [handling responses on the server](doc/server.md).
 
 ## GET/POST/PUT
 
@@ -30,7 +32,7 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:headers` - a map of the HTTP headers to set with the request
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
 * `:body` the exact data to send with in the request. If specified, both `:params` and `:request-format` are ignored.  Note that you can submit js/FormData and other "raw" javascript types through this.
-* `:interceptors` - the [interceptors](Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](Interceptors.md).
+* `:interceptors` - the [interceptors](doc/Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](doc/Interceptors.md).
 
 Everything can be blank, but if you don't provide an `:error-handler` you're going to have a bad time.
 
@@ -106,7 +108,7 @@ The following settings affect the interpretation of JSON responses:  (You must s
 
 ### FormData support
 
-Note that `js/FormData` is not supported before IE10, so if you need to support those browsers, don't use it.  `cljs-ajax` doesn't have any other support for file uploads (although pull requests are welcome).  Also note that you *must* include `ring.middleware.multipart-params\wrap-multipart-params` in your ring handlers as FormData always submits as multipart even if you don't use it to submit files.
+Note that `js/FormData` is not supported before IE10, so if you need to support those browsers, don't use it.  `cljs-ajax` doesn't have any other support for file uploads (although pull requests are welcome).  Also note that you *must* include `ring.middleware.multipart-params\wrap-multipart-params` in your ring handlers as `js/FormData` always submits as multipart even if you don't use it to submit files.
 
 ### Error Responses
 
@@ -128,18 +130,6 @@ Finally, if the server returned an error, and that then failed to parse, it will
 
 The `error-handler` for `GET`, `POST`, and `PUT` is passed one parameter which is an error response.  Note that *in all cases* either `handler` or `error-handler` will be called.  You should never get an exception returned by `GET`, `POST` etcetera.
 
-### Handling responses on the server
-
-If you're looking for working examples of how to reply to cljs-ajax from a ring server, take a look at [the integration test server source code](dev/user.clj).
-
-If you're using transit, take a look at [ring-transit](https://github.com/jalehman/ring-transit).  It will populate the request `:params` with the contents of the transit request.
-
-For handling JSON requests use [ring-json](https://github.com/ring-clojure/ring-json) middleware instead.  This populates the data in the `:body` tag.  However, note that it does not provide protection against [JSON hijacking](https://github.com/ring-clojure/ring-json/issues/14) yet, so do not use it with JSON format GETs, even for internal websites.  (As an aside, if you need lower level JSON access, e.g. for formatting, we'd recommend [Cheshire](https://github.com/dakrone/cheshire) over `data.json`.)
-
-For using EDN then you may wish to take a look at [ring-edn](https://github.com/tailrecursion/ring-edn) middleware. It will populate the request `:params` with the contents of the EDN request.
-
-If your tastes/requirements run more to a standardized multi-format REST server, you might want to investigate [ring-middleware-format](https://github.com/ngrunwald/ring-middleware-format).
-
 ## ajax-request
 
 The `ajax-request` is the simple interface.  It differs from the GET and POST API as follows:
@@ -153,7 +143,7 @@ It has a single parameter, which is a map with the following members:
 The parameters are: 
 * `:uri`
 * `:method` - (`:get`, `"GET"`, `:post` or `"POST"` etcetera)  
-* `:format` and `:response-format`, documented in the [formats documentation](formats.md)
+* `:format` and `:response-format`, documented in the [formats documentation](doc/formats.md)
 * `:handler` - A function that takes a single argument `[ok result]`.  The result will be the response if true and the error response if false.
 
 The following parameters are the same as in the `GET`/`POST` easy api:
@@ -161,7 +151,7 @@ The following parameters are the same as in the `GET`/`POST` easy api:
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
-* `:interceptors` - the [interceptors](Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](Interceptors.md).
+* `:interceptors` - the [interceptors](doc/Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](doc/Interceptors.md).
 
 ### `ajax-request` examples
 
@@ -199,13 +189,13 @@ These examples will use the Google Closure library `XhrIo` API. If you want to u
 * The definition of the `AjaxImpl` protocol has changed.
 * Submitting a `GET` with `:params {:a [10 20]}` used to produce `?a=10&a=20`. It now produces `?a[0]=10&a[1]=20`.
 * `js/FormData` and `js/ArrayBuffer` &c are now submitted using a `:body` tag, not the `:params` tag
-* [Interceptors](interceptors.md) were added. Whilst not strictly speaking a breaking change, the optimal way of solving certain problems has definitely changed.
+* [Interceptors](doc/interceptors.md) were added. Whilst not strictly speaking a breaking change, the optimal way of solving certain problems has definitely changed.
 
 ## Breaking Changes Since 0.2
 
 * The default response format is now transit.
 * The default request format is now transit.
-* Format detection is now "opt in" with `ajax-request`.  See [formats.md](formats.md).  It remains the default with `GET` and `POST`.  This means that code using `ajax-request` will be smaller with advanced optimizations.
+* Format detection is now "opt in" with `ajax-request`.  See [formats.md](doc/formats.md).  It remains the default with `GET` and `POST`.  This means that code using `ajax-request` will be smaller with advanced optimizations.
 * `:is-parse-error`, `:timeout?` and `:aborted?` have been removed, in favour of `:failure`
 * `ajax-request` now has `:format` and `:response-format` parameters, same as `POST`
 * The functions that returned merged request/response formats have been removed.
