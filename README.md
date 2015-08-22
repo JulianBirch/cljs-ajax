@@ -1,6 +1,8 @@
 #cljs-ajax
 
-simple Ajax client for ClojureScript
+simple Ajax client for ClojureScript and Clojure
+
+`cljs-ajax` exposes the same interface (where useful) in both Clojure and ClojureScript. On ClojureScript it operates as a wrapper around [`goog.net.XhrIo`](https://developers.google.com/closure/library/docs/xhrio?hl=en) or [`js\XmlHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest), while on the JVM it's a wrapper around the [Apache HttpAsyncClient](https://hc.apache.org/httpcomponents-asyncclient-dev/) library.
 
 ## Usage
 
@@ -81,7 +83,7 @@ The following settings affect the interpretation of JSON responses:  (You must s
 ; Will send file inputs that are in the form
 (POST "/send-form-modern" {:body (js/FormData. form-element)})
 
-; Send file explicitly
+; Send file explicitly, ClojureScript specific
 (let [form-data (doto
                     (js/FormData.)
                   (.append "id" "10")
@@ -114,7 +116,7 @@ Note that `js/FormData` is not supported before IE10, so if you need to support 
 
 An error response is a map with the following keys passed to it:
 
-* `:status` - the HTTP status code, numeric.  A dummy number is provided if you didn't get to the server.
+* `:status` - the HTTP status code, numeric. A dummy number is provided if you didn't get to the server.
 * `:status-text` - the HTTP status message, or feedback from a parse failure
 * `:failure` - a keyword describing the type of failure
   * `:error` an error on the server
@@ -184,6 +186,8 @@ These examples will use the Google Closure library `XhrIo` API. If you want to u
 
 ## Breaking Changes Since 0.3
 
+cljs-ajax never had a stable 0.4.0 release, so there's no breaking changes.
+
 * EDN support is now in its own namespace: `ajax.edn`
 * The `:edn` keyword no longer works.
 * The definition of the `AjaxImpl` protocol has changed.
@@ -208,7 +212,7 @@ These examples will use the Google Closure library `XhrIo` API. If you want to u
 
 ## Contributing
 
-All pull requests are welcome, but we do ask that any changes come with tests that demonstrate the original problem.  For this, you'll need to get the test environment working.  First, you need to install phantom.js somewhere on your path.  We recommend you download directly from the website [http://phantomjs.org/download.html].  (Do _not_ give into the temptation of using apt-get on Ubuntu; it installs v1.4 and won't work.)
+All pull requests are welcome, but we do ask that any changes come with tests that demonstrate the original problem. For this, you'll need to get the test environment working. First, you need to install slimer.js somewhere on your path. (If you're getting "subprocess failed" errors, it usually means your version of slimerjs is incompatible with your version of firefox. There's two solutions to this: downgrade, or use the standalone version.
 
 Second, you need to install [ClojureScript.test](https://github.com/cemerick/clojurescript.test) as a leiningen plugin.  The instructions are in the README.
 
