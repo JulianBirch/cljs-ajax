@@ -1,51 +1,36 @@
 (ns ajax.core
-  (:require goog.net.EventType
-            goog.net.ErrorCode
-            [goog.net.XhrIo :as xhr]
-            [goog.net.XhrManager :as xhrm]
-            [goog.Uri :as uri]
-            [goog.json :as goog-json]
-            [goog.Uri.QueryData :as query-data]
-            [goog.json.Serializer]
-            [goog.events :as events]
-            [goog.structs :as structs]
-            [clojure.string :as str]
-            [cognitect.transit :as t])
-  (:require-macros [ajax.macros :as m]
-                   [poppea :as p]))
-
-(defprotocol AjaxImpl
-  "An abstraction for a javascript class that implements
-   Ajax calls."
-  (-js-ajax-request [this request handler]
-    "Makes an actual ajax request.  All parameters except opts
-     are in JS format.  Should return an AjaxRequest."))
-
-(defprotocol AjaxRequest
-  "An abstraction for a running ajax request."
-  (-abort [this]
-    "Aborts a running ajax request, if possible."))
-
-(defprotocol AjaxResponse
-  "An abstraction for an ajax response."
-  (-status [this]
-    "Returns the HTTP Status of the response as an integer.")
-  (-status-text [this]
-    "Returns the HTTP Status Text of the response as a string.")
-  (-body [this]
-    "Returns the response body as a string or as type specified in response-format
-    such as a blob or arraybuffer.")
-  (-get-response-header [this header]
-    "Gets the specified response header (specified by a string) as a string.")
-  (-was-aborted [this]
-    "Was the response aborted."))
-
-(defprotocol Interceptor
-  "An abstraction for something that processes requests and responses."
-  (-process-request [this request]
-    "Transforms the opts")
-  (-process-response [this response]
-    "Transforms the raw response (an implementation of AjaxResponse)"))
+  (:require [clojure.string :as str]
+            [cognitect.transit :as t]
+            [clojure.string :as s]
+            [ajax.protocols :refer
+             [-body -process-request -process-response -abort -status
+              -get-response-header -status-text -js-ajax-request
+              -was-aborted
+              #?@ (:cljs [AjaxImpl AjaxRequest AjaxResponse
+                          Interceptor Response])]]
+            #?@ (:clj  [[ajax.macros :as m]
+                        [poppea :as p]
+                        [cheshire.core :as c]
+                        [ajax.apache]
+                        [clojure.java.io :as io]]
+                 :cljs [[goog.net.XhrIo :as xhr]
+                        [ajax.xhrio]
+                        [ajax.xml-http-request]
+                        [goog.json :as goog-json]
+                        [goog.Uri.QueryData :as query-data]
+                        [goog.json.Serializer]
+                        [goog.structs :as structs]]))
+  #? (:clj
+      (:import [java.io OutputStreamWriter ByteArrayOutputStream
+                InputStreamReader]
+               [java.lang String]
+               [java.util Scanner]
+               [ajax.apache Connection]
+               [ajax.protocols AjaxImpl AjaxRequest
+                AjaxResponse Interceptor Response])
+      :cljs
+      (:require-macros [ajax.macros :as m]
+                       [poppea :as p])))
 
 (defn process-response [response interceptor]
   "-process-response with the arguments flipped for use in reduce"
@@ -67,79 +52,8 @@
                              {:request identity :response identity}
                              m)))
 
-(extend-type goog.net.XhrIo
-  AjaxImpl
-  (-js-ajax-request
-    [this
-     {:keys [uri method body headers timeout with-credentials]
-      :or {with-credentials false
-           timeout 0}}
-     handler]
-    (doto this
-      (events/listen goog.net.EventType/COMPLETE
-                     #(handler (.-target %)))
-      (.setTimeoutInterval timeout)
-      (.setWithCredentials with-credentials)
-      (.send uri method body (clj->js headers))))
-  AjaxRequest
-  (-abort [this] (.abort this goog.net.ErrorCode/ABORT))
-  AjaxResponse
-  (-body [this] (.getResponseText this))
-  (-status [this] (.getStatus this))
-  (-status-text [this] (.getStatusText this))
-  (-get-response-header [this header]
-    (.getResponseHeader this header))
-  (-was-aborted [this]
-    (= (.getLastErrorCode this) goog.net.ErrorCode/ABORT)))
-
-(defn ready-state
-  [e]
-  ({0 :not-initialized
-    1 :connection-established
-    2 :request-received
-    3 :processing-request
-    4 :response-ready} (.-readyState (.-target e))))
-
-(extend-type js/XMLHttpRequest
-  AjaxImpl
-  (-js-ajax-request
-    [this
-     {:keys [uri method body headers timeout with-credentials
-             response-format]
-           :or {with-credentials false
-                timeout 0}}
-     handler]
-    (set! (.-withCredentials this) with-credentials)
-    (set! (.-onreadystatechange this) #(when (= :response-ready (ready-state %)) (handler this)))
-    (.open this method uri true)
-    (set! (.-timeout this) timeout)
-    ;;; IE8 needs timeout to be set between open and send
-    ;;; https://msdn.microsoft.com/en-us/library/cc304105(v=vs.85).aspx
-    (when-let [response-type (:type response-format)]
-      (set! (.-responseType this) (name response-type)))
-    (doseq [[k v] headers]
-      (.setRequestHeader this k v))
-    (.send this (or body ""))
-    this)
-  AjaxRequest
-  (-abort [this] (.abort this))
-  AjaxResponse
-  (-body [this] (.-response this))
-  (-status [this] (.-status this))
-  (-status-text [this] (.-statusText this))
-  (-get-response-header [this header]
-    (.getResponseHeader this header))
-  (-was-aborted [this] (= 0 (.-readyState this))))
-
-(extend-type goog.net.XhrManager
-  AjaxImpl
-  (-js-ajax-request
-    [this {:keys [uri method body headers
-                  id timeout priority max-retries]
-           :or {timeout 0}}
-     handler]
-    (.send this id uri method body (clj->js headers)
-           priority handler max-retries)))
+(defn get-content-type [response]
+  (or (-get-response-header response "Content-Type") ""))
 
 (defn abort ([this] (-abort this)))
 
@@ -148,11 +62,14 @@
 
 ;;; Response Format record
 
+#? (:clj (defn exception-message [^Exception e] (.getMessage e))
+    :cljs (defn exception-message [e] (.-message e)))
+
 (defn exception-response [e status {:keys [description]} xhrio]
   (let [response {:status status
                   :failure :error
                   :response nil}
-        status-text (str (.-message e)
+        status-text (str (exception-message e)
                          "  Format should have been "
                          description)
         parse-error (assoc response
@@ -179,7 +96,7 @@
     "Sets the headers on the request"
     (update request
             :headers
-            #(merge {"Accept" content-type}
+            #(merge {"Accept" (str/join ", " content-type)}
                     (or % {}))))
   (-process-response [{:keys [read] :as format} xhrio]
     "Transforms the raw response (an implementation of AjaxResponse)"
@@ -187,6 +104,9 @@
       (let [status (-status xhrio)
             fail (partial fail status)]
         (case status
+          0 (if (instance? Response xhrio)
+              [false xhrio]
+              (fail "Request failed." :failed))
           -1 (if (-was-aborted xhrio)
                (fail "Request aborted by client." :aborted)
                (fail "Request timed out." :timeout))
@@ -197,21 +117,24 @@
               (if (success? status)
                 [true response]
                 (fail (-status-text xhrio) :error :response response)))
-            (catch js/Object e
-              [false (exception-response e status format xhrio)]))))
-      (catch js/Object e
+            (catch #? (:clj Exception :cljs js/Object) e
+                   [false (exception-response e status format xhrio)]))))
+      (catch #? (:clj Exception :cljs js/Object) e
                                         ; These errors should never happen
-        (fail 0 (.-message e) :exception :exception e)))))
+             (let [message #? (:clj (.getMessage e)
+                               :cljs (.-message e))]
+               (fail 0 message :exception :exception e))))))
 
 ;;; Request Format Record
 
-(defn params-to-str-old [params]
-  (if params
-    (-> params
-        clj->js
-        structs/Map.
-        query-data/createFromMap
-        .toString)))
+#? (:cljs
+    (defn params-to-str-old [params]
+      (if params
+        (-> params
+            clj->js
+            structs/Map.
+            query-data/createFromMap
+            .toString))))
 
 (declare param-to-str)
 
@@ -232,6 +155,13 @@
                                      (seq value)))
 
           :else [[new-key value]])))
+
+(defn to-utf8-writer [to-str]
+  #? (:cljs to-str
+      :clj (fn write-utf8 [stream params]
+             (doto (OutputStreamWriter. stream)
+               (.write (to-str params))
+               (.flush)))))
 
 (defn params-to-str [params]
   (->> (seq params)
@@ -261,80 +191,155 @@
       request))
   (-process-response [_ response] response))
 
+(defn throw-error [& args]
+  (throw (#? (:clj Exception. :cljs js/Error.)
+             (apply str args))))
+
 (defrecord DirectSubmission []
   Interceptor
   (-process-request [_ {:keys [body params] :as request}]
     (if (nil? body) request (reduced request)))
   (-process-response [_ response] response))
 
+(defn apply-request-format [write params]
+  #? (:cljs (write params)
+      :clj (let [stream (ByteArrayOutputStream.)]
+             (write stream params)
+             (.toByteArray stream))))
+
+(defn content-type-to-request-header [content-type]
+  (->> (if (string? content-type)
+         [content-type]
+         content-type)
+       (map #(str % "; charset=utf-8"))
+       (s/join ", ")))
+
 (defrecord ApplyRequestFormat []
   Interceptor
   (-process-request
     [_ {:keys [uri method format params headers] :as request}]
     (let [{:keys [write content-type]} (get-request-format format)
-          body (if-not (nil? write) (write params)
-                       (throw (js/Error. (str "unrecognized request format: " format))))
+          body (if-not (nil? write)
+                 (apply-request-format write params)
+                 (throw-error "unrecognized request format: "
+                              format))
           headers (or headers {})]
       (assoc request
         :body body
         :headers (if content-type
                    (assoc headers "Content-Type"
-                          (str content-type "; charset=utf-8"))
+                          (content-type-to-request-header
+                           content-type))
                    headers))))
   (-process-response [_ xhrio] xhrio))
 
 ;;; Standard Formats
 
+(defn transit-type [{:keys [type]}]
+  (or type #? (:cljs :json :clj :msgpack)))
 
-
-(p/defn-curried transit-write
-  [writer params]
-  (t/write writer params))
+#? (:cljs (defn transit-write-fn
+            [type request]
+            (let [writer (or (:writer request)
+                             (t/writer type request))]
+              (fn transit-write-params [params]
+                (t/write writer params))))
+    :clj (p/defn-curried transit-write-fn
+           [type request stream params]
+           (let [writer (t/writer stream type request)]
+             (t/write writer params))))
 
 (defn transit-request-format
   ([] (transit-request-format {}))
-  ([{:keys [type writer] :as request}]
-     (let [writer (or writer (t/writer (or type :json) request))]
-       {:write (transit-write writer)
-        :content-type "application/transit+json"})))
+  ([request]
+     (let [type (transit-type request)
+           mime-type (if (= type :json) "json" "msgpack")]
+       {:write (transit-write-fn type request)
+        :content-type (str "application/transit+" mime-type)})))
 
-(p/defn-curried transit-read [reader raw xhrio]
-  (let [text (-body xhrio)
-        data (t/read reader text)]
-    (if raw data (js->clj data))))
+#? (:cljs (defn transit-read-fn [request]
+            (let [reader (or (:reader request)
+                             (t/reader :json request))]
+              (fn transit-read-response [response]
+                (let [data (t/read reader (-body response))]
+                  (if (:raw request)
+                    data
+                    (js->clj data))))))
+    :clj (p/defn-curried transit-read-fn [request response]
+           (let [content-type (get-content-type response)
+                 type (if (.contains content-type "msgpack")
+                        :msgpack :json)
+                 stream (-body response)
+                 reader (t/reader stream type request)]
+             (t/read reader))))
 
 (defn transit-response-format
   ([] (transit-response-format {}))
-  ([{:keys [type reader raw] :as request}]
-   (let [reader (or reader (t/reader (or type :json) request))]
-     (map->ResponseFormat {:read (transit-read reader raw)
-                           :description "Transit"
-                           :content-type "application/transit+json"}))))
+  ([request]
+     (transit-response-format (transit-type request) request))
+  ([type request]
+     (map->ResponseFormat
+      {:read (transit-read-fn request)
+       :description "Transit"
+       :content-type
+       #? (:cljs ["application/transit+json"]
+           :clj ["application/transit+msgpack"
+                 "application/transit+json"])})))
 
 (defn url-request-format []
-  {:write params-to-str
+  {:write (to-utf8-writer params-to-str)
    :content-type "application/x-www-form-urlencoded"})
 
 (defn raw-response-format
-  ([] (map->ResponseFormat {:read -body :description "raw text" :content-type "*/*"}))
+  ([] (map->ResponseFormat {:read -body
+                            :description #? (:cljs "raw text"
+                                             :clj "raw binary")
+                            :content-type ["*/*"]}))
   ([_] (raw-response-format)))
 
-(defn write-json [data]
-  (.serialize (goog.json.Serializer.) (clj->js data)))
+#? (:clj
+    ;;; http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
+    (do
+      (defn response-to-string [response]
+        (let [s (doto (-> response -body (Scanner. "UTF-8"))
+                  (.useDelimiter "\\A"))]
+          (if (.hasNext s) (.next s) "")))
+
+      (defn text-response-format
+        ([] (map->ResponseFormat {:read response-to-string
+                                  :description "raw text"
+                                  :content-type ["*/*"]}))
+        ([_] (text-response-format))))
+    :cljs
+    (def text-response-format raw-response-format))
+
+#? (:cljs (defn write-json [data]
+            (.serialize (goog.json.Serializer.) (clj->js data)))
+    :clj (defn write-json [writer data]
+           (c/generate-stream data writer)))
 
 (defn json-request-format []
   {:write write-json
    :content-type "application/json"})
 
+
+;;; strip prefix for CLJ
+
+;;; Sort out stream closing
+
+
+
+
 (p/defn-curried json-read [prefix raw keywords? xhrio]
   (let [text (-body xhrio)
         text (if (and prefix (= 0 (.indexOf text prefix)))
                (.substring text (.length prefix))
-               text)
-        json (goog-json/parse text)]
-    (if raw
-      json
-      (js->clj json :keywordize-keys keywords?))))
+               text)]
+    #? (:cljs (let [json (goog-json/parse text)]
+                (if raw
+                  json
+                  (js->clj json :keywordize-keys keywords?)))
+              :clj (c/parse-stream (io/reader text)))))
 
 (defn json-response-format
   "Returns a JSON response format.  Options include
@@ -351,16 +356,17 @@
        :description (str "JSON"
                          (if prefix (str " prefix '" prefix "'"))
                          (if keywords? " keywordize"))
-       :content-type "application/json"})))
+       :content-type ["application/json"]})))
 
 ;;; Detection and Accept Code
 
 (def default-formats
-  [json-response-format
-   transit-response-format
-   ["text/plain" raw-response-format]
-   ["text/html" raw-response-format]
-   raw-response-format])
+  [["application/json" json-response-format]
+   ["application/transit+json" transit-response-format]
+   ["application/transit+transit" transit-response-format]
+   ["text/plain" text-response-format]
+   ["text/html" text-response-format]
+   ["*/*" raw-response-format]])
 
 (p/defn-curried get-format [request format-entry]
   (cond
@@ -373,36 +379,46 @@
    ;;; Must be a format generating function
    :else (format-entry request)))
 
-(p/defn-curried accept-entry [request format-entry]
-  (or (if (vector? format-entry)
-        (first format-entry)
-        (:content-type (get-format request format-entry)))
-      "*/*"))
+(p/defn-curried get-accept-entries [request format-entry]
+  (let [fe (if (vector? format-entry)
+             (first format-entry)
+             (:content-type (get-format request format-entry)))]
+    (cond (nil? fe) ["*/*"]
+          (string? fe) [fe]
+          :else fe)))
+
+(p/defn-curried content-type-matches [content-type accept]
+  (or (= accept "*/*")
+      (>= (.indexOf content-type accept) 0)))
 
 (p/defn-curried detect-content-type
   [content-type request format-entry]
-  (let [accept (accept-entry request format-entry)]
-    (or (= accept "*/*")
-        (>= (.indexOf content-type accept) 0))))
+  ; (println "DCT")
+  ; (println content-type)
+  ; (println format-entry)
+  (let [accept (get-accept-entries request format-entry)]
+    (some (content-type-matches content-type) accept)))
 
 (defn get-default-format
-  [xhrio {:keys [response-format] :as request}]
-  (let [f (detect-content-type
-           (or (-get-response-header xhrio "Content-Type") "")
-           request)]
+  [response {:keys [response-format] :as request}]
+  ; (println "GDF")
+  ; (println response-format)
+  (let [f (detect-content-type (get-content-type response) request)]
     (->> response-format
          (filter f)
          first
          (get-format request))))
 
 (p/defn-curried detect-response-format-read
-  [request xhrio]
-  ((:read (get-default-format xhrio request)) xhrio))
+  [request response]
+  (let [format (get-default-format response request)]
+    ((:read format) response)))
 
 (defn accept-header [{:keys [response-format] :as request}]
   (if (vector? response-format)
-    (str/join ", " (map (accept-entry request) response-format))
-    (accept-entry request response-format)))
+    (str/join ", "
+              (mapcat (get-accept-entries request) response-format))
+    (get-accept-entries request response-format)))
 
 (defn detect-response-format
   ([] (detect-response-format {:response-format default-formats}))
@@ -424,10 +440,8 @@
    (map->ResponseFormat {:read response-format
                          :description "custom"
                          :content-type "*/*"})
-   :else (throw (js/Error. (str "unrecognized response format: " response-format)))))
-
-(defn no-format [xhrio]
-  (throw (js/Error. "No response format was supplied.")))
+   :else (throw-error "unrecognized response format: "
+                      response-format)))
 
 (defn normalize-method [method]
   (if (keyword? method)
@@ -443,7 +457,7 @@
 (defn base-handler [interceptors {:keys [handler]}]
   (if handler
     (js-handler handler interceptors)
-    (throw (js/Error. "No ajax handler provided."))))
+    (throw-error "No ajax handler provided.")))
 
 (def request-interceptors [(ProcessGet.) (DirectSubmission.) (ApplyRequestFormat.)])
 
@@ -458,10 +472,14 @@
                          (or % @default-interceptors)
                          request-interceptors)))))
 
+(defn new-default-api []
+  #? (:clj  (ajax.apache/Connection.)
+      :cljs (new goog.net.XhrIo)))
+
 (defn raw-ajax-request [{:keys [interceptors] :as request}]
   (let [request (reduce process-request request interceptors)
         handler (base-handler (reverse interceptors) request)
-        api (or (:api request) (new goog.net.XhrIo))]
+        api (or (:api request) (new-default-api))]
     (-js-ajax-request api request handler)))
 
 (defn ajax-request [request]
@@ -492,6 +510,7 @@
    :else (case format
            :transit (transit-response-format format-params)
            :json (json-response-format format-params)
+           :text (text-response-format)
            :raw (raw-response-format)
            :detect (detect-response-format)
            nil)))

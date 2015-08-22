@@ -1,6 +1,8 @@
-(ns test.core
+(ns ajax.test.core
   (:require
-   [cemerick.cljs.test]
+   #? (:cljs [cemerick.cljs.test]
+             :clj [clojure.test :refer :all])
+   [ajax.protocols :refer [-body]]
    [ajax.core :refer [get-default-format
                       normalize-method
                       normalize-request
@@ -8,24 +10,30 @@
                       ajax-request
                       url-request-format
                       raw-response-format
+                      text-response-format
                       json-response-format
                       transit-response-format
                       transit-request-format
                       keyword-request-format
                       keyword-response-format
                       detect-response-format
-                      accept-entry
                       accept-header
                       default-formats
                       process-request
                       process-response
                       transform-opts
-                      ResponseFormat
                       get-response-format
                       params-to-str
-                      POST GET]]
+                      apply-request-format
+                      POST GET
+                      #?@ (:cljs [ResponseFormat] :clj [])]]
    [ajax.edn :refer [edn-request-format edn-response-format]])
-  (:require-macros [cemerick.cljs.test :refer (is deftest with-test run-tests testing)]))
+   #? (:cljs (:require-macros
+              [cemerick.cljs.test :refer
+               (is deftest with-test run-tests testing)])
+       :clj (:import [ajax.core ResponseFormat]
+                     [java.lang String]
+                     [java.io ByteArrayInputStream])))
 
 (deftest complex-params-to-str
   (is (= "a=0") (params-to-str {:a 0}))
@@ -42,25 +50,25 @@
   (is (= "GET" (normalize-method :get)))
   (is (= "POST" (normalize-method "POST"))))
 
-(deftype FakeXhrIo [content-type response status]
-  ajax.core/AjaxImpl
+(defrecord FakeXhrIo [content-type response status]
+  ajax.protocols/AjaxImpl
   (-js-ajax-request [this _ h]
     (h this))
-  ajax.core/AjaxResponse
+  ajax.protocols/AjaxResponse
   (-get-response-header [this header] content-type)
   (-status [_] status)
-  (-body [_] response))
-
-(deftest round-trip-transit
-  (let [y ((:write (transit-request-format {})) {:a 1})
-        req (FakeXhrIo. nil y 200)]
-    (is (= [true {:a 1}] (process-response req (transit-response-format {}))))))
+  (-body [_] #? (:cljs response
+                 :clj (if response
+                          (ByteArrayInputStream.
+                           (if (string? response)
+                             (.getBytes response)
+                             response))))))
 
 (deftest test-get-default-format
   (letfn [(make-format [content-type]
             (get-default-format (FakeXhrIo. content-type nil nil)
                                 {:response-format default-formats}))
-          (detects [{:keys [from format]}] (is (= (:description (make-format from)) format)))]
+          (detects [{:keys [from format]}] (is format (= (:description (make-format from)))))]
     (detects {:format "JSON"     :from "application/json;..."})
     (detects {:format "raw text" :from "text/plain;..."})
     (detects {:format "raw text" :from "text/html;..."})
@@ -81,7 +89,8 @@
   (is (map? (first (keyword-response-format [:json :transit] {}))))
   (is (= "application/json" (accept-header {:response-format [(json-response-format {})]})))
   (is (= (multi-content-type [:json :transit])
-         "application/json, application/transit+json"))
+         #? (:clj "application/json, application/transit+msgpack, application/transit+json"
+             :cljs "application/json, application/transit+json")))
   (is (= (multi-content-type [:json ["text/plain" :raw]])
          "application/json, text/plain")))
 
@@ -92,6 +101,10 @@
         (normalize-request request)]
     (reduce process-request request interceptors)))
 
+(defn as-string [body]
+  #? (:cljs body
+      :clj (String. body "UTF-8")) )
+
 (deftest test-process-inputs-as-json
   (let [{:keys [uri body headers]}
         (process-inputs {:params {:a 3 :b "hello"}
@@ -101,7 +114,7 @@
                          :format (edn-request-format)
                          :response-format (edn-response-format)})]
     (is (= uri "/test"))
-    (is (= body "{:a 3, :b \"hello\"}"))
+    (is (= (as-string body) "{:a 3, :b \"hello\"}"))
     (is (= headers {"Content-Type" "application/edn; charset=utf-8"
                     "Accept" "application/edn"}))))
 
@@ -126,7 +139,7 @@
                          :interceptors [interceptor]})]
     (is (= uri "/test?extra=true&a=3&b=hello&c=world"))))
 
-(deftest test-process-inputs-as-edn
+(deftest process-inputs-as-edn
   (let [{:keys [uri body headers]}
         (process-inputs {:params {:a 3 :b "hello"}
                          :headers nil
@@ -138,7 +151,7 @@
     (is (nil? body))
     (is (= {"Accept" "application/edn"} headers))))
 
-(deftest test-process-inputs-as-raw
+(deftest process-inputs-as-raw
   (let [{:keys [uri body headers]}
         (process-inputs {:params {:a 3 :b "hello"}
                          :headers nil
@@ -147,19 +160,19 @@
                          :format (url-request-format)
                          :response-format (json-response-format)})]
     (is (= uri "/test"))
-    (is (= body "a=3&b=hello"))
+    (is (= (as-string body) "a=3&b=hello"))
     (is (= headers {"Content-Type"
                     "application/x-www-form-urlencoded; charset=utf-8"
                     "Accept" "application/json"}))))
 
-(deftest body-is-passed-through
-  (let [result (process-inputs {:body (js/FormData.)
-                                :response-format (json-response-format)})]
-    (is (instance? js/FormData (:body result)))))
+#? (:cljs (deftest body-is-passed-through
+            (let [result (process-inputs {:body (js/FormData.)
+                                           :response-format (json-response-format)})]
+              (is (instance? js/FormData (:body result))))))
 
 (defn fake-from-request [{:keys [params format]}]
   (let [{:keys [content-type write]} format]
-    (FakeXhrIo. content-type (write params) 200)))
+    (FakeXhrIo. content-type (apply-request-format write params) 200)))
 
 (defn round-trip-test [request-format
                   {:keys [read] :as response-format} request]
@@ -172,12 +185,21 @@
                    (transit-response-format {})
                    {:id 3 :content "Hello"}))
 
+(deftest edn-round-trip
+  (round-trip-test (edn-request-format {})
+                   (edn-response-format {})
+                   {:id 3 :content "Hello"}))
+
 (def simple-response-text "[\"^ \",\"~:a\",1]")
+
+(def simple-response-body
+  #? (:cljs simple-response-text
+      :clj (.getBytes simple-response-text "UTF8")))
 
 (def simple-reply
   (FakeXhrIo.
    "application/transit+json; charset blah blah"
-   simple-response-text 200))
+   simple-response-body 200))
 
 (defn expect-simple-reply [r value]
   (is (vector? r))
@@ -189,7 +211,7 @@
     ;; Rolled usage of ajax-request
     (ajax-request {:handler #(reset! r %)
                    :format (url-request-format)
-                   :response-format (raw-response-format)
+                   :response-format (text-response-format)
                    :api simple-reply})
     (expect-simple-reply @r simple-response-text)))
 
@@ -199,7 +221,7 @@
     (POST nil
           :handler #(reset! r %)
           :format :url
-          :response-format (raw-response-format)
+          :response-format (text-response-format)
           :api simple-reply)
     (is (= simple-response-text @r))))
 
@@ -210,16 +232,19 @@
                :api simple-reply})
     (is (= {:a 1} @r) "Format detection didn't work")))
 
+#? (:cljs
+    (deftest js-types
+      (POST nil {:body (js/FormData.)
+                 :api simple-reply})))
+
 (deftest through-run
-         ; Test format detection runs all the way through
-         ; These are basically "don't crash" tests
-  (POST nil {:body (js/FormData.)
-             :api simple-reply})
+  ;;; Test format detection runs all the way through
+  ;;; These are basically "don't crash" tests
   (GET "/" {:params {:a 3}
             :api simple-reply})
   (GET "/" {:params {:a 3}
             :api simple-reply}
-       :response-format [:json :raw])
+       :response-format [:json :text])
   (GET "/" {:params {:a 3}
             :api simple-reply}
        :response-format [:json ["text/plain" :raw]]))
@@ -228,10 +253,12 @@
   (let [r1 (atom "whatever")
         r2 (atom "whatever")]
     (POST "/" {:handler #(reset! r1 %)
+               :error-handler #(reset! r1 %)
                :response-format (json-response-format)
                :api (FakeXhrIo. "application/json; charset blah blah" "" 204)})
     (is (= nil @r1))
     (POST "/" {:handler #(reset! r2 %)
+               :error-handler #(reset! r2 %)
                :response-format (json-response-format)
                :api (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)})
     (is (= {"a" "b"} @r2))))
@@ -242,6 +269,8 @@
 (deftest composite-format
   (let [request (-> {:format :raw
                      :response-format [:transit :json]}
-                    transform-opts
-                    get-response-format)]
-    (is (instance? ResponseFormat request))))
+                    transform-opts)
+        response (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)]
+    (is (instance? ResponseFormat (get-response-format request)))
+    (let [format (get-default-format simple-reply request)]
+      (is format))))

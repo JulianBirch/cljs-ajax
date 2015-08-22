@@ -208,7 +208,7 @@ These examples will use the Google Closure library `XhrIo` API. If you want to u
 
 ## Contributing
 
-All pull requests are welcome, but we do ask that any changes come with tests that demonstrate the original problem.  For this, you'll need to get the test environment working.  First, you need to install phantom.js somewhere on your path.  We recommend you download directly from the website [http://phantomjs.org/download.html].  (Do _not_ give into the temptation of using apt-get on Ubuntu; it installs v1.4 and won't work.)
+All pull requests are welcome, but we do ask that any changes come with tests that demonstrate the original problem. For this, you'll need to get the test environment working. First, you need to install slimer.js somewhere on your path. (If you're getting "subprocess failed" errors, it usually means your version of slimerjs is incompatible with your version of firefox. There's two solutions to this: downgrade, or use the standalone version.
 
 Second, you need to install [ClojureScript.test](https://github.com/cemerick/clojurescript.test) as a leiningen plugin.  The instructions are in the README.
 
