@@ -152,6 +152,11 @@
                     "application/x-www-form-urlencoded; charset=utf-8"
                     "Accept" "application/json"}))))
 
+(deftest body-is-passed-through
+  (let [result (process-inputs {:body (js/FormData.)
+                                :response-format (json-response-format)})]
+    (is (instance? js/FormData (:body result)))))
+
 (defn fake-from-request [{:keys [params format]}]
   (let [{:keys [content-type write]} format]
     (FakeXhrIo. content-type (write params) 200)))

@@ -264,7 +264,7 @@
 (defrecord DirectSubmission []
   Interceptor
   (-process-request [_ {:keys [body params] :as request}]
-    (if body (reduced request) request))
+    (if (nil? body) request (reduced request)))
   (-process-response [_ response] response))
 
 (defrecord ApplyRequestFormat []
