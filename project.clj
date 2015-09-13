@@ -45,7 +45,7 @@
           :incremental? true
           :compiler {:output-to "target-int/integration.js"
                      :output-dir "target-int"
-                     :source-map "target-int/integration.js.map"
+                     ; :source-map "target-int/integration.js.map"
                      :optimizations :whitespace
                      :pretty-print true}}}
    :test-commands {"unit-tests"
