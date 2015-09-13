@@ -15,10 +15,10 @@ Note that there are breaking changes since 0.3, detailed near the bottom of this
 The client provides an easy way to send Ajax queries to the server using `GET`, `POST`, and `PUT` functions.
 It also provides a simple way using `ajax-request`.
 
-There are three formats currently supported for communicating with the server:  `:transit`, `:json`, `:edn` and `:raw`.
-(`:raw` will send parameters up using normal form submission and return the raw text.)
+There are four formats currently supported for communicating with the server:  `:transit`, `:json`, `:text` and `:raw`.
+(`:text` will send parameters up using normal form submission and return the raw text. `:raw` does the same, but on the JVM it returns the body's `java.io.InputStream` and *doesn't close it*.)
 
-For advice on how to set up the server side in Clojure to work with cljs-ajax, please see the page on [handling responses on the server](doc/server.md).
+For advice on how to set up the server side in Clojure to work with cljs-ajax, please see the page on [handling responses on the server](docs/server.md).
 
 ## GET/POST/PUT
 
@@ -29,7 +29,7 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:finally` - a function that takes no parameters and will be triggered during the callback in addition to any other handlers
 * `:format` - the format for the request.  If you leave this blank, it will use `:transit` as the default
 * `:response-format`  the response format.  If you leave this blank, it will detect the format from the Content-Type header
-* `:params` - the parameters that will be sent with the request,  format dependent: `:transit` and `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
+* `:params` - the parameters that will be sent with the request,  format dependent: `:transit` and `:edn` can send anything, `:json`, `:text` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
