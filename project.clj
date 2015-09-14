@@ -1,4 +1,4 @@
-(defproject cljs-ajax "0.5.0-SNAPSHOT"
+(defproject cljs-ajax "0.5.1-SNAPSHOT"
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/JulianBirch/cljs-ajax"
   :license {:name "Eclipse Public License"
