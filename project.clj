@@ -47,6 +47,7 @@
           :compiler {:output-to "target-int/integration.js"
                      :output-dir "target-int"
                                         ; :source-map "target-int/integration.js.map"
+                     :warnings {:single-segment-namespace false}
                      :optimizations :whitespace
                      :pretty-print true}}}
    :test-commands {"unit-tests"
