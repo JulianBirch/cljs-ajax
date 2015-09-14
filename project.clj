@@ -9,6 +9,7 @@
                  [org.clojure/clojurescript "1.7.107"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [com.cognitect/transit-cljs "0.8.220"]
+                 [com.cognitect/transit-clj "0.8.281"]
                  [net.colourcoding/poppea "0.2.0"]
                  [org.apache.httpcomponents/httpcore "4.4.1"]
                  [org.apache.httpcomponents/httpclient "4.5"]
@@ -31,21 +32,21 @@
    {:dev  {:source-paths ["src"]
            :compiler {:output-to "target/main.js"
                       :output-dir "target"
-                      ; :source-map "target/main.js.map"
+                                        ; :source-map "target/main.js.map"
                       :optimizations :whitespace
                       :pretty-print true}}
     :test {:source-paths ["src" "test"]
            :incremental? true
            :compiler {:output-to "target-test/unit-test.js"
                       :output-dir "target-test"
-                      ; :source-map "target-test/unit-test.js.map"
+                                        ; :source-map "target-test/unit-test.js.map"
                       :optimizations :whitespace
                       :pretty-print true}}
     :int {:source-paths ["src" "browser-test"]
           :incremental? true
           :compiler {:output-to "target-int/integration.js"
                      :output-dir "target-int"
-                     ; :source-map "target-int/integration.js.map"
+                                        ; :source-map "target-int/integration.js.map"
                      :optimizations :whitespace
                      :pretty-print true}}}
    :test-commands {"unit-tests"
