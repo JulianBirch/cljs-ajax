@@ -6,8 +6,10 @@ addons:
   firefox: "24.0"
 before_script:
   - "sh -e /etc/init.d/xvfb start"
-  - "echo 'Installing Slimer'"
-  - "wget http://download.slimerjs.org/v0.9.6/slimerjs-0.9.6.zip"
-  - "unzip slimerjs-0.9.6.zip"
+  - "curl https://slimerjs.org/slimerjs-pubkey.gpg | gpg --import"
+  - "wget http://download.slimerjs.org/releases/0.9.6/slimerjs-0.9.6-linux-x86_64.tar.bz2"
+  - "wget http://download.slimerjs.org/releases/0.9.6/slimerjs-0.9.6-linux-x86_64.tar.bz2.asc"
+  - "gpg --verify-files *.asc"
+  - "tar jxfv slimerjs-0.9.6-linux-x86_64.tar.bz2"
   - "mv slimerjs-0.9.6 ./slimerjs"
 sudo: false

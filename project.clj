@@ -1,4 +1,4 @@
-(defproject cljs-ajax "0.5.0-SNAPSHOT"
+(defproject cljs-ajax "0.5.1-SNAPSHOT"
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/JulianBirch/cljs-ajax"
   :license {:name "Eclipse Public License"
@@ -9,6 +9,7 @@
                  [org.clojure/clojurescript "1.7.107"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [com.cognitect/transit-cljs "0.8.220"]
+                 [com.cognitect/transit-clj "0.8.281"]
                  [net.colourcoding/poppea "0.2.0"]
                  [org.apache.httpcomponents/httpcore "4.4.1"]
                  [org.apache.httpcomponents/httpclient "4.5"]
@@ -19,6 +20,7 @@
             [com.cemerick/clojurescript.test "0.3.3"]]
   :hooks [leiningen.cljsbuild]
   :global-vars { *warn-on-reflection* true }
+  :clean-targets ^{:protect false} ["target" "target-int" "target-test"]
   :profiles
   {:dev {:source-paths ["dev", "browser-test"]
          :dependencies [[ring-server "0.4.0"]
@@ -31,21 +33,22 @@
    {:dev  {:source-paths ["src"]
            :compiler {:output-to "target/main.js"
                       :output-dir "target"
-                      ; :source-map "target/main.js.map"
+                                        ; :source-map "target/main.js.map"
                       :optimizations :whitespace
                       :pretty-print true}}
     :test {:source-paths ["src" "test"]
            :incremental? true
            :compiler {:output-to "target-test/unit-test.js"
                       :output-dir "target-test"
-                      ; :source-map "target-test/unit-test.js.map"
+                                        ; :source-map "target-test/unit-test.js.map"
                       :optimizations :whitespace
                       :pretty-print true}}
     :int {:source-paths ["src" "browser-test"]
           :incremental? true
           :compiler {:output-to "target-int/integration.js"
                      :output-dir "target-int"
-                     ; :source-map "target-int/integration.js.map"
+                                        ; :source-map "target-int/integration.js.map"
+                     :warnings {:single-segment-namespace false}
                      :optimizations :whitespace
                      :pretty-print true}}}
    :test-commands {"unit-tests"
