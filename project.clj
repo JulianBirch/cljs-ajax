@@ -20,6 +20,7 @@
             [com.cemerick/clojurescript.test "0.3.3"]]
   :hooks [leiningen.cljsbuild]
   :global-vars { *warn-on-reflection* true }
+  :clean-targets ^{:protect false} ["target" "target-int" "target-test"]
   :profiles
   {:dev {:source-paths ["dev", "browser-test"]
          :dependencies [[ring-server "0.4.0"]
