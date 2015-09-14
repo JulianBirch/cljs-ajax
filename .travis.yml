@@ -12,4 +12,5 @@ before_script:
   - "gpg --verify-files *.asc"
   - "tar jxfv slimerjs-0.9.6-linux-x86_64.tar.bz2"
   - "mv slimerjs-0.9.6 ./slimerjs"
-sudo: false
+  - "yes | sudo lein2 upgrade 2.5.2"
+sudo: required
