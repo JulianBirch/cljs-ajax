@@ -1,4 +1,5 @@
 (defproject cljs-ajax "0.5.0-SNAPSHOT"
+  :min-lein-version "2.5.2" ;;; lower can't run tests in cljc
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/JulianBirch/cljs-ajax"
   :license {:name "Eclipse Public License"
@@ -10,7 +11,7 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [com.cognitect/transit-cljs "0.8.225"]
                  [com.cognitect/transit-clj "0.8.281"]
-                 [net.colourcoding/poppea "0.2.0"]
+                 [net.colourcoding/poppea "0.2.1"]
                  [org.apache.httpcomponents/httpcore "4.4.3"]
                  [org.apache.httpcomponents/httpasyncclient "4.1"]
                  [cheshire "5.5.0"]]
@@ -23,7 +24,8 @@
   {:dev {:source-paths ["dev", "browser-test"]
          :dependencies [[ring-server "0.4.0"]
                         [fogus/ring-edn "0.3.0"]
-                        [ring/ring-json "0.4.0"]
+                        [ring/ring-json "0.4.0"
+                         :exclusions [joda-time]]
                         [ring-transit "0.1.3"]
                         [org.clojure/tools.namespace "0.2.10"]]}}
   :cljsbuild
