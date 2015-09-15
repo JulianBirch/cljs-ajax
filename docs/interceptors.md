@@ -15,6 +15,7 @@ The request and response formats are implementing using interceptors, so you've 
 ## The Interceptor Life Cycle
 
 A request works like this:
+
 * If you're using the easy API, `GET` or `POST` &c, the request map is converted to a form accepted by `ajax-request`.
 * The `ajax-request` map has its method normalized, so `:get` becomes `"GET"` &c
 * The response format is determined and fixed 
@@ -42,24 +43,27 @@ Quite a few people want to put CSRF or session tokens into every request.
      
 (def token-interceptor
      (to-interceptor {:name "Token Interceptor"
-                      :request #(update-in [:params :token] @token)}))
-(swap standard-interceptors conj token-interceptor)
+                      :request #(assoc-in % [:params :token] @token)}))
+(swap! default-interceptors (partial cons token-interceptor))
 ```
 
-Google App Engine doesn't permit a body in `DELETE` requests. (Its implementation of the HTTP spec is wrong, but there's no point arguing.)
+Note that in general, we will want to *prepend* elements to the `default-interceptor` atom as we do above.
+
+We may wish to see a rule *appended*, however. The Google App Engine doesn't permit a body in `DELETE` requests; its implementation of the HTTP spec is wrong, but there's no point arguing.  The following appends this rule:
 
 ```clj
 (def delete-is-empty [{:keys [method] :as request}]
-     (if (= method "POST")
-         (reduced (update request :body nil))
+     (if (= method "DELETE")
+         (reduced (assoc request :body nil))
          request))
 
 (def app-engine-delete-interceptor
      (to-interceptor {:name "Google App Engine Delete Rule"
                       :request delete-is-empty}))
 
-(swap standard-interceptors conj app-engine-delete-interceptor)
-;;; Since this rule uses `reduced`, its important that it is positioned near the end.
+;;; Since this rule uses `reduced`, it is important that it is 
+;;; positioned at the end of the list, hence we use `concat` here
+(swap! standard-interceptors concat [app-engine-delete-interceptor])
 ```
 
 Finally, many systems return an empty JSON response when returning `nil`. Strictly speaking, they should return `"null"`.
@@ -74,5 +78,5 @@ Finally, many systems return an empty JSON response when returning `nil`. Strict
      (to-interceptor {:name "JSON special case nil"
                       :response empty-means-nil}))
 
-(swap standard-interceptors conj treat-nil-as-empty)
+(swap! standard-interceptors concat [treat-nil-as-empty]))
 ```
