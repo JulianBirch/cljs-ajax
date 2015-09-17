@@ -16,3 +16,4 @@ pom.xml.asc
 *.orig
 .lein-repl-history
 .nrepl-port
+*~
