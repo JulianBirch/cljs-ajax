@@ -299,6 +299,10 @@
                             :content-type ["*/*"]}))
   ([_] (raw-response-format)))
 
+(defn text-request-format []
+  {:write (to-utf8-writer identity)
+   :content-type "text/plain"})
+
 #? (:clj
     ;;; http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
     (do
@@ -318,8 +322,8 @@
 
 #? (:cljs (defn write-json [data]
             (.serialize (goog.json.Serializer.) (clj->js data)))
-    :clj (defn write-json [writer data]
-           (c/generate-stream data writer)))
+    :clj (defn write-json [stream data]
+           (c/generate-stream data (io/writer stream))))
 
 (defn json-request-format []
   {:write write-json
@@ -465,7 +469,8 @@
     ;;; close the original response stream
     ;;; If you're writing a weird interceptor that doesn't do this,
     ;;; remember to close the original stream yourself
-    #? (:clj (if-not (instance? Closeable (second processed))
+    #? (:clj (if (and response
+                      (instance? Closeable (second processed)))
                (.close ^Closeable (-body response))))
     (handler processed)))
 
@@ -510,6 +515,7 @@
    :else (case format
            :transit (transit-request-format format-params)
            :json (json-request-format)
+           :text (text-request-format)
            :raw (url-request-format)
            :url (url-request-format)
            nil)))

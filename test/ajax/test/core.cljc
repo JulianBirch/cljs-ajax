@@ -12,6 +12,7 @@
                       raw-response-format
                       text-response-format
                       json-response-format
+                      json-request-format
                       transit-response-format
                       transit-request-format
                       keyword-request-format
@@ -280,3 +281,14 @@
   (let [response (FakeXhrIo. "application/json; charset blah blah" "while(1);{\"a\":\"b\"}" 200)]
     (is (= {"a" "b"} (json-read "while(1);" false false response)))
     (is (= {:a "b"} (json-read "while(1);" false true response)))))
+
+#_ (deftest empty-response
+  (let [r1 (atom "whatever")
+        response (FakeXhrIo. nil nil 200)]
+    (ajax-request {:uri "/"
+                   :handler #(reset! r1 %)
+                   :error-handler #(reset! r1 %)
+                   :format (json-request-format)
+                   :response-format (json-response-format)
+                   :api response
+                   :method "DELETE"})))

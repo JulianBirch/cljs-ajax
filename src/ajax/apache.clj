@@ -69,19 +69,14 @@
                      :was-aborted false}))))
 
 (defn create-handler [handler]
-  (proxy [FutureCallback] []
-    (cancelled []
+  (reify
+    FutureCallback
+    (cancelled [_]
       (cancel handler))
-    (completed [^HttpResponse response]
+    (completed [_ response]
       (handler (HttpResponseWrapper. response)))
-    (failed [^Exception ex]
+    (failed [_ ex]
       (fail handler ex))))
-
-(defrecord RunningRequest [future]
-  AjaxRequest
-  (-abort [this]
-    (let [^Future future (:future this)]
-      (.cancel future true))))
 
 (defn- create-request-config
   ^RequestConfig [{:keys [timeout socket-timeout]}]
@@ -91,6 +86,36 @@
     (if-let [st (or socket-timeout timeout)]
       (.setSocketTimeout builder st))
     (.build builder)))
+
+(defn ^:private deref-future
+  ([^java.util.concurrent.Future fut]
+     (.get fut))
+  ([^java.util.concurrent.Future fut timeout-ms timeout-val]
+     ))
+
+(defn- to-clojure-future [^Future future]
+  "Converts a normal Java future to one similar to the one generated
+   by `clojure.core/future`"
+  (reify
+    clojure.lang.IDeref
+    (deref [_] (.get future))
+    clojure.lang.IBlockingDeref
+    (deref [_ timeout-ms timeout-val]
+      (try
+        (.get future timeout-ms
+              java.util.concurrent.TimeUnit/MILLISECONDS)
+        (catch java.util.concurrent.TimeoutException e
+          timeout-val)))
+    clojure.lang.IPending
+    (isRealized [_] (.isDone future))
+    java.util.concurrent.Future
+    (get [_] (.get future))
+    (get [_ timeout unit] (.get future timeout unit))
+    (isCancelled [_] (.isCancelled future))
+    (isDone [_] (.isDone future))
+    (cancel [_ interrupt?] (.cancel future interrupt?))
+    ajax.protocols.AjaxRequest
+    (-abort [_] (.cancel future true))))
 
 (defrecord Connection []
   AjaxImpl
@@ -109,5 +134,5 @@
         (doseq [x headers]
           (let [[h v] x]
             (.addHeader request h v)))
-        (RunningRequest. (.execute client request h)))
+        (to-clojure-future (.execute client request h)))
       (catch Exception ex (fail handler ex)))))

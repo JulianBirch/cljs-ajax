@@ -22,10 +22,10 @@ There are functions that return request and response formats.  Most of these fun
 | `:json` | `json-request-format` | `json-response-format` |
 | `:url`  | `url-request-format` | |
 | `:raw`  | | `raw-response-format` |
-| `:text`  | | `text-response-format` |
+| `:text`  | `text-request-format` | `text-response-format` |
 | `:detect` | | `detect-response-format` |
 
-`text-response-format` and `raw-response-format` are identical in Clojurescript, but `raw-response-format` returns the byte stream in Clojure, while `text-response-format` returns a string.
+`text-response-format` and `raw-response-format` are identical in Clojurescript, but `raw-response-format` returns the byte stream in Clojure, while `text-response-format` returns a string. `text-request-format` is a pass-through in Clojurescript, but converts a string to a byte stream in Clojure (which is what you want).
 
 ### Transit parameters
 
