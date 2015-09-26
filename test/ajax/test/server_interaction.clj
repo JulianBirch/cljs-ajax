@@ -44,6 +44,14 @@
                               :format :text
                               :params payload})
             out (<!! comm)]
+        (is (= payload out))))
+    (testing "ajax can POST a string in the :body tag"
+      (let [payload (name (gensym))
+            comm (chan)
+            _ (ajax/POST url {:handler #(go (>! comm %))
+                              :error-handler #(go (>! comm %))
+                              :body payload})
+            out (<!! comm)]
         (is (= payload out))))))
 
 (comment (run-tests))

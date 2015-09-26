@@ -2,7 +2,8 @@
   (:require [ajax.protocols :refer [map->Response]]
             [clojure.string :as s])
   (:import [org.apache.http HttpResponse]
-           [org.apache.http.entity ByteArrayEntity]
+           [org.apache.http.entity ByteArrayEntity StringEntity
+            FileEntity InputStreamEntity]
            [org.apache.http.client.methods HttpRequestBase
             HttpEntityEnclosingRequestBase]
            [org.apache.http.client.config RequestConfig]
@@ -12,7 +13,8 @@
             Interceptor Response]
            [java.lang Exception]
            [java.util.concurrent Future]
-           [java.net URI SocketTimeoutException]))
+           [java.net URI SocketTimeoutException]
+           [java.io File InputStream]))
 
 ;;; Chunks of this code liberally ripped off dakrone/clj-http
 ;;; Although that uses the synchronous API
@@ -20,8 +22,11 @@
 (def array-of-bytes-type (Class/forName "[B"))
 
 (defn- to-entity [b]
-  (if (instance? array-of-bytes-type b)
-    (ByteArrayEntity. b)
+  (condp instance? b
+    array-of-bytes-type (ByteArrayEntity. b)
+    String (StringEntity. b "UTF-8")
+    File (FileEntity. b)
+    InputStream (InputStreamEntity. b)
     b))
 
 (defn- to-uri [u]
