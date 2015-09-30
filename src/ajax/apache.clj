@@ -92,12 +92,6 @@
       (.setSocketTimeout builder st))
     (.build builder)))
 
-(defn ^:private deref-future
-  ([^java.util.concurrent.Future fut]
-     (.get fut))
-  ([^java.util.concurrent.Future fut timeout-ms timeout-val]
-     ))
-
 (defn- to-clojure-future [^Future future]
   "Converts a normal Java future to one similar to the one generated
    by `clojure.core/future`"
