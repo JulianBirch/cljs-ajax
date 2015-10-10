@@ -147,7 +147,7 @@ It has a single parameter, which is a map with the following members:
 The parameters are: 
 * `:uri`
 * `:method` - (`:get`, `"GET"`, `:post` or `"POST"` etcetera)  
-* `:format` and `:response-format`, documented in the [formats documentation](doc/formats.md)
+* `:format` and `:response-format`, documented in the [formats documentation](docs/formats.md)
 * `:handler` - A function that takes a single argument `[ok result]`.  The result will be the response if true and the error response if false.
 
 The following parameters are the same as in the `GET`/`POST` easy api:
@@ -155,7 +155,7 @@ The following parameters are the same as in the `GET`/`POST` easy api:
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
-* `:interceptors` - the [interceptors](doc/Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](doc/Interceptors.md).
+* `:interceptors` - the [interceptors](docs/Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](docs/Interceptors.md).
 
 ### `ajax-request` examples
 
@@ -195,13 +195,13 @@ cljs-ajax never had a stable 0.4.0 release, so there's no breaking changes.
 * The definition of the `AjaxImpl` protocol has changed.
 * Submitting a `GET` with `:params {:a [10 20]}` used to produce `?a=10&a=20`. It now produces `?a[0]=10&a[1]=20`.
 * `js/FormData` and `js/ArrayBuffer` &c are now submitted using a `:body` tag, not the `:params` tag
-* [Interceptors](doc/interceptors.md) were added. Whilst not strictly speaking a breaking change, the optimal way of solving certain problems has definitely changed.
+* [Interceptors](docs/interceptors.md) were added. Whilst not strictly speaking a breaking change, the optimal way of solving certain problems has definitely changed.
 
 ## Breaking Changes Since 0.2
 
 * The default response format is now transit.
 * The default request format is now transit.
-* Format detection is now "opt in" with `ajax-request`.  See [formats.md](doc/formats.md).  It remains the default with `GET` and `POST`.  This means that code using `ajax-request` will be smaller with advanced optimizations.
+* Format detection is now "opt in" with `ajax-request`.  See [formats.md](docs/formats.md).  It remains the default with `GET` and `POST`.  This means that code using `ajax-request` will be smaller with advanced optimizations.
 * `:is-parse-error`, `:timeout?` and `:aborted?` have been removed, in favour of `:failure`
 * `ajax-request` now has `:format` and `:response-format` parameters, same as `POST`
 * The functions that returned merged request/response formats have been removed.
