@@ -91,13 +91,20 @@
                    response
                    (map vec (partition 2 params)))]))
 
+(defn content-type-to-request-header [content-type]
+  (->> (if (string? content-type)
+         [content-type]
+         content-type)
+       (map #(str % "; charset=utf-8"))
+       (s/join ", ")))
+
 (defrecord ResponseFormat [read description content-type]
   Interceptor
   (-process-request [{:keys [content-type]} request]
     "Sets the headers on the request"
     (update request
             :headers
-            #(merge {"Accept" (str/join ", " content-type)}
+            #(merge {"Accept" (content-type-to-request-header content-type)}
                     (or % {}))))
   (-process-response [{:keys [read] :as format} xhrio]
     "Transforms the raw response (an implementation of AjaxResponse)"
@@ -208,13 +215,6 @@
       :clj (let [stream (ByteArrayOutputStream.)]
              (write stream params)
              (.toByteArray stream))))
-
-(defn content-type-to-request-header [content-type]
-  (->> (if (string? content-type)
-         [content-type]
-         content-type)
-       (map #(str % "; charset=utf-8"))
-       (s/join ", ")))
 
 (defrecord ApplyRequestFormat []
   Interceptor
@@ -428,8 +428,7 @@
 
 (defn accept-header [{:keys [response-format] :as request}]
   (if (vector? response-format)
-    (str/join ", "
-              (mapcat (get-accept-entries request) response-format))
+    (mapcat (get-accept-entries request) response-format)
     (get-accept-entries request response-format)))
 
 (defn detect-response-format
