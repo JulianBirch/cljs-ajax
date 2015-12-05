@@ -9,11 +9,11 @@
                  [com.cognitect/transit-clj "0.8.285"]
                  [com.cognitect/transit-cljs "0.8.232"]
                  [net.colourcoding/poppea "0.2.1"]
-                 [org.apache.httpcomponents/httpasyncclient "4.1"]
-                 [org.apache.httpcomponents/httpcore "4.4.3"]
+                 [org.apache.httpcomponents/httpasyncclient "4.1.1"]
+                 [org.apache.httpcomponents/httpcore "4.4.4"]
                  [org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.122"]]
-  :plugins [[lein-cljsbuild "1.0.6"]
+                 [org.clojure/clojurescript "1.7.170"]]
+  :plugins [[lein-cljsbuild "1.1.1"]
             [com.cemerick/clojurescript.test "0.3.3"]]
   :hooks [leiningen.cljsbuild]
   :global-vars { *warn-on-reflection* true }
@@ -21,14 +21,14 @@
   :profiles
   {:dev {:source-paths ["dev", "browser-test"]
          :test-paths ["test"]
-         :dependencies [[org.clojure/core.async "0.1.346.0-17112a-alpha"]
+         :dependencies [[org.clojure/core.async "0.2.374"]
                         [clj-time "0.11.0"]
                         [compojure "1.4.0"]
                         [fogus/ring-edn "0.3.0"]
                         [http-kit "2.1.19"]
                         [org.clojure/tools.namespace "0.2.10"]
                         [ring-server "0.4.0"]
-                        [ring-transit "0.1.3"]
+                        [ring-transit "0.1.4"]
                         [ring/ring-defaults "0.1.5"]
                         [ring/ring-json "0.4.0"]]}}
   :cljsbuild
