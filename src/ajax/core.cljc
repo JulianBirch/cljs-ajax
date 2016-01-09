@@ -137,7 +137,7 @@
 ;;; Request Format Record
 
 #? (:cljs
-    (defn params-to-str-old [params]
+    (defn params-to-str-alt [params]
       (if params
         (-> params
             clj->js
@@ -178,7 +178,7 @@
        (map (fn [[k v]] (str k "=" v)))
        (str/join "&")))
 
-(defn uri-with-params [uri params]
+(p/defn-curried uri-with-params [params params-to-str uri]
   (if params
     (str uri
          (if (re-find #"\?" uri) "&" "?") ; add & if uri contains ?
@@ -191,12 +191,12 @@
    (ifn? format) {:write format :content-type "text/plain"}
    :else {}))
 
-(defrecord ProcessGet []
+(defrecord ProcessGet [params-to-str]
   Interceptor
   (-process-request [_ {:keys [method] :as request}]
     (if (= method "GET")
       (reduced (update request :uri
-                       #(uri-with-params % (:params request))))
+                       (uri-with-params (:params request) params-to-str)))
       request))
   (-process-response [_ response] response))
 
@@ -478,7 +478,7 @@
     (js-handler handler interceptors)
     (throw-error "No ajax handler provided.")))
 
-(def request-interceptors [(ProcessGet.) (DirectSubmission.) (ApplyRequestFormat.)])
+(def request-interceptors [(ProcessGet. params-to-str) (DirectSubmission.) (ApplyRequestFormat.)])
 
 (def default-interceptors (atom []))
 
