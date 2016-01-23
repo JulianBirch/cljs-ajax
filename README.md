@@ -94,6 +94,18 @@ The following settings affect the interpretation of JSON responses:  (You must s
                       :response-format (raw-response-format)
                       :timeout 100}))
 
+; Send multiple files explicitly, ClojureScript specific
+; input-element is an html element of file type.
+(let [form-data (let [f-d (js/FormData.)
+                      files (.-files input-element)
+                      name (.-name input-element)]
+                  (doseq [file-key (.keys js/Object files)]
+                    (.append f-d name (aget files file-key)))
+                  f-d)]
+  (POST "/send-files" {:body form-data
+                       :response-format (raw-response-format)
+                       :timeout 100}))
+                      
 (POST "/send-message"
         {:params {:message "Hello World"
                   :user    "Bob"}
