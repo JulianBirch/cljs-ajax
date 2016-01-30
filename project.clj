@@ -11,10 +11,10 @@
                  [org.apache.httpcomponents/httpasyncclient "4.1.1"]
                  [org.apache.httpcomponents/httpcore "4.4.4"]
                  [org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.122"]
+                 [org.clojure/clojurescript "1.7.228"]
                  [lein-doo "0.1.6"]]
   :plugins [[lein-doo "0.1.6"]
-            [lein-cljsbuild "1.0.6"]]
+            [lein-cljsbuild "1.1.2"]]
   :hooks [leiningen.cljsbuild]
   :global-vars { *warn-on-reflection* true }
   :clean-targets ^{:protect false} ["target" "target-int" "target-test"]
