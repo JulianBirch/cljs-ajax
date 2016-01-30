@@ -7,3 +7,4 @@ before_script:
   - "export PATH=$PWD/travis-phantomjs:$PATH"
   - "yes | sudo lein2 upgrade 2.5.2"
 sudo: required
+script: lein run-tests
