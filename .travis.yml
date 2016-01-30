@@ -1,16 +1,9 @@
 language: clojure
 lein: lein2
-env:
-  - SLIMERJSLAUNCHER=$(which firefox) DISPLAY=:99.0 PATH=$TRAVIS_BUILD_DIR/slimerjs:$PATH
-addons:
-  firefox: "24.0"
 before_script:
-  - "sh -e /etc/init.d/xvfb start"
-  - "curl https://slimerjs.org/slimerjs-pubkey.gpg | gpg --import"
-  - "wget http://download.slimerjs.org/releases/0.9.6/slimerjs-0.9.6-linux-x86_64.tar.bz2"
-  - "wget http://download.slimerjs.org/releases/0.9.6/slimerjs-0.9.6-linux-x86_64.tar.bz2.asc"
-  - "gpg --verify-files *.asc"
-  - "tar jxfv slimerjs-0.9.6-linux-x86_64.tar.bz2"
-  - "mv slimerjs-0.9.6 ./slimerjs"
+  - "mkdir travis-phantomjs"
+  - "wget https://s3.amazonaws.com/travis-phantomjs/phantomjs-2.0.0-ubuntu-12.04.tar.bz2 -O $PWD/travis-phantomjs/phantomjs-2.0.0-ubuntu-12.04.tar.bz2"
+  - "tar -xvf $PWD/travis-phantomjs/phantomjs-2.0.0-ubuntu-12.04.tar.bz2 -C $PWD/travis-phantomjs"
+  - "export PATH=$PWD/travis-phantomjs:$PATH"
   - "yes | sudo lein2 upgrade 2.5.2"
 sudo: required
