@@ -1,6 +1,6 @@
 (ns ajax.test.core
   (:require
-   #? (:cljs [cemerick.cljs.test]
+   #? (:cljs [cljs.test]
              :clj [clojure.test :refer :all])
    [ajax.protocols :refer [-body]]
    [ajax.core :refer [get-default-format
@@ -30,9 +30,7 @@
                       POST GET
                       #?@ (:cljs [ResponseFormat] :clj [])]]
    [ajax.edn :refer [edn-request-format edn-response-format]])
-   #? (:cljs (:require-macros
-              [cemerick.cljs.test :refer
-               (is deftest with-test run-tests testing)])
+   #? (:cljs (:require-macros [cljs.test :refer [deftest testing is]])
        :clj (:import [ajax.core ResponseFormat]
                      [java.lang String]
                      [java.io ByteArrayInputStream])))

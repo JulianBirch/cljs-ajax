@@ -5,16 +5,16 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[cheshire "5.5.0"]
-                 [com.cemerick/clojurescript.test "0.3.3" :scope "test"]
                  [com.cognitect/transit-clj "0.8.285"]
                  [com.cognitect/transit-cljs "0.8.237"]
                  [net.colourcoding/poppea "0.2.1"]
                  [org.apache.httpcomponents/httpasyncclient "4.1.1"]
                  [org.apache.httpcomponents/httpcore "4.4.4"]
                  [org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.122"]]
-  :plugins [[lein-cljsbuild "1.0.6"]
-            [com.cemerick/clojurescript.test "0.3.3"]]
+                 [org.clojure/clojurescript "1.7.122"]
+                 [lein-doo "0.1.6"]]
+  :plugins [[lein-doo "0.1.6"]
+            [lein-cljsbuild "1.0.6"]]
   :hooks [leiningen.cljsbuild]
   :global-vars { *warn-on-reflection* true }
   :clean-targets ^{:protect false} ["target" "target-int" "target-test"]
@@ -44,6 +44,7 @@
            :compiler {:output-to "target-test/unit-test.js"
                       :output-dir "target-test"
                       ;;; :source-map "target-test/unit-test.js.map"
+                      :main ajax.test.runner
                       :optimizations :whitespace
                       :pretty-print true}}
     :int {:source-paths ["src" "browser-test"]
@@ -53,8 +54,7 @@
                      ;;; :source-map "target-int/integration.js.map"
                      :warnings {:single-segment-namespace false}
                      :optimizations :whitespace
-                     :pretty-print true}}}
-   :test-commands {"unit-tests"
-                   ["xvfb-run" "-a" "slimerjs" :runner
-                    "window.literal_js_was_evaluated=true"
-                    "target-test/unit-test.js"]}})
+                     :pretty-print true}}}}
+  :aliases {"clj-test"  ["test"]
+            "cljs-test" ["doo" "phantom" "test" "once"]
+            "run-tests" ["do" "clean," "clj-test," "cljs-test"]})
