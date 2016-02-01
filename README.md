@@ -226,11 +226,9 @@ cljs-ajax never had a stable 0.4.0 release, so there's no breaking changes.
 
 ## Contributing
 
-All pull requests are welcome, but we do ask that any changes come with tests that demonstrate the original problem. For this, you'll need to get the test environment working. First, you need to install slimer.js somewhere on your path. (If you're getting "subprocess failed" errors, it usually means your version of slimerjs is incompatible with your version of firefox. There's two solutions to this: downgrade, or use the standalone version.
+All pull requests are welcome, but we do ask that any changes come with tests that demonstrate the original problem. For this, you'll need to get the test environment working. You need to install [PhantomJS](http://phantomjs.org/) somewhere on your path.
 
-Second, you need to install [ClojureScript.test](https://github.com/cemerick/clojurescript.test) as a leiningen plugin.  The instructions are in the README.
-
-After that `lein test` should run the tests.
+After that `lein run-tests` should run the tests.
 
 ## License
 
