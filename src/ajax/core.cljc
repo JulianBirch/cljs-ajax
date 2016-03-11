@@ -1,7 +1,6 @@
 (ns ajax.core
   (:require [clojure.string :as str]
             [cognitect.transit :as t]
-            [clojure.string :as s]
             [ajax.protocols :refer
              [-body -process-request -process-response -abort -status
               -get-response-header -status-text -js-ajax-request
@@ -96,7 +95,7 @@
          [content-type]
          content-type)
        (map #(str % "; charset=utf-8"))
-       (s/join ", ")))
+       (str/join ", ")))
 
 (defrecord ResponseFormat [read description content-type]
   Interceptor
