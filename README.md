@@ -45,7 +45,7 @@ Everything can be blank, but if you don't provide an `:error-handler` you're goi
 The following settings affect the interpretation of JSON responses:  (You must specify `:response-format` as `:json` to use these.)
 
 * `:keywords?` - true/false specifies whether keys in maps will be keywordized
-* `:prefix` - the prefix to be stripped from the start of the JSON response. e.g. `while(1);`.  You should *always* use this if you've got a GET request.
+* `:prefix` - the prefix to be stripped from the start of the JSON response. e.g. `while(1);` which is added by some APIs to [prevent JSON hijacking](https://stackoverflow.com/questions/2669690/why-does-google-prepend-while1-to-their-json-responses).  You should *always* use this if you've got a GET request.
 
 ### GET/POST examples
 
