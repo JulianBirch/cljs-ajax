@@ -115,8 +115,8 @@
                          :response-format (edn-response-format)})]
     (is (= "/test" uri))
     (is (= "{:a 3, :b \"hello\"}" (as-string body)))
-    (is (= {"Content-Type" "application/edn; charset=utf-8"
-            "Accept" "application/edn; charset=utf-8"}
+    (is (= {"Content-Type" "application/edn"
+            "Accept" "application/edn"}
            headers))))
 
 (deftest regression-no-formats
@@ -126,9 +126,8 @@
                          :uri "/test"
                          :method "POST"
                          :format (keyword-request-format nil {})
-                         :response-format (keyword-response-format nil
-  {})})]
-    (is (= "application/json; charset=utf-8, application/transit+json; charset=utf-8, application/transit+transit; charset=utf-8, text/plain; charset=utf-8, text/html; charset=utf-8, */*; charset=utf-8" (get headers "Accept")))))
+                         :response-format (keyword-response-format nil {})})]
+    (is (= "application/json, application/transit+json, application/transit+transit, text/plain, text/html, */*" (get headers "Accept")))))
 
 (deftest can-add-to-query-string
   (let [{:keys [uri]}
@@ -161,7 +160,7 @@
                          :response-format (edn-response-format)})]
     (is (= "/test?a=3&b=hello" uri))
     (is (nil? body))
-    (is (= {"Accept" "application/edn; charset=utf-8"} headers))))
+    (is (= {"Accept" "application/edn"} headers))))
 
 (deftest process-inputs-as-raw
   (let [{:keys [uri body headers]}
@@ -175,7 +174,7 @@
     (is (= "a=3&b=hello" (as-string body)))
     (is (= {"Content-Type"
             "application/x-www-form-urlencoded; charset=utf-8"
-            "Accept" "application/json; charset=utf-8"}
+            "Accept" "application/json"}
            headers))))
 
 #? (:cljs (deftest body-is-passed-through

@@ -94,7 +94,6 @@
   (->> (if (string? content-type)
          [content-type]
          content-type)
-       (map #(str % "; charset=utf-8"))
        (str/join ", ")))
 
 (defrecord ResponseFormat [read description content-type]
@@ -289,7 +288,7 @@
 
 (defn url-request-format []
   {:write (to-utf8-writer params-to-str)
-   :content-type "application/x-www-form-urlencoded"})
+   :content-type "application/x-www-form-urlencoded; charset=utf-8"})
 
 (defn raw-response-format
   ([] (map->ResponseFormat {:read -body
@@ -300,7 +299,7 @@
 
 (defn text-request-format []
   {:write (to-utf8-writer identity)
-   :content-type "text/plain"})
+   :content-type "text/plain; charset=utf-8"})
 
 #? (:clj
     ;;; http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
