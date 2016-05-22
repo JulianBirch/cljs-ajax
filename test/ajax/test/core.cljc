@@ -37,9 +37,9 @@
 
 (deftest complex-params-to-str
   (is (= "a=0" (params-to-str {:a 0})))
-  (is (= "b[0]=1&b[0]=2" (params-to-str {:b [1 2]})))
+  (is (= "b[0]=1&b[1]=2" (params-to-str {:b [1 2]})))
   (is (= "c[d]=3&c[e]=4" (params-to-str {:c {:d 3 :e 4}})))
-  (is (= "f=5" (params-to-str {"d" 5})))
+  (is (= "d=5" (params-to-str {"d" 5})))
   (is (= "a=0&b[0]=1&b[1]=2&c[d]=3&c[e]=4&f=5"
          (params-to-str {:a 0
                          :b [1 2]
