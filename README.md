@@ -117,9 +117,8 @@ The following settings affect the interpretation of JSON responses:  (You must s
 (PUT "/add-item"
      {:params {:id 1 :name "mystery item"}})
      
-(ajax-handler {:url "/generate.png" ; Request a PNG and get it back as a js/ArrayBuffer
-               :api (js/XMLHttpRequest.)
-               :response-format {:content-type "image/png" :description "PNG image" :read -body :type :arraybuffer})
+(GET {:url "/generate.png" ; Request a PNG and get it back as a js/ArrayBuffer
+      :response-format {:content-type "image/png" :description "PNG image" :read -body :type :arraybuffer})
 ```
 
 ### FormData support

@@ -13,10 +13,13 @@
   AjaxImpl
   (-js-ajax-request
     [this
-     {:keys [uri method body headers timeout with-credentials]
+     {:keys [uri method body headers timeout with-credentials
+             response-format]
       :or {with-credentials false
            timeout 0}}
      handler]
+    (when-let [response-type (:type response-format)]
+      (.setResponseType this (name response-type)))
     (doto this
       (events/listen goog.net.EventType/COMPLETE
                      #(handler (.-target %)))
@@ -26,7 +29,7 @@
   AjaxRequest
   (-abort [this] (.abort this goog.net.ErrorCode/ABORT))
   AjaxResponse
-  (-body [this] (.getResponseText this))
+  (-body [this] (.getResponse this))
   (-status [this] (.getStatus this))
   (-status-text [this] (.getStatusText this))
   (-get-response-header [this header]
