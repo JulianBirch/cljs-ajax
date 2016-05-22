@@ -167,7 +167,7 @@ The following parameters are the same as in the `GET`/`POST` easy api:
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
-* `:interceptors` - the [interceptors](docs/Interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](docs/Interceptors.md).
+* `:interceptors` - the [interceptors](docs/interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](docs/interceptors.md).
 
 ### `ajax-request` examples
 

@@ -69,10 +69,10 @@ We may wish to see a rule *appended*, however. The Google App Engine doesn't per
 Finally, many systems return an empty JSON response when returning `nil`. Strictly speaking, they should return `"null"`.
 
 ```clj
-(def empty-means-nil [response]
-     (if (-response-text response)
-         response
-         (reduced [(-> response -status success?) nil])))
+(defn empty-means-nil [response]
+      (if (ajax.protocols/-body response)
+          response
+          (reduced [(-> response ajax.protocols/-status ajax.core/success?) nil])))
 
 (def treat-nil-as-empty
      (to-interceptor {:name "JSON special case nil"
