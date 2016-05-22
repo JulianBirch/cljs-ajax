@@ -1,7 +1,7 @@
 (ns ajax.test.core
   (:require
    #? (:cljs [cljs.test]
-             :clj [clojure.test :refer :all])
+       :clj [clojure.test :refer :all])
    [ajax.protocols :refer [-body]]
    [ajax.core :refer [get-default-format
                       normalize-method
@@ -36,10 +36,10 @@
                      [java.io ByteArrayInputStream])))
 
 (deftest complex-params-to-str
-  (is (= "a=0") (params-to-str {:a 0}))
-  (is (= "b[0]=1&b[0]=2") (params-to-str {:b [1 2]}))
-  (is (= "c[d]=3&c[e]=4") (params-to-str {:c {:d 3 :e 4}}))
-  (is (= "f=5") (params-to-str {"d" 5}))
+  (is (= "a=0" (params-to-str {:a 0})))
+  (is (= "b[0]=1&b[1]=2" (params-to-str {:b [1 2]})))
+  (is (= "c[d]=3&c[e]=4" (params-to-str {:c {:d 3 :e 4}})))
+  (is (= "d=5" (params-to-str {"d" 5})))
   (is (= "a=0&b[0]=1&b[1]=2&c[d]=3&c[e]=4&f=5"
          (params-to-str {:a 0
                          :b [1 2]
@@ -88,11 +88,11 @@
   (is (vector? (keyword-response-format [:json :transit] {})))
   (is (map? (first (keyword-response-format [:json :transit] {}))))
   (is (= ["application/json"] (accept-header {:response-format [(json-response-format {})]})))
-  (is (= (multi-content-type [:json :transit])
-         #? (:clj ["application/json" "application/transit+msgpack" "application/transit+json"]
-             :cljs ["application/json" "application/transit+json"])))
-  (is (= (multi-content-type [:json ["text/plain" :raw]])
-         ["application/json" "text/plain"])))
+  (is (= #? (:clj ["application/json" "application/transit+msgpack" "application/transit+json"]
+             :cljs ["application/json" "application/transit+json"])
+         (multi-content-type [:json :transit])))
+  (is (= ["application/json" "text/plain"]
+         (multi-content-type [:json ["text/plain" :raw]]))))
 
 ;;; Somewhat ugly that this isn't exactly the same code as runs
 ;;; in ajax-request
@@ -113,10 +113,11 @@
                          :method "POST"
                          :format (edn-request-format)
                          :response-format (edn-response-format)})]
-    (is (= uri "/test"))
-    (is (= (as-string body) "{:a 3, :b \"hello\"}"))
-    (is (= headers {"Content-Type" "application/edn; charset=utf-8"
-                    "Accept" "application/edn; charset=utf-8"}))))
+    (is (= "/test" uri))
+    (is (= "{:a 3, :b \"hello\"}" (as-string body)))
+    (is (= {"Content-Type" "application/edn; charset=utf-8"
+            "Accept" "application/edn; charset=utf-8"}
+           headers))))
 
 (deftest regression-no-formats
   (let [{:keys [headers]}
@@ -127,7 +128,7 @@
                          :format (keyword-request-format nil {})
                          :response-format (keyword-response-format nil
   {})})]
-    (is (= (get headers "Accept") "application/json; charset=utf-8, application/transit+json; charset=utf-8, application/transit+transit; charset=utf-8, text/plain; charset=utf-8, text/html; charset=utf-8, */*; charset=utf-8"))))
+    (is (= "application/json; charset=utf-8, application/transit+json; charset=utf-8, application/transit+transit; charset=utf-8, text/plain; charset=utf-8, text/html; charset=utf-8, */*; charset=utf-8" (get headers "Accept")))))
 
 (deftest can-add-to-query-string
   (let [{:keys [uri]}
@@ -136,7 +137,7 @@
                          :uri "/test?extra=true"
                          :method "GET"
                          :response-format (edn-response-format)})]
-    (is (= uri "/test?extra=true&a=3&b=hello"))))
+    (is (= "/test?extra=true&a=3&b=hello" uri))))
 
 (deftest use-interceptor
   (let [interceptor (to-interceptor
@@ -148,7 +149,7 @@
                          :method "GET"
                          :response-format (edn-response-format)
                          :interceptors [interceptor]})]
-    (is (= uri "/test?extra=true&a=3&b=hello&c=world"))))
+    (is (= "/test?extra=true&a=3&b=hello&c=world" uri))))
 
 (deftest process-inputs-as-edn
   (let [{:keys [uri body headers]}
@@ -158,7 +159,7 @@
                          :method "GET"
                          :format (edn-request-format)
                          :response-format (edn-response-format)})]
-    (is (= uri "/test?a=3&b=hello"))
+    (is (= "/test?a=3&b=hello" uri))
     (is (nil? body))
     (is (= {"Accept" "application/edn; charset=utf-8"} headers))))
 
@@ -170,11 +171,12 @@
                          :method "POST"
                          :format (url-request-format)
                          :response-format (json-response-format)})]
-    (is (= uri "/test"))
-    (is (= (as-string body) "a=3&b=hello"))
-    (is (= headers {"Content-Type"
-                    "application/x-www-form-urlencoded; charset=utf-8"
-                    "Accept" "application/json; charset=utf-8"}))))
+    (is (= "/test" uri))
+    (is (= "a=3&b=hello" (as-string body)))
+    (is (= {"Content-Type"
+            "application/x-www-form-urlencoded; charset=utf-8"
+            "Accept" "application/json; charset=utf-8"}
+           headers))))
 
 #? (:cljs (deftest body-is-passed-through
             (let [result (process-inputs {:body (js/FormData.)
