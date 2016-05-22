@@ -540,12 +540,30 @@
          (apply vector))
     (keyword-response-format-element format format-params)))
 
-(p/defn-curried transform-handler
-  [{:keys [handler error-handler finally]} [ok result]]
-  (if-let [h (if ok handler error-handler)]
-    (h result))
-  (when (fn? finally)
-    (finally)))
+(defn print-response [response]
+  (println "CLJS-AJAX response:  " response))
+
+(def default-handler (atom print-response))
+
+(defn print-error-response [response]
+  #? (:clj (println "CLJS-AJAX ERROR: " response)
+      :cljs (if-let [c js/Console]
+          (.error c response)
+          (if-let [w js/Window]
+            (.alert w (str response))
+            (println "CLJS-AJAX ERROR: " response)))))
+
+(def default-error-handler
+  (atom print-error-response))
+
+(defn transform-handler
+  [{:keys [handler error-handler finally]}]
+  (let [h (or handler @default-handler)
+        e (or error-handler @default-error-handler)]
+    (fn easy-handler [[ok result]]
+      ((if ok h e) result)
+      (when (fn? finally)
+        (finally)))))
 
 (defn transform-opts [{:keys [method format response-format
                               params body]

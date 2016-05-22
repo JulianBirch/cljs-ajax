@@ -26,8 +26,8 @@ For advice on how to set up the server side in Clojure to work with cljs-ajax, p
 
 The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 
-* `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response
-* `:error-handler` - the handler function for errors, should accept an error response (detailed below)
+* `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response. If you do not provide a handler, the contents of the `default-handler` atom will be called instead. By default this is `println`.
+* `:error-handler` - the handler function for errors, should accept an error response (detailed below). If you do not provide an error-handler, the contents of the `default-error-handler` atom will be called instead. By default this is `println` for Clojure and writes an error to the console for ClojureScript.
 * `:finally` - a function that takes no parameters and will be triggered during the callback in addition to any other handlers
 * `:format` - the format for the request.  If you leave this blank, it will use `:transit` as the default
 * `:response-format`  the response format.  If you leave this blank, it will detect the format from the Content-Type header
@@ -38,7 +38,7 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:body` the exact data to send with in the request. If specified, both `:params` and `:request-format` are ignored.  Note that you can submit js/FormData and other "raw" javascript types through this.
 * `:interceptors` - the [interceptors](docs/interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](docs/interceptors.md).
 
-Everything can be blank, but if you don't provide an `:error-handler` you're going to have a bad time.
+Note that you can override `default-handler` and `default-error-handler`, but they are global to your application/page.
 
 ### JSON specific settings
 
