@@ -547,7 +547,7 @@
 
 (defn print-error-response [response]
   #? (:clj (println "CLJS-AJAX ERROR: " response)
-      :cljs (if-let [c js/Console]
+      :cljs (if-let [c js/window.console]
           (.error c response)
           (if-let [w js/Window]
             (.alert w (str response))
