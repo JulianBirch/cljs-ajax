@@ -541,17 +541,15 @@
     (keyword-response-format-element format format-params)))
 
 (defn print-response [response]
-  (println "CLJS-AJAX response:  " response))
+  (println "CLJS-AJAX response:" response))
 
 (def default-handler (atom print-response))
 
 (defn print-error-response [response]
-  #? (:clj (println "CLJS-AJAX ERROR: " response)
-      :cljs (if-let [c js/window.console]
-          (.error c response)
-          (if-let [w js/Window]
-            (.alert w (str response))
-            (println "CLJS-AJAX ERROR: " response)))))
+  #? (:clj  (println "CLJS-AJAX ERROR:" response)
+      :cljs (cond (exists? js/console) (.error js/console response)
+                  (exists? js/window)  (.alert js/window (str response))
+                  :else                (println "CLJS-AJAX ERROR:" response))))
 
 (def default-error-handler
   (atom print-error-response))
