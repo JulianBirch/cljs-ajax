@@ -127,7 +127,7 @@
                          :method "POST"
                          :format (keyword-request-format nil {})
                          :response-format (keyword-response-format nil {})})]
-    (is (= "application/json, application/transit+json, application/transit+transit, text/plain, text/html, */*" (get headers "Accept")))))
+    (is (= "application/transit+json, application/transit+transit, application/json, text/plain, text/html, */*" (get headers "Accept")))))
 
 (deftest can-add-to-query-string
   (let [{:keys [uri]}

@@ -375,9 +375,9 @@
 ;;; Detection and Accept Code
 
 (def default-formats
-  [["application/json" json-response-format]
-   ["application/transit+json" transit-response-format]
+  [["application/transit+json" transit-response-format]
    ["application/transit+transit" transit-response-format]
+   ["application/json" json-response-format]
    ["text/plain" text-response-format]
    ["text/html" text-response-format]
    ["*/*" raw-response-format]])
