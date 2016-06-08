@@ -28,8 +28,8 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response. If you do not provide a handler, the contents of the `default-handler` atom will be called instead. By default this is `println`.
 * `:error-handler` - the handler function for errors, should accept an error response (detailed below). If you do not provide an error-handler, the contents of the `default-error-handler` atom will be called instead. By default this is `println` for Clojure and writes an error to the console for ClojureScript.
 * `:finally` - a function that takes no parameters and will be triggered during the callback in addition to any other handlers
-* `:format` - the format for the request.  If you leave this blank, it will use `:transit` as the default
-* `:response-format`  the response format.  If you leave this blank, it will detect the format from the Content-Type header
+* `:format` - specifies the format for the body of the request (Transit, JSON, etc.). Also sets the appropriate `Content-Type` header.  Defaults to `:transit` if not provided.
+* `:response-format` - specifies that you'd like to receive a certain format of data from the server (by setting the `Accept` header and forcing the response to be parsed as the desired format).  If not provided, a permissive `Accept` header will be sent, and the response body will be interpreted according to the response's `Content-Type` header.
 * `:params` - the parameters that will be sent with the request,  format dependent: `:transit` and `:edn` can send anything, `:json`, `:text` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
