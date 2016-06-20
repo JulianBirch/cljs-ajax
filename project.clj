@@ -6,7 +6,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[cheshire "5.5.0"]
                  [com.cognitect/transit-clj "0.8.285"]
-                 [com.cognitect/transit-cljs "0.8.237"]
+                 [com.cognitect/transit-cljs "0.8.239"]
                  [net.colourcoding/poppea "0.2.1"]
                  [org.apache.httpcomponents/httpasyncclient "4.1.1"]
                  [org.apache.httpcomponents/httpcore "4.4.4"]
