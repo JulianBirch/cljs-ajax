@@ -24,6 +24,7 @@
                         [clj-time "0.11.0"]
                         [compojure "1.4.0"]
                         [fogus/ring-edn "0.3.0"]
+                        [lein-doo "0.1.6"]
                         [http-kit "2.1.19"]
                         [org.clojure/tools.namespace "0.2.10"]
                         [ring-server "0.4.0"]
