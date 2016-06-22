@@ -1,4 +1,4 @@
-(defproject cljs-ajax "0.5.7"
+(defproject cljs-ajax "0.5.8"
   :min-lein-version "2.5.2" ;;; lower can't run tests in cljc
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/JulianBirch/cljs-ajax"
@@ -11,9 +11,11 @@
                  [org.apache.httpcomponents/httpasyncclient "4.1.1"]
                  [org.apache.httpcomponents/httpcore "4.4.4"]
                  [org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.228"]]
+                 [org.clojure/clojurescript "1.7.228" :scope "provided"]
+                 [lein-doo "0.1.6" :scope "test"]
+                 [org.clojure/core.async "0.2.374" :scope "test"]]
   :plugins [[lein-doo "0.1.6"]
-            [lein-cljsbuild "1.1.2"]]
+            [lein-cljsbuild "1.1.3"]]
   :hooks [leiningen.cljsbuild]
   :global-vars { *warn-on-reflection* true }
   :clean-targets ^{:protect false} ["target" "target-int" "target-test"]
