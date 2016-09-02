@@ -261,10 +261,7 @@
             (let [reader (or (:reader request)
                              (t/reader :json request))]
               (fn transit-read-response [response]
-                (let [data (t/read reader (-body response))]
-                  (if (:raw request)
-                    data
-                    (js->clj data))))))
+                (t/read reader (-body response)))))
     :clj (p/defn-curried transit-read-fn [request response]
            (let [content-type (get-content-type response)
                  type (if (.contains content-type "msgpack")
