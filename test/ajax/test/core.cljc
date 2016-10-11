@@ -23,6 +23,7 @@
                       process-request
                       process-response
                       transform-opts
+                      get-request-format
                       get-response-format
                       params-to-str
                       apply-request-format
@@ -286,6 +287,12 @@
     (is (instance? ResponseFormat (get-response-format request)))
     (let [format (get-default-format simple-reply request)]
       (is format))))
+
+(deftest response-format-kw
+  (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"keywords are not allowed as response formats in ajax calls:" (get-response-format {:response-format :json}))))
+
+(deftest request-format-kw
+  (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"keywords are not allowed as request formats in ajax calls:" (get-request-format :json))))
 
 (deftest json-parsing
   (let [response (FakeXhrIo. "application/json; charset blah blah" "while(1);{\"a\":\"b\"}" 200)]

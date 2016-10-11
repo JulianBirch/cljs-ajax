@@ -60,6 +60,10 @@
 (defn success? [status]
   (some #{status} [200 201 202 204 205 206]))
 
+(defn throw-error [args]
+  (throw (#?(:clj Exception. :cljs js/Error.)
+           (str args))))
+
 ;;; Response Format record
 
 #? (:clj (defn exception-message [^Exception e] (.getMessage e))
@@ -186,6 +190,7 @@
 (defn get-request-format [format]
   (cond
    (map? format) format
+   (keyword? format) (throw-error ["keywords are not allowed as request formats in ajax calls: " format])
    (ifn? format) {:write format :content-type "text/plain"}
    :else {}))
 
@@ -197,10 +202,6 @@
                        (uri-with-params (:params request) params-to-str)))
       request))
   (-process-response [_ response] response))
-
-(defn throw-error [args]
-  (throw (#? (:clj Exception. :cljs js/Error.)
-             (str args))))
 
 (defrecord DirectSubmission []
   Interceptor
@@ -442,6 +443,7 @@
    (instance? ResponseFormat response-format) response-format
    (vector? response-format) (detect-response-format opts)
    (map? response-format) (map->ResponseFormat response-format)
+   (keyword? response-format) (throw-error ["keywords are not allowed as response formats in ajax calls: " response-format])
    (ifn? response-format)
    (map->ResponseFormat {:read response-format
                          :description "custom"
