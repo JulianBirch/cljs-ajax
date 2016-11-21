@@ -1,6 +1,7 @@
 (ns ajax.xml-http-request
   (:require [ajax.protocols :refer [AjaxImpl AjaxRequest
                                     AjaxResponse Interceptor]]))
+
 (defn ready-state [e]
   ({0 :not-initialized
     1 :connection-established
@@ -8,7 +9,14 @@
     3 :processing-request
     4 :response-ready} (.-readyState (.-target e))))
 
-(extend-type js/XMLHttpRequest
+(def xmlhttprequest
+  (if (= cljs.core/*target* "nodejs")
+    (let [xmlhttprequest (.-XMLHttpRequest (js/require "@pupeno/xmlhttprequest"))]
+      (goog.object/set js/global "XMLHttpRequest" xmlhttprequest)
+      xmlhttprequest)
+    (.-XMLHttpRequest js/window)))
+
+(extend-type xmlhttprequest
   AjaxImpl
   (-js-ajax-request
     [this
