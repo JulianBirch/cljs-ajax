@@ -590,3 +590,4 @@
 (m/easy-api OPTIONS)
 (m/easy-api TRACE)
 (m/easy-api PATCH)
+(m/easy-api PURGE)
