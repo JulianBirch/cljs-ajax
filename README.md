@@ -206,6 +206,7 @@ cljs-ajax never had a stable 0.4.0 release, so there's no breaking changes.
 * Submitting a `GET` with `:params {:a [10 20]}` used to produce `?a=10&a=20`. It now produces `?a[0]=10&a[1]=20`.
 * `js/FormData` and `js/ArrayBuffer` &c are now submitted using a `:body` tag, not the `:params` tag
 * [Interceptors](docs/interceptors.md) were added. Whilst not strictly speaking a breaking change, the optimal way of solving certain problems has definitely changed.
+* Keywords that are used as request parameter values are stringified using `(str my-keyword)` instead of `(name my-keyword)` causing leading colons to be preserved.
 
 ## Breaking Changes Since 0.2
 
