@@ -92,29 +92,45 @@
       (.setSocketTimeout builder st))
     (.build builder)))
 
-(defn- to-clojure-future [^Future future]
+(defn- to-clojure-future [^Future future ^java.io.Closeable client]
   "Converts a normal Java future to one similar to the one generated
    by `clojure.core/future`"
   (reify
     clojure.lang.IDeref
-    (deref [_] (.get future))
+    (deref [_]
+      (try
+        (.get future)
+        (finally (.close client))))
     clojure.lang.IBlockingDeref
     (deref [_ timeout-ms timeout-val]
       (try
         (.get future timeout-ms
               java.util.concurrent.TimeUnit/MILLISECONDS)
         (catch java.util.concurrent.TimeoutException e
-          timeout-val)))
+          timeout-val)
+        (finally (.close client))))
     clojure.lang.IPending
     (isRealized [_] (.isDone future))
     java.util.concurrent.Future
-    (get [_] (.get future))
-    (get [_ timeout unit] (.get future timeout unit))
+    (get [_]
+      (try
+        (.get future)
+        (finally (.close client))))
+    (get [_ timeout unit]
+      (try
+        (.get future timeout unit)
+        (finally (.close client))))
     (isCancelled [_] (.isCancelled future))
     (isDone [_] (.isDone future))
-    (cancel [_ interrupt?] (.cancel future interrupt?))
+    (cancel [_ interrupt?]
+      (try
+        (.cancel future interrupt?)
+        (finally (.close client))))
     ajax.protocols.AjaxRequest
-    (-abort [_] (.cancel future true))))
+    (-abort [_]
+      (try
+        (.cancel future true)
+        (finally (.close client))))))
 
 (defrecord Connection []
   AjaxImpl
@@ -133,5 +149,5 @@
         (doseq [x headers]
           (let [[h v] x]
             (.addHeader request h v)))
-        (to-clojure-future (.execute client request h)))
+        (to-clojure-future (.execute client request h) client))
       (catch Exception ex (fail handler ex)))))
