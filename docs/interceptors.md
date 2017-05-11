@@ -5,7 +5,7 @@ Interceptors allow you to customize the behaviour of `cljs-ajax`. Examples of wh
 * Special casing `DELETE` on Google App Engine
 * Treating empty responses as `null` with JSON responses
 
-There will be example implementations of each of these nearer the bottom of the file. 
+There will be example implementations of each of these nearer the bottom of the file.
 
 The request and response formats are implementing using interceptors, so you've got access to everything possible. An interceptor is any object that implements the `ajax.core/Interceptor` protocol. The easiest way to achieve this is to call `to-interceptor` passing a map with the following keys
 * `:request` - The request interceptor, optional
@@ -18,9 +18,9 @@ A request works like this:
 
 * If you're using the easy API, `GET` or `POST` &c, the request map is converted to a form accepted by `ajax-request`.
 * The `ajax-request` map has its method normalized, so `:get` becomes `"GET"` &c
-* The response format is determined and fixed 
+* The response format is determined and fixed
 * If no interceptors are provided, they are replaced with `@default-interceptors`. `default-interceptors` is an atom vector of interceptors.
-* Standard interceptors are put around them: `:response-format` at the start and `:request-format` at the end.
+* Default interceptors are put around them: `:response-format` at the start and `:request-format` at the end.
 * The request interceptors are run. By the end, the request should have a `:body` entry (unless it's a `GET`).
 * The ajax query is run, it returns an `AjaxResponse`.
 * The response interceptors are run in reverse order. This means `:response-format` interceptor runs last.
@@ -32,7 +32,7 @@ Note that request and response handlers are run using `reduce`. This means that 
 
 You can use an interceptor to change the request format, but not the response format. This is partly caused by technical internal considerations, but it's worth considering that most of the reasons you'd want it are either to slightly customize response behaviour, which can be handled with an interceptor, or to switch formats, which can be handled with format detection.
 
-Equally, you can't use an interceptor to change the list of interceptors. This would be technically feasible if complex, but I can't think of any cases where it wouldn't be a code smell. In general terms, interceptors should be independent of one another. If they're not, it's probably best to just create a control interceptor that calls the others rather than trying to 'trick' the architecture to achieve the same ends. 
+Equally, you can't use an interceptor to change the list of interceptors. This would be technically feasible if complex, but I can't think of any cases where it wouldn't be a code smell. In general terms, interceptors should be independent of one another. If they're not, it's probably best to just create a control interceptor that calls the others rather than trying to 'trick' the architecture to achieve the same ends.
 
 ## Example interceptors
 
@@ -40,7 +40,7 @@ Quite a few people want to put CSRF or session tokens into every request.
 
 ```clj
 (def token (atom 2334))
-     
+
 (def token-interceptor
      (to-interceptor {:name "Token Interceptor"
                       :request #(assoc-in % [:params :token] @token)}))
@@ -61,9 +61,9 @@ We may wish to see a rule *appended*, however. The Google App Engine doesn't per
      (to-interceptor {:name "Google App Engine Delete Rule"
                       :request delete-is-empty}))
 
-;;; Since this rule uses `reduced`, it is important that it is 
+;;; Since this rule uses `reduced`, it is important that it is
 ;;; positioned at the end of the list, hence we use `concat` here
-(swap! standard-interceptors concat [app-engine-delete-interceptor])
+(swap! default-interceptors concat [app-engine-delete-interceptor])
 ```
 
 Finally, many systems return an empty JSON response when returning `nil`. Strictly speaking, they should return `"null"`.
@@ -78,5 +78,5 @@ Finally, many systems return an empty JSON response when returning `nil`. Strict
      (to-interceptor {:name "JSON special case nil"
                       :response empty-means-nil}))
 
-(swap! standard-interceptors concat [treat-nil-as-empty]))
+(swap! default-interceptors concat [treat-nil-as-empty]))
 ```
