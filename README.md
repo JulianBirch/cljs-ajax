@@ -147,8 +147,10 @@ The `error-handler` for `GET`, `POST`, and `PUT` is passed one parameter which i
 ## ajax-request
 
 The `ajax-request` is the simple interface.  It differs from the GET and POST API as follows:
+
+* **You can't use keywords to specify formats. You must provide a complete format in your request (see the [formats documentation](docs/formats.md) for more details)**
+* The API is harder to use.
 * You can use your own formats.
-* You can't use keywords to specify formats.  The API is harder to use.
 * It compiles to smaller code when advanced optimizations are switched on.
 * It doesn't do Content-Type discovery.
 * There's only one handler, so you have to handle errors.
