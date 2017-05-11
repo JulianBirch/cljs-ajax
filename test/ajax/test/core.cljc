@@ -45,7 +45,8 @@
          (params-to-str {:a 0
                          :b [1 2]
                          :c {:d 3 :e 4}
-                         "f" 5}))))
+                         "f" 5})))
+  (is (= "a=b%2Bc" (params-to-str {:a "b+c"}))))
 
 (deftest normalize
   (is (= "GET" (normalize-method :get)))

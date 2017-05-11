@@ -175,10 +175,12 @@
                (.flush)))))
 
 (defn params-to-str [params]
-  (->> (seq params)
-       (mapcat (param-to-str nil))
-       (map (fn [[k v]] (str k "=" v)))
-       (str/join "&")))
+  (let [url-encode-fn #? (:clj (fn [u] (java.net.URLEncoder/encode (str u) "UTF-8"))
+                          :cljs js/encodeURIComponent)]
+    (->> (seq params)
+         (mapcat (param-to-str nil))
+         (map (fn [[k v]] (str k "=" (url-encode-fn v))))
+         (str/join "&"))))
 
 (p/defn-curried uri-with-params [params params-to-str uri]
   (if params
