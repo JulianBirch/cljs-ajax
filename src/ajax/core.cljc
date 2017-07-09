@@ -1,6 +1,7 @@
 (ns ajax.core
   (:require [clojure.string :as str]
             [cognitect.transit :as t]
+            [ajax.url :as url]
             [ajax.protocols :refer
              [-body -process-request -process-response -abort -status
               -get-response-header -status-text -js-ajax-request
@@ -138,56 +139,12 @@
 
 ;;; Request Format Record
 
-#? (:cljs
-    (defn params-to-str-alt [params]
-      (if params
-        (-> params
-            clj->js
-            structs/Map.
-            query-data/createFromMap
-            .toString))))
-
-(declare param-to-str)
-
-(p/defn-curried vec-param-to-str [prefix key value]
-  (param-to-str prefix [key value]))
-
-(p/defn-curried param-to-str [prefix [key value]]
-  (let [k1 (if (keyword? key) (name key) key)
-        new-key (if prefix (str prefix "[" k1 "]") k1)]
-    (cond (string? value)
-          [[new-key value]]
-
-          (map? value)
-          (mapcat (param-to-str new-key) (seq value))
-
-          (sequential? value)
-          (apply concat (map-indexed (vec-param-to-str new-key)
-                                     (seq value)))
-
-          :else [[new-key value]])))
-
 (defn to-utf8-writer [to-str]
   #? (:cljs to-str
       :clj (fn write-utf8 [stream params]
              (doto (OutputStreamWriter. stream)
                (.write ^String (to-str params))
                (.flush)))))
-
-(defn params-to-str [params]
-  (let [url-encode-fn #? (:clj (fn [u] (java.net.URLEncoder/encode (str u) "UTF-8"))
-                          :cljs js/encodeURIComponent)]
-    (->> (seq params)
-         (mapcat (param-to-str nil))
-         (map (fn [[k v]] (str k "=" (url-encode-fn v))))
-         (str/join "&"))))
-
-(p/defn-curried uri-with-params [params params-to-str uri]
-  (if params
-    (str uri
-         (if (re-find #"\?" uri) "&" "?") ; add & if uri contains ?
-         (params-to-str params))
-    uri))
 
 (defn get-request-format [format]
   (cond
@@ -196,12 +153,19 @@
    (ifn? format) {:write format :content-type "text/plain"}
    :else {}))
 
-(defrecord ProcessGet [params-to-str]
+(p/defn-curried uri-with-params [{:keys [vec-strategy params]} uri]
+  (if params
+    (str uri
+         (if (re-find #"\?" uri) "&" "?") ; add & if uri contains ?
+         (url/params-to-str vec-strategy params))
+    uri))
+
+(defrecord ProcessGet []
   Interceptor
   (-process-request [_ {:keys [method] :as request}]
     (if (= method "GET")
       (reduced (update request :uri
-                       (uri-with-params (:params request) params-to-str)))
+                       (uri-with-params request)))
       request))
   (-process-response [_ response] response))
 
@@ -286,9 +250,11 @@
            :clj ["application/transit+msgpack"
                  "application/transit+json"])})))
 
-(defn url-request-format []
-  {:write (to-utf8-writer params-to-str)
-   :content-type "application/x-www-form-urlencoded; charset=utf-8"})
+(defn url-request-format
+  ([] (url-request-format {})) 
+  ([{:keys [vec-strategy]}]
+   {:write (to-utf8-writer (url/params-to-str vec-strategy))
+    :content-type "application/x-www-form-urlencoded; charset=utf-8"}))
 
 (defn raw-response-format
   ([] (map->ResponseFormat {:read -body
@@ -477,7 +443,7 @@
     (js-handler handler interceptors)
     (throw-error "No ajax handler provided.")))
 
-(def request-interceptors [(ProcessGet. params-to-str) (DirectSubmission.) (ApplyRequestFormat.)])
+(def request-interceptors [(ProcessGet.) (DirectSubmission.) (ApplyRequestFormat.)])
 
 (def default-interceptors (atom []))
 
@@ -514,8 +480,8 @@
            :transit (transit-request-format format-params)
            :json (json-request-format)
            :text (text-request-format)
-           :raw (url-request-format)
-           :url (url-request-format)
+           :raw (url-request-format format-params)
+           :url (url-request-format format-params)
            nil)))
 
 (defn keyword-response-format-element [format format-params]
