@@ -46,6 +46,12 @@ The following settings affect the interpretation of JSON responses:  (You must s
 * `:keywords?` - true/false specifies whether keys in maps will be keywordized
 * `:prefix` - the prefix to be stripped from the start of the JSON response. e.g. `while(1);` which is added by some APIs to [prevent JSON hijacking](https://stackoverflow.com/questions/2669690/why-does-google-prepend-while1-to-their-json-responses).  You should *always* use this if you've got a GET request.
 
+### GET specific settings
+
+The `:vec-strategy` setting affects how sequences are written out. 
+A `:vec-strategy` of `:java` will render `{:a [1 2]}` as `a=1&a=2`.
+A `:vec-strategy` of `:rails` will render `{:a [1 2]}` as `a[]=1&a[]=2`. This is also the correct setting for working with HTTP.
+
 ### GET/POST examples
 
 ```clojure
@@ -66,7 +72,15 @@ The following settings affect the interpretation of JSON responses:  (You must s
                         :b [1 2]
                         :c {:d 3 :e 4}
                         "f" 5}})
-;;; writes "a=0&b[0]=1&b[1]=2&c[d]=3&c[e]=4&f=5"
+;;; writes "a=0&b=1&b=2&c[d]=3&c[e]=4&f=5"
+
+(GET "/hello" {:params {:a 0
+                        :b [1 2]
+                        :c {:d 3 :e 4}
+                        "f" 5}
+               :vec-strategy :rails})
+;;; writes "a=0&b[]=1&b[]=2&c[d]=3&c[e]=4&f=5"
+
 
 (GET "/hello" {:handler handler
                :error-handler error-handler})
