@@ -23,6 +23,9 @@
 (defn handle-error [error]
   (println "Error" error))
 
+(defn handle-progress [e]
+  (println (str "Progress (" (.-loaded e) "/" (.-total e) ")")))
+
 (defn blob-response-handler
   [[status res]]
   (println (pr-str "status should be true:" status
@@ -176,6 +179,7 @@
                            :api (js/XMLHttpRequest.)
                            :handler blob-response-handler
                            :error-handler handle-error
+                           :progress-handler handle-progress
                            :response-format {:content-type "image/png"
                                              :type :blob
                                              :description "PNG file"
