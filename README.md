@@ -26,6 +26,7 @@ For advice on how to set up the server side in Clojure to work with cljs-ajax, p
 The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 
 * `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response. If you do not provide a handler, the contents of the `default-handler` atom will be called instead. By default this is `println`.
+* `:progress-handler` - the handler function for progress events. **This handler is only available when using the `goog.net.XhrIo` API**
 * `:error-handler` - the handler function for errors, should accept an error response (detailed below). If you do not provide an error-handler, the contents of the `default-error-handler` atom will be called instead. By default this is `println` for Clojure and writes an error to the console for ClojureScript.
 * `:finally` - a function that takes no parameters and will be triggered during the callback in addition to any other handlers
 * `:format` - specifies the format for the body of the request (Transit, JSON, etc.). Also sets the appropriate `Content-Type` header.  Defaults to `:transit` if not provided.
