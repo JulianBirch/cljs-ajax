@@ -179,6 +179,20 @@
                            :api (js/XMLHttpRequest.)
                            :handler blob-response-handler
                            :error-handler handle-error
+                           :response-format {:content-type "image/png"
+                                             :type :blob
+                                             :description "PNG file"
+                                             :read -body}}))
+
+  #? (:cljs (ajax-request {:uri "/ajax-form-data-png"
+                           :method "POST"
+                           :body (doto
+                                   (js/FormData.)
+                                   (.append "id" "19")
+                                   (.append "timeout" "0")
+                                   (.append "input" "Hello form-data POST"))
+                           :handler blob-response-handler
+                           :error-handler handle-error
                            :progress-handler handle-progress
                            :response-format {:content-type "image/png"
                                              :type :blob
