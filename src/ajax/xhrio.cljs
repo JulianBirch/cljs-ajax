@@ -20,7 +20,7 @@
      handler]
     (when-let [response-type (:type response-format)]
       (.setResponseType this (name response-type)))
-    (when progress-handler
+    (when (fn? progress-handler)
       (doto this
         (.setProgressEventsEnabled true)
         (events/listen goog.net.EventType.UPLOAD_PROGRESS progress-handler)))
