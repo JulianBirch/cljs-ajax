@@ -24,7 +24,7 @@
 (defn- to-entity [b]
   (condp instance? b
     array-of-bytes-type (ByteArrayEntity. b)
-    String (StringEntity. b "UTF-8")
+    String (StringEntity. ^String b "UTF-8")
     File (FileEntity. b)
     InputStream (InputStreamEntity. b)
     b))
