@@ -14,8 +14,9 @@
                  [org.clojure/clojurescript "1.7.228" :scope "provided"]
                  [lein-doo "0.1.6" :scope "test"]
                  [org.clojure/core.async "0.2.374" :scope "test"]]
-  :plugins [[lein-doo "0.1.6"]
-            [lein-cljsbuild "1.1.3"]]
+  :plugins [[lein-doo "0.1.7"]
+            [lein-cljsbuild "1.1.3"]
+            [lein-ancient "0.6.10"]]
   :hooks [leiningen.cljsbuild]
   :global-vars { *warn-on-reflection* true }
   :clean-targets ^{:protect false} ["target" "target-int" "target-test"]

@@ -3,6 +3,10 @@
    #? (:cljs [cljs.test]
        :clj [clojure.test :refer :all])
    [ajax.protocols :refer [-body]]
+   [ajax.interceptors :refer [get-request-format
+                              apply-request-format
+                              get-response-format
+                              is-response-format?]]
    [ajax.core :refer [get-default-format
                       normalize-method
                       normalize-request
@@ -23,15 +27,11 @@
                       process-request
                       process-response
                       transform-opts
-                      get-request-format
-                      get-response-format
-                      apply-request-format
                       json-read
-                      POST GET
-                      #?@ (:cljs [ResponseFormat] :clj [])]]
+                      POST GET]]
    [ajax.edn :refer [edn-request-format edn-response-format]])
    #? (:cljs (:require-macros [cljs.test :refer [deftest testing is]])
-       :clj (:import [ajax.core ResponseFormat]
+       :clj (:import [ajax.interceptors ResponseFormat]
                      [java.lang String]
                      [java.io ByteArrayInputStream])))
 
@@ -273,12 +273,15 @@
                      :response-format [:transit :json]}
                     transform-opts)
         response (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)]
-    (is (instance? ResponseFormat (get-response-format request)))
+    (is (is-response-format? (get-response-format detect-response-format request)))
     (let [format (get-default-format simple-reply request)]
       (is format))))
 
 (deftest response-format-kw
-  (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"keywords are not allowed as response formats in ajax calls:" (get-response-format {:response-format :json}))))
+  (is (thrown-with-msg? 
+      #?(:clj Exception :cljs js/Error) 
+      #"keywords are not allowed as response formats in ajax calls:" 
+      (get-response-format detect-response-format {:response-format :json}))))
 
 (deftest request-format-kw
   (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"keywords are not allowed as request formats in ajax calls:" (get-request-format :json))))

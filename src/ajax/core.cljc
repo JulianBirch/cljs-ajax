@@ -2,6 +2,10 @@
   (:require [clojure.string :as str]
             [cognitect.transit :as t]
             [ajax.url :as url]
+            [ajax.util :as u]
+            [ajax.interceptors :refer 
+             [map->ResponseFormat request-interceptors 
+              get-response-format]]
             [ajax.protocols :refer
              [-body -process-request -process-response -abort -status
               -get-response-header -status-text -js-ajax-request
@@ -13,13 +17,10 @@
                         [cheshire.core :as c]
                         [ajax.apache]
                         [clojure.java.io :as io]]
-                 :cljs [[goog.net.XhrIo :as xhr]
-                        [ajax.xhrio]
+                 :cljs [[ajax.xhrio]
                         [ajax.xml-http-request]
                         [goog.json :as goog-json]
-                        [goog.Uri.QueryData :as query-data]
-                        [goog.json.Serializer]
-                        [goog.structs :as structs]]))
+                        [goog.json.Serializer]]))
   #? (:clj
       (:import [java.io OutputStreamWriter ByteArrayOutputStream
                 InputStreamReader Closeable OutputStream
@@ -58,85 +59,6 @@
 
 (defn abort ([this] (-abort this)))
 
-(defn success? [status]
-  (some #{status} [200 201 202 204 205 206]))
-
-(defn throw-error [args]
-  (throw (#?(:clj Exception. :cljs js/Error.)
-           (str args))))
-
-;;; Response Format record
-
-#? (:clj (defn exception-message [^Exception e] (.getMessage e))
-    :cljs (defn exception-message [e] (.-message e)))
-
-(defn exception-response [e status {:keys [description]} xhrio]
-  (let [response {:status status
-                  :failure :error
-                  :response nil}
-        status-text (str (exception-message e)
-                         "  Format should have been "
-                         description)
-        parse-error (assoc response
-                      :status-text status-text
-                      :failure :parse
-                      :original-text (-body xhrio))]
-    (if (success? status)
-      parse-error
-      (assoc response
-        :status-text (-status-text xhrio)
-        :parse-error parse-error))))
-
-(defn fail [status status-text failure & params]
-  (let [response {:status status
-                  :status-text status-text
-                  :failure failure}]
-    [false (reduce conj
-                   response
-                   (map vec (partition 2 params)))]))
-
-(defn content-type-to-request-header [content-type]
-  (->> (if (string? content-type)
-         [content-type]
-         content-type)
-       (str/join ", ")))
-
-(defrecord ResponseFormat [read description content-type]
-  Interceptor
-  (-process-request [{:keys [content-type]} request]
-    "Sets the headers on the request"
-    (update request
-            :headers
-            #(merge {"Accept" (content-type-to-request-header content-type)}
-                    (or % {}))))
-  (-process-response [{:keys [read] :as format} xhrio]
-    "Transforms the raw response (an implementation of AjaxResponse)"
-    (try
-      (let [status #? (:clj (long (-status xhrio))
-                       :cljs (-status xhrio))
-            fail (partial fail status)]
-        (case status
-          0 (if (instance? Response xhrio)
-              [false xhrio]
-              (fail "Request failed." :failed))
-          -1 (if (-was-aborted xhrio)
-               (fail "Request aborted by client." :aborted)
-               (fail "Request timed out." :timeout))
-          204 [true nil]       ; 204 and 205 should have empty responses
-          205 [true nil]
-          (try
-            (let [response (read xhrio)]
-              (if (success? status)
-                [true response]
-                (fail (-status-text xhrio) :error :response response)))
-            (catch #? (:clj Exception :cljs js/Object) e
-                   [false (exception-response e status format xhrio)]))))
-      (catch #? (:clj Exception :cljs js/Object) e
-                                        ; These errors should never happen
-             (let [message #? (:clj (.getMessage e)
-                               :cljs (.-message e))]
-               (fail 0 message :exception :exception e))))))
-
 ;;; Request Format Record
 
 (defn to-utf8-writer [to-str]
@@ -146,59 +68,6 @@
                (.write ^String (to-str params))
                (.flush)))))
 
-(defn get-request-format [format]
-  (cond
-   (map? format) format
-   (keyword? format) (throw-error ["keywords are not allowed as request formats in ajax calls: " format])
-   (ifn? format) {:write format :content-type "text/plain"}
-   :else {}))
-
-(p/defn-curried uri-with-params [{:keys [vec-strategy params]} uri]
-  (if params
-    (str uri
-         (if (re-find #"\?" uri) "&" "?") ; add & if uri contains ?
-         (url/params-to-str vec-strategy params))
-    uri))
-
-(defrecord ProcessGet []
-  Interceptor
-  (-process-request [_ {:keys [method] :as request}]
-    (if (= method "GET")
-      (reduced (update request :uri
-                       (uri-with-params request)))
-      request))
-  (-process-response [_ response] response))
-
-(defrecord DirectSubmission []
-  Interceptor
-  (-process-request [_ {:keys [body params] :as request}]
-    (if (nil? body) request (reduced request)))
-  (-process-response [_ response] response))
-
-(defn apply-request-format [write params]
-  #? (:cljs (write params)
-      :clj (let [stream (ByteArrayOutputStream.)]
-             (write stream params)
-             (.toByteArray stream))))
-
-(defrecord ApplyRequestFormat []
-  Interceptor
-  (-process-request
-    [_ {:keys [uri method format params headers] :as request}]
-    (let [{:keys [write content-type]} (get-request-format format)
-          body (if-not (nil? write)
-                 (apply-request-format write params)
-                 (throw-error ["unrecognized request format: "
-                               format]))
-          headers (or headers {})]
-      (assoc request
-        :body body
-        :headers (if content-type
-                   (assoc headers "Content-Type"
-                          (content-type-to-request-header
-                           content-type))
-                   headers))))
-  (-process-response [_ xhrio] xhrio))
 
 ;;; Standard Formats
 
@@ -292,7 +161,6 @@
 (defn json-request-format []
   {:write write-json
    :content-type "application/json"})
-
 
 ;;; strip prefix for CLJ
 
@@ -406,19 +274,6 @@
 
 ;;; AJAX calls
 
-(defn get-response-format [{:keys [response-format] :as opts}]
-  (cond
-   (instance? ResponseFormat response-format) response-format
-   (vector? response-format) (detect-response-format opts)
-   (map? response-format) (map->ResponseFormat response-format)
-   (keyword? response-format) (throw-error ["keywords are not allowed as response formats in ajax calls: " response-format])
-   (ifn? response-format)
-   (map->ResponseFormat {:read response-format
-                         :description "custom"
-                         :content-type "*/*"})
-   :else (throw-error ["unrecognized response format: "
-                       response-format])))
-
 (defn normalize-method [method]
   (if (keyword? method)
     (str/upper-case (name method))
@@ -441,14 +296,12 @@
 (defn base-handler [interceptors {:keys [handler]}]
   (if handler
     (js-handler handler interceptors)
-    (throw-error "No ajax handler provided.")))
-
-(def request-interceptors [(ProcessGet.) (DirectSubmission.) (ApplyRequestFormat.)])
+    (u/throw-error "No ajax handler provided.")))
 
 (def default-interceptors (atom []))
 
 (defn normalize-request [request]
-  (let [response-format (get-response-format request)]
+  (let [response-format (get-response-format detect-response-format request)]
     (-> request
         (update :method normalize-method)
         (update :interceptors
