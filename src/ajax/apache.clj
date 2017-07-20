@@ -1,7 +1,8 @@
 (ns ajax.apache
   (:require [ajax.protocols :refer [map->Response]]
             [clojure.string :as s])
-  (:import [org.apache.http HttpResponse]
+  (:import [clojure.lang IDeref IBlockingDeref IPending]
+           [org.apache.http HttpResponse]
            [org.apache.http.entity ByteArrayEntity StringEntity
             FileEntity InputStreamEntity]
            [org.apache.http.client.methods HttpRequestBase
@@ -14,7 +15,7 @@
            [java.lang Exception]
            [java.util.concurrent Future]
            [java.net URI SocketTimeoutException]
-           [java.io File InputStream]))
+           [java.io File InputStream Closeable]))
 
 ;;; Chunks of this code liberally ripped off dakrone/clj-http
 ;;; Although that uses the synchronous API
@@ -95,11 +96,32 @@
 (defn- to-clojure-future
   "Converts a normal Java future to one similar to the one generated
    by `clojure.core/future`"
-  [^Future fut ^java.io.Closeable client]
-  (future
-    (try
-      (.get fut)
-      (finally (.close client)))))
+  [^Future fut ^Closeable client]
+  (let [^Future f (future
+                    (try
+                      (.get fut)
+                      (finally (.close client))))]
+    (reify
+      IDeref
+      (deref [_] (deref f))
+      IBlockingDeref
+      (deref [_ timeout-ms timeout-val]
+        (deref f timeout-ms timeout-val))
+      IPending
+      (isRealized [_] (.isDone f))
+      Future
+      (get [_] (.get f))
+      (get [_ timeout unit]
+        (.get f timeout unit))
+      (isCancelled [_] (.isCancelled f))
+      (isDone [_] (.isDone f))
+      (cancel [_ interrupt?]
+        (.cancel f interrupt?))
+      AjaxRequest
+      (-abort [_]
+        (try
+          (.cancel fut true)
+          (finally (.close client)))))))
 
 (defrecord Connection []
   AjaxImpl
