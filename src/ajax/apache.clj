@@ -1,5 +1,6 @@
 (ns ajax.apache
-  (:require [ajax.protocols :refer [map->Response]]
+  (:require [ajax.protocols :refer [AjaxImpl AjaxRequest AjaxResponse
+                                    map->Response]]
             [clojure.string :as s])
   (:import [org.apache.http HttpResponse]
            [org.apache.http.entity ByteArrayEntity StringEntity
@@ -9,9 +10,6 @@
            [org.apache.http.client.config RequestConfig]
            [org.apache.http.concurrent FutureCallback]
            [org.apache.http.impl.nio.client HttpAsyncClients]
-           [ajax.protocols AjaxImpl AjaxRequest AjaxResponse
-            Interceptor Response]
-           [java.lang Exception]
            [java.util.concurrent Future]
            [java.net URI SocketTimeoutException]
            [java.io File InputStream]))
@@ -126,7 +124,7 @@
       (try
         (.cancel future interrupt?)
         (finally (.close client))))
-    ajax.protocols.AjaxRequest
+    AjaxRequest
     (-abort [_]
       (try
         (.cancel future true)
