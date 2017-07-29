@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [cognitect.transit :as t]
             [ajax.url :as url]
+            [ajax.json :as json]
             [ajax.util :as u]
             [ajax.interceptors :refer 
              [map->ResponseFormat request-interceptors 
@@ -33,6 +34,9 @@
       :cljs
       (:require-macros [ajax.macros :as m]
                        [poppea :as p])))
+
+(def json-request-format json/json-request-format)
+(def json-response-format json/json-response-format)
 
 (defn process-response [response interceptor]
   "-process-response with the arguments flipped for use in reduce"
@@ -153,58 +157,7 @@
     :cljs
     (def text-response-format raw-response-format))
 
-#? (:cljs (defn write-json [data]
-            (.serialize (goog.json.Serializer.) (clj->js data)))
-    :clj (defn write-json [stream data]
-           (c/generate-stream data (io/writer stream))))
-
-(defn json-request-format []
-  {:write write-json
-   :content-type "application/json"})
-
 ;;; strip prefix for CLJ
-
-;;; Sort out stream closing
-
-#? (:clj (defn strip-prefix
-           ^InputStream [^String prefix ^InputStream text]
-           (if prefix
-             (let [utf8 (.getBytes prefix "UTF-8")]
-               (loop [i 0]
-                 (if (and (< i (alength utf8))
-                          (= (aget utf8 i) (.read text)))
-                   (recur (inc i))
-                   text)))
-             text))
-     :cljs (defn strip-prefix [^String prefix text]
-             (if (and prefix (= 0 (.indexOf text prefix)))
-               (.substring text (.-length prefix))
-               text)))
-
-(p/defn-curried json-read [prefix raw keywords? xhrio]
-  (let [text (strip-prefix prefix (-body xhrio))]
-    #? (:cljs (let [json (goog-json/parse text)]
-                (if raw
-                  json
-                  (js->clj json :keywordize-keys keywords?)))
-        :clj (c/parse-stream (io/reader text) keywords?))))
-
-(defn json-response-format
-  "Returns a JSON response format.  Options include
-   :keywords? Returns the keys as keywords
-   :prefix A prefix that needs to be stripped off.  This is to
-   combat JSON hijacking.  If you're using JSON with GET request,
-   you should think about using this.
-   http://stackoverflow.com/questions/2669690/why-does-google-prepend-while1-to-their-json-responses
-   http://haacked.com/archive/2009/06/24/json-hijacking.aspx"
-  ([] (json-response-format {}))
-  ([{:keys [prefix keywords? raw]}]
-     (map->ResponseFormat
-      {:read (json-read prefix raw keywords?)
-       :description (str "JSON"
-                         (if prefix (str " prefix '" prefix "'"))
-                         (if keywords? " keywordize"))
-       :content-type ["application/json"]})))
 
 ;;; Detection and Accept Code
 

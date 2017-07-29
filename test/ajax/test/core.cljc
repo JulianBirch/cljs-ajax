@@ -27,8 +27,8 @@
                       process-request
                       process-response
                       transform-opts
-                      json-read
                       POST GET]]
+   [ajax.json :as json]
    [ajax.edn :refer [edn-request-format edn-response-format]])
    #? (:cljs (:require-macros [cljs.test :refer [deftest testing is]])
        :clj (:import [ajax.interceptors ResponseFormat]
@@ -287,9 +287,12 @@
   (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"keywords are not allowed as request formats in ajax calls:" (get-request-format :json))))
 
 (deftest json-parsing
-  (let [response (FakeXhrIo. "application/json; charset blah blah" "while(1);{\"a\":\"b\"}" 200)]
-    (is (= {"a" "b"} (json-read "while(1);" false false response)))
-    (is (= {:a "b"} (json-read "while(1);" false true response)))))
+  (let [response (FakeXhrIo. "application/json; charset blah blah" "while(1);{\"a\":\"b\"}" 200)
+        json-read (fn [prefix keywords? raw]
+                    (let [opts {:prefix prefix :keywords? keywords? :raw raw}]
+                      ((:read (json-response-format opts)) response)))]
+    (is (= {"a" "b"} (json-read "while(1);" false false)))
+    (is (= {:a "b"} (json-read "while(1);" false true)))))
 
 #_ (deftest empty-response
   (let [r1 (atom "whatever")
