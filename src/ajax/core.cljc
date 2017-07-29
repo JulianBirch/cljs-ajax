@@ -19,9 +19,7 @@
                         [ajax.apache]
                         [clojure.java.io :as io]]
                  :cljs [[ajax.xhrio]
-                        [ajax.xml-http-request]
-                        [goog.json :as goog-json]
-                        [goog.json.Serializer]]))
+                        [ajax.xml-http-request]]))
   #? (:clj
       (:import [java.io OutputStreamWriter ByteArrayOutputStream
                 InputStreamReader Closeable OutputStream
@@ -35,8 +33,13 @@
       (:require-macros [ajax.macros :as m]
                        [poppea :as p])))
 
-(def json-request-format json/json-request-format)
-(def json-response-format json/json-response-format)
+;;; NB As a matter of policy, this file shouldn't reference any
+;;; google closure files. That functionality should be off in
+;;; specific namespaces and exposed here in a platform indepdent 
+;;; way
+
+;;; Ideally this would be true of all functionality, but it's
+;;; an ongoing project.
 
 (defn process-response [response interceptor]
   "-process-response with the arguments flipped for use in reduce"
@@ -72,8 +75,10 @@
                (.write ^String (to-str params))
                (.flush)))))
 
-
 ;;; Standard Formats
+
+(def json-request-format json/json-request-format)
+(def json-response-format json/json-response-format)
 
 (defn transit-type [{:keys [type]}]
   (or type #? (:cljs :json :clj :msgpack)))

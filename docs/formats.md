@@ -55,6 +55,17 @@ There are functions that return request and response formats.  Most of these fun
 
 EDN is deprecated, but the functions `edn-request-format` and `edn-response-format` are available in the `ajax.edn` namespace.
 
+### Google Closure JSON
+
+Earlier versions used Google Closure's implementation of JSON. This was the 
+correct choice at the time since native implementations were pretty 
+inconsistent. These days, it's more likely that you'll want to be using the 
+browser native JSON implementation which is vastly faster and handles dates 
+better, but if you still need the old behaviour you can get it by using
+`goog-json-request-format` and `goog-json-response-format` in the 
+`ajax.goog-json` namespace. They support the same options as the standard JSON
+implementation and share most of the internal code.
+
 ## Non-standard formats
 
 To get the raw XhrIo object back:
