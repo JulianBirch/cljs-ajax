@@ -1,0 +1,3 @@
+*.clj text eol=lf
+*.cljc text eol=lf
+*.cljs text eol=lf
