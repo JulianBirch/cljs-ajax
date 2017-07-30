@@ -1,8 +1,8 @@
 (ns ajax.core
   (:require [clojure.string :as str]
-            [cognitect.transit :as t]
             [ajax.url :as url]
             [ajax.json :as json]
+            [ajax.transit :as transit]
             [ajax.util :as u]
             [ajax.interceptors :refer 
              [map->ResponseFormat request-interceptors 
@@ -80,53 +80,8 @@
 (def json-request-format json/json-request-format)
 (def json-response-format json/json-response-format)
 
-(defn transit-type [{:keys [type]}]
-  (or type #? (:cljs :json :clj :msgpack)))
-
-#? (:cljs (defn transit-write-fn
-            [type request]
-            (let [writer (or (:writer request)
-                             (t/writer type request))]
-              (fn transit-write-params [params]
-                (t/write writer params))))
-    :clj (p/defn-curried transit-write-fn
-           [type request stream params]
-           (let [writer (t/writer stream type request)]
-             (t/write writer params))))
-
-(defn transit-request-format
-  ([] (transit-request-format {}))
-  ([request]
-     (let [type (transit-type request)
-           mime-type (if (= type :json) "json" "msgpack")]
-       {:write (transit-write-fn type request)
-        :content-type (str "application/transit+" mime-type)})))
-
-#? (:cljs (defn transit-read-fn [request]
-            (let [reader (or (:reader request)
-                             (t/reader :json request))]
-              (fn transit-read-response [response]
-                (t/read reader (-body response)))))
-    :clj (p/defn-curried transit-read-fn [request response]
-           (let [content-type (get-content-type response)
-                 type (if (.contains content-type "msgpack")
-                        :msgpack :json)
-                 stream (-body response)
-                 reader (t/reader stream type request)]
-             (t/read reader))))
-
-(defn transit-response-format
-  ([] (transit-response-format {}))
-  ([request]
-     (transit-response-format (transit-type request) request))
-  ([type request]
-     (map->ResponseFormat
-      {:read (transit-read-fn request)
-       :description "Transit"
-       :content-type
-       #? (:cljs ["application/transit+json"]
-           :clj ["application/transit+msgpack"
-                 "application/transit+json"])})))
+(def transit-request-format transit/transit-request-format)
+(def transit-response-format transit/transit-response-format)
 
 (defn url-request-format
   ([] (url-request-format {})) 
