@@ -1,5 +1,6 @@
 (ns ajax.apache
-  (:require [ajax.protocols :refer [map->Response]]
+  (:require [ajax.protocols :refer [map->Response
+              AjaxImpl AjaxRequest AjaxResponse]]
             [clojure.string :as s])
   (:import [clojure.lang IDeref IBlockingDeref IPending]
            [org.apache.http HttpResponse]
@@ -10,8 +11,6 @@
            [org.apache.http.client.config RequestConfig]
            [org.apache.http.concurrent FutureCallback]
            [org.apache.http.impl.nio.client HttpAsyncClients]
-           [ajax.protocols AjaxImpl AjaxRequest AjaxResponse
-            Interceptor Response]
            [java.lang Exception]
            [java.util.concurrent Future]
            [java.net URI SocketTimeoutException]
@@ -25,7 +24,7 @@
 (defn- to-entity [b]
   (condp instance? b
     array-of-bytes-type (ByteArrayEntity. b)
-    String (StringEntity. b "UTF-8")
+    String (StringEntity. ^String b "UTF-8")
     File (FileEntity. b)
     InputStream (InputStreamEntity. b)
     b))

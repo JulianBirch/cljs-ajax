@@ -1,4 +1,4 @@
-(defproject cljs-ajax "0.6.0"
+(defproject cljs-ajax "0.7.0-SNAPSHOT"
   :min-lein-version "2.5.2" ;;; lower can't run tests in cljc
   :description "A simple Ajax library for ClojureScript"
   :url "https://github.com/JulianBirch/cljs-ajax"
