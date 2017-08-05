@@ -3,12 +3,12 @@
    #? (:cljs [cljs.test]
        :clj [clojure.test :refer :all])
    [ajax.protocols :refer [-body]]
+   [ajax.formats :as f]
    [ajax.interceptors :refer [get-request-format
                               apply-request-format
                               get-response-format
                               is-response-format?]]
-   [ajax.core :refer [get-default-format
-                      normalize-method
+   [ajax.core :refer [normalize-method
                       normalize-request
                       to-interceptor
                       ajax-request
@@ -22,10 +22,8 @@
                       keyword-request-format
                       keyword-response-format
                       detect-response-format
-                      accept-header
                       default-formats
                       process-request
-                      process-response
                       transform-opts
                       POST GET]]
    [ajax.json :as json]
@@ -55,8 +53,8 @@
 
 (deftest test-get-default-format
   (letfn [(make-format [content-type]
-            (get-default-format (FakeXhrIo. content-type nil nil)
-                                {:response-format default-formats}))
+            (f/get-default-format (FakeXhrIo. content-type nil nil)
+                                {:response-format @default-formats}))
           (detects [{:keys [from format]}] (is format (= (:description (make-format from)))))]
     (detects {:format "JSON"     :from "application/json;..."})
     (detects {:format "raw text" :from "text/plain;..."})
@@ -76,7 +74,7 @@
          (:content-type (transit-request-format))))
   (is (vector? (keyword-response-format [:json :transit] {})))
   (is (map? (first (keyword-response-format [:json :transit] {}))))
-  (is (= ["application/json"] (accept-header {:response-format [(json-response-format {})]})))
+  (is (= ["application/json"] (f/accept-header {:response-format [(json-response-format {})]})))
   (is (= #? (:clj ["application/json" "application/transit+msgpack" "application/transit+json"]
              :cljs ["application/json" "application/transit+json"])
          (multi-content-type [:json :transit])))
@@ -274,7 +272,7 @@
                     transform-opts)
         response (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)]
     (is (is-response-format? (get-response-format detect-response-format request)))
-    (let [format (get-default-format simple-reply request)]
+    (let [format (f/get-default-format simple-reply request)]
       (is format))))
 
 (deftest response-format-kw

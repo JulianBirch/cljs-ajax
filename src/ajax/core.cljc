@@ -3,10 +3,9 @@
             [ajax.url :as url]
             [ajax.json :as json]
             [ajax.transit :as transit]
+            [ajax.formats :as f]
             [ajax.util :as u]
-            [ajax.interceptors :refer 
-             [map->ResponseFormat request-interceptors 
-              get-response-format]]
+            [ajax.interceptors :as i]
             [ajax.protocols :refer
              [-body -process-request -process-response -abort -status
               -get-response-header -status-text -js-ajax-request
@@ -21,14 +20,9 @@
                  :cljs [[ajax.xhrio]
                         [ajax.xml-http-request]]))
   #? (:clj
-      (:import [java.io OutputStreamWriter ByteArrayOutputStream
-                InputStreamReader Closeable OutputStream
-                InputStream]
-               [java.lang String]
-               [java.util Scanner]
+      (:import [java.lang String]
                [ajax.apache Connection]
-               [ajax.protocols AjaxImpl AjaxRequest
-                AjaxResponse Interceptor Response])
+               [java.io Closeable])
       :cljs
       (:require-macros [ajax.macros :as m]
                        [poppea :as p])))
@@ -41,29 +35,7 @@
 ;;; Ideally this would be true of all functionality, but it's
 ;;; an ongoing project.
 
-(defn process-response [response interceptor]
-  "-process-response with the arguments flipped for use in reduce"
-  (-process-response interceptor response))
-
-(defn process-request [request interceptor]
-  "-process-request with the arguments flipped for use in reduce"
-  (-process-request interceptor request))
-
-(defrecord StandardInterceptor [name request response]
-  Interceptor
-  (-process-request [{:keys [request]} opts]
-    (request opts))
-  (-process-response [{:keys [response]} xhrio]
-    (response xhrio)))
-
-(defn to-interceptor [m]
-  "Utility function. If you want to create your own interceptor
-   quickly, this will do the job. Note you don't need to specify
-   both methods. (Or indeed either, but it won't do much under
-   those circumstances.)"
-  (map->StandardInterceptor (merge
-                             {:request identity :response identity}
-                             m)))
+(def to-interceptor i/to-interceptor)
 
 (defn abort [this]
   "Call this on the result of `ajax-request` to cancel the request." 
@@ -77,57 +49,12 @@
 (def transit-request-format transit/transit-request-format)
 (def transit-response-format transit/transit-response-format)
 
-(defn- to-utf8-writer [to-str]
-  #? (:cljs to-str
-      :clj (fn write-utf8 [stream params]
-             (doto (OutputStreamWriter. stream)
-               (.write ^String (to-str params))
-               (.flush)))))
+(def url-request-format url/url-request-format)
 
-(defn url-request-format
-  "The request format for simple POST and GET."
-  ([] (url-request-format {})) 
-  ([{:keys [vec-strategy]}]
-   {:write (to-utf8-writer (url/params-to-str vec-strategy))
-    :content-type "application/x-www-form-urlencoded; charset=utf-8"}))
-
-(defn raw-response-format
-  "This will literally return whatever the underlying implementation
-   considers has been sent. Obviously, this is highly implementation
-   dependent, gives different results depending on your platform but
-   is nonetheless really rather useful."
-  ([] (map->ResponseFormat {:read -body
-                            :description #? (:cljs "raw text"
-                                             :clj "raw binary")
-                            :content-type ["*/*"]}))
-  ([_] (raw-response-format)))
-
-(defn text-request-format []
-  {:write (to-utf8-writer identity)
-   :content-type "text/plain; charset=utf-8"})
-
-#? (:clj
-    ;;; http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
-    (do
-      (defn response-to-string [response]
-        "Interprets the response as text (a string). Isn't likely 
-         to give you a good outcome if the response wasn't text."
-        (let [s (doto (Scanner. ^InputStream (-body response)
-                                "UTF-8")
-                  (.useDelimiter "\\A"))]
-          (if (.hasNext s) (.next s) "")))
-
-      (defn text-response-format
-        ([] (map->ResponseFormat {:read response-to-string
-                                  :description "raw text"
-                                  :content-type ["*/*"]}))
-        ([_] (text-response-format))))
-    :cljs
-    ;;; For CLJS, there's no distinction betweeen raw and text
-    ;;; format, because it's a string in the API anyway.
-    (def text-response-format raw-response-format))
-
-;;; strip prefix for CLJ
+(def text-request-format f/text-request-format)
+(def text-response-format f/text-response-format)
+; There's no raw-request-format because it's handled by the DirectSubmission code
+(def raw-response-format f/raw-response-format)
 
 ;;; Detection and Accept Code
 
@@ -139,68 +66,9 @@
    ["text/html" text-response-format]
    ["*/*" raw-response-format]])
 
-(p/defn-curried get-format [request format-entry]
-  "Converts one of a number of types to a response format.
-   Note that it processes `[text format]` the same as `format`,
-   which makes it easier to work with detection vectors such as
-   `default-formats`.
-   
-   It also supports providing formats as raw functions. I don't 
-   know if anyone has ever used this."
-  (cond
-   (or (nil? format-entry) (map? format-entry))
-   format-entry
-
-   (vector? format-entry)
-   (get-format request (second format-entry))
-
-   ;;; Must be a format generating function
-   :else (format-entry request)))
-
-(p/defn-curried get-accept-entries [request format-entry]
-  (let [fe (if (vector? format-entry)
-             (first format-entry)
-             (:content-type (get-format request format-entry)))]
-    (cond (nil? fe) ["*/*"]
-          (string? fe) [fe]
-          :else fe)))
-
-(p/defn-curried content-type-matches
-  [^String content-type ^String accept]
-  (or (= accept "*/*")
-      (>= (.indexOf content-type accept) 0)))
-
-(p/defn-curried detect-content-type
-  [content-type request format-entry]
-  (let [accept (get-accept-entries request format-entry)]
-    (some (content-type-matches content-type) accept)))
-
-(defn get-default-format
-  [response {:keys [response-format] :as request}]
-  (let [f (detect-content-type (u/get-content-type response) request)]
-    (->> response-format
-         (filter f)
-         first
-         (get-format request))))
-
-(p/defn-curried detect-response-format-read
-  [request response]
-  (let [format (get-default-format response request)]
-    ((:read format) response)))
-
-(defn accept-header [{:keys [response-format] :as request}]
-  (if (vector? response-format)
-    (mapcat (get-accept-entries request) response-format)
-    (get-accept-entries request response-format)))
-
 (defn detect-response-format
-  ([] (detect-response-format {:response-format default-formats}))
-  ([opts]
-     (let [accept (accept-header opts)]
-       (map->ResponseFormat
-        {:read (detect-response-format-read opts)
-         :format (str "(from " accept ")")
-         :content-type accept}))))
+  ([] (f/detect-response-format {:response-format default-formats}))
+  ([opts] (f/detect-response-format opts)))
 
 ;;; AJAX calls
 
@@ -231,17 +99,21 @@
 (def default-interceptors (atom []))
 
 (defn normalize-request [request]
-  (let [response-format (get-response-format detect-response-format request)]
+  (let [response-format (i/get-response-format detect-response-format request)]
     (-> request
         (update :method normalize-method)
         (update :interceptors
                 #(concat [response-format]
                          (or % @default-interceptors)
-                         request-interceptors)))))
+                         i/request-interceptors)))))
 
 (defn new-default-api []
   #? (:clj  (ajax.apache/Connection.)
       :cljs (new goog.net.XhrIo)))
+
+(defn process-request [request interceptor]
+  "-process-request with the arguments flipped for use in reduce"
+  (-process-request interceptor request))
 
 (defn raw-ajax-request [{:keys [interceptors] :as request}]
   "The main request function."

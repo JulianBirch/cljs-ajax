@@ -48,12 +48,13 @@
 
 #?@ (:clj  ((:require 
              [poppea :as p]
+             [ajax.util :as u]
              [clojure.string :as str]))
      :cljs ((:require 
-             [clojure.string :as str])
-             (:require-macros [poppea :as p])))
+             [clojure.string :as str]
+             [ajax.util :as u])
+             (:require-macros [poppea :as p]))))
 
-)
 
 (defn- key-encode [key]
   (if (keyword? key) (name key) key))
@@ -115,3 +116,10 @@
          (param-to-key-value-pairs (to-vec-key-transform vec-strategy) nil)
          (map key-value-pair-to-str)
          (str/join "&")))
+
+(defn url-request-format
+  "The request format for simple POST and GET."
+  ([] (url-request-format {})) 
+  ([{:keys [vec-strategy]}]
+   {:write (u/to-utf8-writer (params-to-str vec-strategy))
+    :content-type "application/x-www-form-urlencoded; charset=utf-8"}))

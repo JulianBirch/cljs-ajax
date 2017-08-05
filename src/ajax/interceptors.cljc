@@ -29,6 +29,26 @@
         :cljs
         (:require-macros [ajax.macros :as m]
                          [poppea :as p])))
+
+;;; Utility
+
+(defrecord StandardInterceptor [name request response]
+  Interceptor
+  (-process-request [{:keys [request]} opts]
+    (request opts))
+  (-process-response [{:keys [response]} xhrio]
+    (response xhrio)))
+
+(defn to-interceptor [m]
+  "Utility function. If you want to create your own interceptor
+   quickly, this will do the job. Note you don't need to specify
+   both methods. (Or indeed either, but it won't do much under
+   those circumstances.)"
+  (map->StandardInterceptor (merge
+                             {:request identity :response identity}
+                             m)))
+
+
 ;;; Response Format record
 
 (defn- success? [status]
