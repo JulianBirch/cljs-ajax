@@ -4,6 +4,7 @@
        :clj [clojure.test :refer :all])
    [ajax.protocols :refer [-body]]
    [ajax.formats :as f]
+   [ajax.easy :as easy]
    [ajax.simple :as simple]
    [ajax.interceptors :refer [get-request-format
                               apply-request-format
@@ -18,11 +19,8 @@
                       json-request-format
                       transit-response-format
                       transit-request-format
-                      keyword-request-format
-                      keyword-response-format
                       detect-response-format
                       default-formats
-                      transform-opts
                       POST GET]]
    [ajax.json :as json]
    [ajax.edn :refer [edn-request-format edn-response-format]])
@@ -61,17 +59,17 @@
     (detects {:format "raw text" :from "application/xml;..."})))
 
 (defn multi-content-type [input]
-  (let [a (keyword-response-format input {})
+  (let [a (easy/keyword-response-format input {})
         a2 (detect-response-format {:response-format a})]
     (:content-type a2)))
 
 (deftest keywords
-  (is (= (:content-type (keyword-response-format :transit {}))
+  (is (= (:content-type (easy/keyword-response-format :transit {}))
          (:content-type (transit-response-format {}))))
-  (is (= (:content-type (keyword-request-format :transit {}))
+  (is (= (:content-type (easy/keyword-request-format :transit {}))
          (:content-type (transit-request-format))))
-  (is (vector? (keyword-response-format [:json :transit] {})))
-  (is (map? (first (keyword-response-format [:json :transit] {}))))
+  (is (vector? (easy/keyword-response-format [:json :transit] {})))
+  (is (map? (first (easy/keyword-response-format [:json :transit] {}))))
   (is (= ["application/json"] (f/accept-header {:response-format [(json-response-format {})]})))
   (is (= #? (:clj ["application/json" "application/transit+msgpack" "application/transit+json"]
              :cljs ["application/json" "application/transit+json"])
@@ -110,8 +108,8 @@
                          :headers nil
                          :uri "/test"
                          :method "POST"
-                         :format (keyword-request-format nil {})
-                         :response-format (keyword-response-format nil {})})]
+                         :format (easy/keyword-request-format nil {})
+                         :response-format (easy/keyword-response-format nil {})})]
     (is (= "application/transit+json, application/transit+transit, application/json, text/plain, text/html, */*" (get headers "Accept")))))
 
 ; NB This also tests that the vec-strategy has reverted to :java
@@ -262,12 +260,12 @@
     (is (= {"a" "b"} @r2))))
 
 (deftest format-interpretation
-  (is (map? (keyword-response-format {} {}))))
+  (is (map? (easy/keyword-response-format {} {}))))
 
 (deftest composite-format
   (let [request (-> {:format :raw
                      :response-format [:transit :json]}
-                    transform-opts)
+                    easy/transform-opts)
         response (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)]
     (is (is-response-format? (get-response-format detect-response-format request)))
     (let [format (f/get-default-format simple-reply request)]

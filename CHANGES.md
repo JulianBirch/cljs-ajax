@@ -5,6 +5,8 @@
 * There is some work being done with (progress handlers)[(https://github.com/JulianBirch/cljs-ajax/pull/183)]. Be warned that this API is subject to change in later versions and should be considered unsupported at the present time.
 * The json implementation now defaults to the browser native code. You can revert to the previous Google Closure behaviour using the notes in (docs/formats.md)[formats.md].
 * It is intended that the default implementation for JavaScript uses XmlHttpRequest directly and XhrIO is deprecated in 0.8. Be warned. 
+* `default-formats` is now an atom.
+* A lot of the internal implementation has moved around into specific files. If you rely upon the documented API this should not cause you any problems.
 
 ## Version 0.6
 

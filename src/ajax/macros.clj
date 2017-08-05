@@ -3,7 +3,7 @@
 (defmacro easy-api [method]
   (let [uri (symbol "uri")
         opts (symbol "opts")
-        easy-ajax-request (symbol "easy-ajax-request")]
+        easy-ajax-request (symbol "ajax.easy/easy-ajax-request")]
     `(defn ~method
        "accepts the URI and an optional map of options, options include:
         :handler - the handler function for successful operation
