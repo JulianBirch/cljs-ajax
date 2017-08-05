@@ -4,13 +4,12 @@
        :clj [clojure.test :refer :all])
    [ajax.protocols :refer [-body]]
    [ajax.formats :as f]
+   [ajax.simple :as simple]
    [ajax.interceptors :refer [get-request-format
                               apply-request-format
                               get-response-format
                               is-response-format?]]
-   [ajax.core :refer [normalize-method
-                      normalize-request
-                      to-interceptor
+   [ajax.core :refer [to-interceptor
                       ajax-request
                       url-request-format
                       raw-response-format
@@ -23,7 +22,6 @@
                       keyword-response-format
                       detect-response-format
                       default-formats
-                      process-request
                       transform-opts
                       POST GET]]
    [ajax.json :as json]
@@ -34,8 +32,8 @@
                      [java.io ByteArrayInputStream])))
 
 (deftest normalize
-  (is (= "GET" (normalize-method :get)))
-  (is (= "POST" (normalize-method "POST"))))
+  (is (= "GET" (simple/normalize-method :get)))
+  (is (= "POST" (simple/normalize-method "POST"))))
 
 (defrecord FakeXhrIo [content-type response status]
   ajax.protocols/AjaxImpl
@@ -85,8 +83,8 @@
 ;;; in ajax-request
 (defn process-inputs [request]
   (let [{:keys [interceptors] :as request}
-        (normalize-request request)]
-    (reduce process-request request interceptors)))
+        (simple/normalize-request request)]
+    (reduce simple/process-request request interceptors)))
 
 (defn as-string [body]
   #? (:cljs body

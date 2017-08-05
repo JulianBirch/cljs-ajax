@@ -6,6 +6,7 @@
             [ajax.formats :as f]
             [ajax.util :as u]
             [ajax.interceptors :as i]
+            [ajax.simple :as simple]
             [ajax.protocols :refer
              [-body -process-request -process-response -abort -status
               -get-response-header -status-text -js-ajax-request
@@ -70,62 +71,7 @@
   ([] (f/detect-response-format {:response-format default-formats}))
   ([opts] (f/detect-response-format opts)))
 
-;;; AJAX calls
-
-(defn normalize-method [method]
-  (if (keyword? method)
-    (str/upper-case (name method))
-    method))
-
-(p/defn-curried js-handler [handler interceptors response]
-  (let [process (fn process [response interceptor]
-            (-process-response interceptor response))
-        processed (reduce process response interceptors)]
-    ;;; This requires a bit of explanation: if we return a closeable,
-    ;;; it should be wrapping the original response, so we _don't_
-    ;;; close the original response stream
-    ;;; If you're writing a weird interceptor that doesn't do this,
-    ;;; remember to close the original stream yourself
-    #? (:clj (if (and response
-                      (instance? Closeable (second processed)))
-               (.close ^Closeable (-body response))))
-    (handler processed)))
-
-(defn base-handler [interceptors {:keys [handler]}]
-  (if handler
-    (js-handler handler interceptors)
-    (u/throw-error "No ajax handler provided.")))
-
-(def default-interceptors (atom []))
-
-(defn normalize-request [request]
-  (let [response-format (i/get-response-format detect-response-format request)]
-    (-> request
-        (update :method normalize-method)
-        (update :interceptors
-                #(concat [response-format]
-                         (or % @default-interceptors)
-                         i/request-interceptors)))))
-
-(defn new-default-api []
-  #? (:clj  (ajax.apache/Connection.)
-      :cljs (new goog.net.XhrIo)))
-
-(defn process-request [request interceptor]
-  "-process-request with the arguments flipped for use in reduce"
-  (-process-request interceptor request))
-
-(defn raw-ajax-request [{:keys [interceptors] :as request}]
-  "The main request function."
-  (let [request (reduce process-request request interceptors)
-        ;;; Pass the request through the interceptors
-        handler (base-handler (reverse interceptors) request)
-        ;;; Set up a handler that passes it back through
-        api (or (:api request) (new-default-api))]
-    (-js-ajax-request api request handler)))
-
-(defn ajax-request [request]
-  (-> request normalize-request raw-ajax-request))
+(def ajax-request simple/ajax-request)
 
 ;;; "Easy" API beyond this point
 

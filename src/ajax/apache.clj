@@ -18,6 +18,8 @@
 
 ;;; Chunks of this code liberally ripped off dakrone/clj-http
 ;;; Although that uses the synchronous API
+;;; Note that the only thing exposed by this rather complicated
+;;; piece of code is `new-api` at the bottom.
 
 (def array-of-bytes-type (Class/forName "[B"))
 
@@ -73,7 +75,7 @@
   (proxy [HttpEntityEnclosingRequestBase] []
     (getMethod [] method)))
 
-(defn cancel [handler]
+(defn- cancel [handler]
   "This method ensures that the behaviour of the wrapped
    Apache classes matches the behaviour the javascript version,
    including the negative status number."
@@ -83,7 +85,7 @@
                    :headers {}
                    :was-aborted true})))
 
-(defn fail [handler ^Exception ex]
+(defn- fail [handler ^Exception ex]
   "XMLHttpRequest reports a status of -1 for timeouts, so
    we do the same."
   (let [status (if (instance? SocketTimeoutException ex) -1 0)]
@@ -94,7 +96,7 @@
                      :exception ex
                      :was-aborted false}))))
 
-(defn create-handler [handler]
+(defn- create-handler [handler]
   "Takes a cljs-ajax style handler method and converts it
    to a FutureCallback suitable for use the Apache API."
   (reify
@@ -155,12 +157,6 @@
       (-abort [_]
         (cancel* true)))))
 
-;;; This is the only thing exposed by the apache.clj file:
-;;;   a class that wraps the Apache async API to the cljs-ajax
-;;;   API. Note that it's completely stateless: all of the relevant
-;;;   objects are created each time."
-
-
 (defrecord Connection []
   AjaxImpl
   (-js-ajax-request
@@ -180,3 +176,12 @@
             (.addHeader request h v)))
         (to-clojure-future (.execute client request h) client))
       (catch Exception ex (fail handler ex)))))
+
+(defn new-api []
+  "This is the only thing exposed by the apache.clj file:
+   a factory function that returns a class that wraps the 
+   Apache async API to the cljs-ajax API. 
+   Note that it's completely stateless: all of the relevant
+   implementation objects are created each time."
+
+  (Connection.))
