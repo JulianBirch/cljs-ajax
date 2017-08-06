@@ -1,4 +1,6 @@
 (ns ajax.core
+  "This is the documented API for cljs-ajax. The only functions not
+   exposed here that are documented are the deprecated features."
   (:require [clojure.string :as str]
             [ajax.url :as url]
             [ajax.json :as json]
@@ -8,26 +10,14 @@
             [ajax.interceptors :as i]
             [ajax.simple :as simple]
             [ajax.easy :as easy]
-            [ajax.protocols :refer
-             [-body -process-request -process-response -abort -status
-              -get-response-header -status-text -js-ajax-request
-              -was-aborted
-              #?@ (:cljs [AjaxImpl AjaxRequest AjaxResponse
-                          Interceptor Response])]]
+            [ajax.protocols :as pr]
             #?@ (:clj  [[ajax.macros :as m]
                         [poppea :as p]
-                        [cheshire.core :as c]
-                        [ajax.apache]
-                        [clojure.java.io :as io]]
+                        [ajax.apache]]
                  :cljs [[ajax.xhrio]
                         [ajax.xml-http-request]]))
-  #? (:clj
-      (:import [java.lang String]
-               [ajax.apache Connection]
-               [java.io Closeable])
-      :cljs
-      (:require-macros [ajax.macros :as m]
-                       [poppea :as p])))
+  #? (:cljs
+      (:require-macros [ajax.macros :as m])))
 
 ;;; NB As a matter of policy, this file shouldn't reference any
 ;;; google closure files. That functionality should be off in
@@ -41,7 +31,7 @@
 
 (defn abort [this]
   "Call this on the result of `ajax-request` to cancel the request." 
-  (-abort this))
+  (pr/-abort this))
 
 ;;; Standard Formats
 
@@ -58,7 +48,9 @@
 ; There's no raw-request-format because it's handled by the DirectSubmission code
 (def raw-response-format f/raw-response-format)
 
-;;; Detection and Accept Code
+;;; Here's the entire "simple" API.
+
+(def default-interceptors simple/default-interceptors)
 
 (def ajax-request simple/ajax-request)
 
@@ -66,6 +58,12 @@
 
 (def default-formats easy/default-formats)
 
+;;; NB detect-response-format with no parameters will pull
+;;; in every non-deprecated format in the code and so is
+;;; considered part of the "easy" API. However,
+;;; using your own vector specification works with the
+;;; simple API and allows you to control what formats you
+;;; want to support.
 (def detect-response-format easy/detect-response-format)
 
 (m/easy-api GET)

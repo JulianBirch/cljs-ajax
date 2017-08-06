@@ -7,8 +7,7 @@
               #? (:clj [poppea :as p]))
     #? (:clj (:import [java.io InputStream]
                       [java.util Scanner])
-        :cljs (:require-macros [ajax.macros :as m]
-                               [poppea :as p])))
+        :cljs (:require-macros [poppea :as p])))
 
 (defn raw-response-format
   "This will literally return whatever the underlying implementation
