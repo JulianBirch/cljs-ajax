@@ -3,10 +3,14 @@
    #? (:cljs [cljs.test]
        :clj [clojure.test :refer :all])
    [ajax.protocols :refer [-body]]
-   [ajax.core :refer [get-default-format
-                      normalize-method
-                      normalize-request
-                      to-interceptor
+   [ajax.formats :as f]
+   [ajax.easy :as easy]
+   [ajax.simple :as simple]
+   [ajax.interceptors :refer [get-request-format
+                              apply-request-format
+                              get-response-format
+                              is-response-format?]]
+   [ajax.core :refer [to-interceptor
                       ajax-request
                       url-request-format
                       raw-response-format
@@ -15,42 +19,19 @@
                       json-request-format
                       transit-response-format
                       transit-request-format
-                      keyword-request-format
-                      keyword-response-format
                       detect-response-format
-                      accept-header
                       default-formats
-                      process-request
-                      process-response
-                      transform-opts
-                      get-request-format
-                      get-response-format
-                      params-to-str
-                      apply-request-format
-                      json-read
-                      POST GET
-                      #?@ (:cljs [ResponseFormat] :clj [])]]
+                      POST GET]]
+   [ajax.json :as json]
    [ajax.edn :refer [edn-request-format edn-response-format]])
    #? (:cljs (:require-macros [cljs.test :refer [deftest testing is]])
-       :clj (:import [ajax.core ResponseFormat]
+       :clj (:import [ajax.interceptors ResponseFormat]
                      [java.lang String]
                      [java.io ByteArrayInputStream])))
 
-(deftest complex-params-to-str
-  (is (= "a=0" (params-to-str {:a 0})))
-  (is (= "b[0]=1&b[1]=2" (params-to-str {:b [1 2]})))
-  (is (= "c[d]=3&c[e]=4" (params-to-str {:c {:d 3 :e 4}})))
-  (is (= "d=5" (params-to-str {"d" 5})))
-  (is (= "a=0&b[0]=1&b[1]=2&c[d]=3&c[e]=4&f=5"
-         (params-to-str {:a 0
-                         :b [1 2]
-                         :c {:d 3 :e 4}
-                         "f" 5})))
-  (is (= "a=b%2Bc" (params-to-str {:a "b+c"}))))
-
 (deftest normalize
-  (is (= "GET" (normalize-method :get)))
-  (is (= "POST" (normalize-method "POST"))))
+  (is (= "GET" (simple/normalize-method :get)))
+  (is (= "POST" (simple/normalize-method "POST"))))
 
 (defrecord FakeXhrIo [content-type response status]
   ajax.protocols/AjaxImpl
@@ -68,8 +49,8 @@
 
 (deftest test-get-default-format
   (letfn [(make-format [content-type]
-            (get-default-format (FakeXhrIo. content-type nil nil)
-                                {:response-format default-formats}))
+            (f/get-default-format (FakeXhrIo. content-type nil nil)
+                                {:response-format @default-formats}))
           (detects [{:keys [from format]}] (is format (= (:description (make-format from)))))]
     (detects {:format "JSON"     :from "application/json;..."})
     (detects {:format "raw text" :from "text/plain;..."})
@@ -78,18 +59,18 @@
     (detects {:format "raw text" :from "application/xml;..."})))
 
 (defn multi-content-type [input]
-  (let [a (keyword-response-format input {})
+  (let [a (easy/keyword-response-format input {})
         a2 (detect-response-format {:response-format a})]
     (:content-type a2)))
 
 (deftest keywords
-  (is (= (:content-type (keyword-response-format :transit {}))
+  (is (= (:content-type (easy/keyword-response-format :transit {}))
          (:content-type (transit-response-format {}))))
-  (is (= (:content-type (keyword-request-format :transit {}))
+  (is (= (:content-type (easy/keyword-request-format :transit {}))
          (:content-type (transit-request-format))))
-  (is (vector? (keyword-response-format [:json :transit] {})))
-  (is (map? (first (keyword-response-format [:json :transit] {}))))
-  (is (= ["application/json"] (accept-header {:response-format [(json-response-format {})]})))
+  (is (vector? (easy/keyword-response-format [:json :transit] {})))
+  (is (map? (first (easy/keyword-response-format [:json :transit] {}))))
+  (is (= ["application/json"] (f/accept-header {:response-format [(json-response-format {})]})))
   (is (= #? (:clj ["application/json" "application/transit+msgpack" "application/transit+json"]
              :cljs ["application/json" "application/transit+json"])
          (multi-content-type [:json :transit])))
@@ -100,8 +81,8 @@
 ;;; in ajax-request
 (defn process-inputs [request]
   (let [{:keys [interceptors] :as request}
-        (normalize-request request)]
-    (reduce process-request request interceptors)))
+        (simple/normalize-request request)]
+    (reduce simple/process-request request interceptors)))
 
 (defn as-string [body]
   #? (:cljs body
@@ -127,18 +108,19 @@
                          :headers nil
                          :uri "/test"
                          :method "POST"
-                         :format (keyword-request-format nil {})
-                         :response-format (keyword-response-format nil {})})]
+                         :format (easy/keyword-request-format nil {})
+                         :response-format (easy/keyword-response-format nil {})})]
     (is (= "application/transit+json, application/transit+transit, application/json, text/plain, text/html, */*" (get headers "Accept")))))
 
+; NB This also tests that the vec-strategy has reverted to :java
 (deftest can-add-to-query-string
   (let [{:keys [uri]}
-        (process-inputs {:params {:a 3 :b "hello"}
+        (process-inputs {:params {:a [3 4] :b "hello"} 
                          :headers nil
                          :uri "/test?extra=true"
                          :method "GET"
                          :response-format (edn-response-format)})]
-    (is (= "/test?extra=true&a=3&b=hello" uri))))
+    (is (= "/test?extra=true&a=3&a=4&b=hello" uri))))
 
 (deftest use-interceptor
   (let [interceptor (to-interceptor
@@ -278,27 +260,33 @@
     (is (= {"a" "b"} @r2))))
 
 (deftest format-interpretation
-  (is (map? (keyword-response-format {} {}))))
+  (is (map? (easy/keyword-response-format {} {}))))
 
 (deftest composite-format
   (let [request (-> {:format :raw
                      :response-format [:transit :json]}
-                    transform-opts)
+                    easy/transform-opts)
         response (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)]
-    (is (instance? ResponseFormat (get-response-format request)))
-    (let [format (get-default-format simple-reply request)]
+    (is (is-response-format? (get-response-format detect-response-format request)))
+    (let [format (f/get-default-format simple-reply request)]
       (is format))))
 
 (deftest response-format-kw
-  (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"keywords are not allowed as response formats in ajax calls:" (get-response-format {:response-format :json}))))
+  (is (thrown-with-msg? 
+      #?(:clj Exception :cljs js/Error) 
+      #"keywords are not allowed as response formats in ajax calls:" 
+      (get-response-format detect-response-format {:response-format :json}))))
 
 (deftest request-format-kw
   (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"keywords are not allowed as request formats in ajax calls:" (get-request-format :json))))
 
 (deftest json-parsing
-  (let [response (FakeXhrIo. "application/json; charset blah blah" "while(1);{\"a\":\"b\"}" 200)]
-    (is (= {"a" "b"} (json-read "while(1);" false false response)))
-    (is (= {:a "b"} (json-read "while(1);" false true response)))))
+  (let [response (FakeXhrIo. "application/json; charset blah blah" "while(1);{\"a\":\"b\"}" 200)
+        json-read (fn [prefix keywords? raw]
+                    (let [opts {:prefix prefix :keywords? keywords? :raw raw}]
+                      ((:read (json-response-format opts)) response)))]
+    (is (= {"a" "b"} (json-read "while(1);" false false)))
+    (is (= {:a "b"} (json-read "while(1);" false true)))))
 
 #_ (deftest empty-response
   (let [r1 (atom "whatever")

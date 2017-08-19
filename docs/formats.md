@@ -40,6 +40,13 @@ There are functions that return request and response formats.  Most of these fun
 * `:keywords?`, which if true returns the keys as keywords and if false or unprovided returns them as strings.
 * `:raw`, if true, returns a JS object rather than a CLJS object.
 
+### URL parameters
+
+`url-request-format` takes one parameter: `vec-strategy`.
+* `:java` will render `{:a [1 2]}` as `a=1&a=2`. This works with yada, ASP and Jetty (ring). It also matches the behaviour of superagent.
+* `:rails` will render `{:a [1 2]}` as `a[]=1&a[]=2`. This is also the correct setting for working with PHP and matches the behaviour of jQuery.
+* `:indexed` will render `{:a [1 2]}` as `a[0]=1&a[1]=2`. This is mostly kept for backwards compatibility and shouldn't be used in new code.
+
 ### Detect parameters
 
 `detect-response-format` has one parameter: `:defaults`, which is a list of pairs.  The first item in the pair is a substring that starts the content type.  The second item is the response format function to call.  It will be passed the options in.  So, you can, for instance, have `:raw` set to `true` and content detection available at the same time.  If you use the zero-arity version, `:defaults` is set to `default-formats`.
@@ -47,6 +54,17 @@ There are functions that return request and response formats.  Most of these fun
 ### EDN
 
 EDN is deprecated, but the functions `edn-request-format` and `edn-response-format` are available in the `ajax.edn` namespace.
+
+### Google Closure JSON
+
+Earlier versions used Google Closure's implementation of JSON. This was the 
+correct choice at the time since native implementations were pretty 
+inconsistent. These days, it's more likely that you'll want to be using the 
+browser native JSON implementation which is vastly faster and handles dates 
+better, but if you still need the old behaviour you can get it by using
+`goog-json-request-format` and `goog-json-response-format` in the 
+`ajax.goog-json` namespace. They support the same options as the standard JSON
+implementation and share most of the internal code.
 
 ## Non-standard formats
 

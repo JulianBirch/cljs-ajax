@@ -1,4 +1,5 @@
 pom.xml
+/lein.ps1
 pom.xml.asc
 .lein-failures
 *jar
@@ -17,3 +18,5 @@ pom.xml.asc
 .lein-repl-history
 .nrepl-port
 *~
+.idea/
+*.iml

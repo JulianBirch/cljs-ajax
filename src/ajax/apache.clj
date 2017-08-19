@@ -1,7 +1,9 @@
 (ns ajax.apache
-  (:require [ajax.protocols :refer [map->Response]]
+  (:require [ajax.protocols :refer [map->Response
+              AjaxImpl AjaxRequest AjaxResponse]]
             [clojure.string :as s])
-  (:import [org.apache.http HttpResponse]
+  (:import [clojure.lang IDeref IBlockingDeref IPending]
+           [org.apache.http HttpResponse]
            [org.apache.http.entity ByteArrayEntity StringEntity
             FileEntity InputStreamEntity]
            [org.apache.http.client.methods HttpRequestBase
@@ -9,22 +11,25 @@
            [org.apache.http.client.config RequestConfig]
            [org.apache.http.concurrent FutureCallback]
            [org.apache.http.impl.nio.client HttpAsyncClients]
-           [ajax.protocols AjaxImpl AjaxRequest AjaxResponse
-            Interceptor Response]
            [java.lang Exception]
            [java.util.concurrent Future]
            [java.net URI SocketTimeoutException]
-           [java.io File InputStream]))
+           [java.io File InputStream Closeable]))
 
 ;;; Chunks of this code liberally ripped off dakrone/clj-http
 ;;; Although that uses the synchronous API
+;;; Note that the only thing exposed by this rather complicated
+;;; piece of code is `new-api` at the bottom.
 
 (def array-of-bytes-type (Class/forName "[B"))
 
 (defn- to-entity [b]
+  "This function means you can just hand cljs-ajax a byte
+   array, string, normal Java file or input stream and it
+   will automatically work with the Apache implementation."
   (condp instance? b
     array-of-bytes-type (ByteArrayEntity. b)
-    String (StringEntity. b "UTF-8")
+    String (StringEntity. ^String b "UTF-8")
     File (FileEntity. b)
     InputStream (InputStreamEntity. b)
     b))
@@ -33,6 +38,18 @@
   (if (instance? URI u)
     u
     (URI. (s/replace u " " "%20"))))
+
+;;; This is a nice demonstration of how protocols don't
+;;; in fact solve the expression problem. Various apache
+;;; methods return HttpResponse classes, but it is not
+;;; guaranteed what concrete class is returned nor that
+;;; it is stable between minor version numbers.
+
+;;; So, you end up doing what you'd normally do in Java,
+;;; write an adapter class.
+
+;;; Takes an HttpResponse and exposes the interface needed
+;;; by cljs-ajax interceptors (including response formats).
 
 (defrecord HttpResponseWrapper [^HttpResponse response]
   AjaxResponse
@@ -51,21 +68,27 @@
   (-was-aborted [this] false))
 
 (defn- create-request
+  "Life's to short to use all of the apache types for
+   the different HTTP methods when you can just wrap a
+   string in the appropriate base class."
   ^HttpEntityEnclosingRequestBase [method]
   (proxy [HttpEntityEnclosingRequestBase] []
     (getMethod [] method)))
 
-(defn cancel [handler]
+(defn- cancel [handler]
+  "This method ensures that the behaviour of the wrapped
+   Apache classes matches the behaviour the javascript version,
+   including the negative status number."
   (handler
    (map->Response {:status -1
                    :status-text "Cancelled"
                    :headers {}
                    :was-aborted true})))
 
-(defn fail [handler ^Exception ex]
+(defn- fail [handler ^Exception ex]
+  "XMLHttpRequest reports a status of -1 for timeouts, so
+   we do the same."
   (let [status (if (instance? SocketTimeoutException ex) -1 0)]
-;;; XMLHttpRequest reports a status of -1 for timeouts, so
-;;; we do the same
     (handler
      (map->Response {:status status
                      :status-text (.getMessage ex)
@@ -73,7 +96,9 @@
                      :exception ex
                      :was-aborted false}))))
 
-(defn create-handler [handler]
+(defn- create-handler [handler]
+  "Takes a cljs-ajax style handler method and converts it
+   to a FutureCallback suitable for use the Apache API."
   (reify
     FutureCallback
     (cancelled [_]
@@ -92,45 +117,45 @@
       (.setSocketTimeout builder st))
     (.build builder)))
 
-(defn- to-clojure-future [^Future future ^java.io.Closeable client]
+(defn- to-clojure-future
   "Converts a normal Java future to one similar to the one generated
-   by `clojure.core/future`"
-  (reify
-    clojure.lang.IDeref
-    (deref [_]
-      (try
-        (.get future)
-        (finally (.close client))))
-    clojure.lang.IBlockingDeref
-    (deref [_ timeout-ms timeout-val]
-      (try
-        (.get future timeout-ms
-              java.util.concurrent.TimeUnit/MILLISECONDS)
-        (catch java.util.concurrent.TimeoutException e
-          timeout-val)
-        (finally (.close client))))
-    clojure.lang.IPending
-    (isRealized [_] (.isDone future))
-    java.util.concurrent.Future
-    (get [_]
-      (try
-        (.get future)
-        (finally (.close client))))
-    (get [_ timeout unit]
-      (try
-        (.get future timeout unit)
-        (finally (.close client))))
-    (isCancelled [_] (.isCancelled future))
-    (isDone [_] (.isDone future))
-    (cancel [_ interrupt?]
-      (try
-        (.cancel future interrupt?)
-        (finally (.close client))))
-    ajax.protocols.AjaxRequest
-    (-abort [_]
-      (try
-        (.cancel future true)
-        (finally (.close client))))))
+   by `clojure.core/future`. Operationally, this is used to wrap the
+   result of the Apache API into something that can be returned by 
+   `ajax-request`. Note that there's no guarantee anyone will ever dereference 
+   it (but they might). Also, since it's returned by `ajax-request`, 
+   it needs to support `abort`."
+  [^Future f ^Closeable client]
+  ;;; We wrap the original future and closeable in a second layer
+  ;;; to guarantee that we don't leak memory. This deeply clever
+  ;;; solution is by https://github.com/divs1210
+  (let [^Future f* (future
+                     (try
+                       (.get f)
+                       (finally (.close client))))
+        cancel* (fn [interrupt?]
+                  (try
+                    (.cancel f interrupt?)
+                    (.cancel f* interrupt?)
+                    (finally (.close client))))]
+    (reify
+      IDeref
+      (deref [_] (deref f*))
+      IBlockingDeref
+      (deref [_ timeout-ms timeout-val]
+        (deref f* timeout-ms timeout-val))
+      IPending
+      (isRealized [_] (.isDone f*))
+      Future
+      (get [_] (.get f*))
+      (get [_ timeout unit]
+        (.get f* timeout unit))
+      (isCancelled [_] (.isCancelled f*))
+      (isDone [_] (.isDone f*))
+      (cancel [_ interrupt?]
+        (cancel* interrupt?))
+      AjaxRequest
+      (-abort [_]
+        (cancel* true)))))
 
 (defrecord Connection []
   AjaxImpl
@@ -151,3 +176,12 @@
             (.addHeader request h v)))
         (to-clojure-future (.execute client request h) client))
       (catch Exception ex (fail handler ex)))))
+
+(defn new-api []
+  "This is the only thing exposed by the apache.clj file:
+   a factory function that returns a class that wraps the 
+   Apache async API to the cljs-ajax API. 
+   Note that it's completely stateless: all of the relevant
+   implementation objects are created each time."
+
+  (Connection.))

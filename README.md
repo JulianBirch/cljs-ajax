@@ -4,7 +4,9 @@ simple Ajax client for ClojureScript and Clojure
 
 [![Build Status](https://travis-ci.org/JulianBirch/cljs-ajax.svg?branch=master)](https://travis-ci.org/JulianBirch/cljs-ajax)
 
-`cljs-ajax` exposes the same interface (where useful) in both Clojure and ClojureScript. On ClojureScript it operates as a wrapper around [`goog.net.XhrIo`](https://developers.google.com/closure/library/docs/xhrio?hl=en) or [`js/XmlHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest), while on the JVM it's a wrapper around the [Apache HttpAsyncClient](https://hc.apache.org/httpcomponents-asyncclient-dev/) library.
+`cljs-ajax` exposes the same interface (where useful) in both Clojure and ClojureScript. On ClojureScript it operates as a wrapper around [`goog.net.XhrIo`](https://developers.google.com/closure/library/docs/xhrio?hl=en) or [`js/XmlHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest), while on the JVM it's a wrapper around the [Apache HttpAsyncClient](https://hc.apache.org/httpcomponents-asyncclient-dev/) library. 
+
+In addition to this document, there's an [FAQ](docs/faq.md), a [change log](CHANGES.md) and a [contribution document](CONTRIBUTING.md). Furthermore, there is detailed documentation on specific features and design advice in the [docs folder](docs).
 
 ## Usage
 
@@ -26,6 +28,7 @@ For advice on how to set up the server side in Clojure to work with cljs-ajax, p
 The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 
 * `:handler` - the handler function for successful operation should accept a single parameter which is the deserialized response. If you do not provide a handler, the contents of the `default-handler` atom will be called instead. By default this is `println`.
+* `:progress-handler` - the handler function for progress events. **This handler is only available when using the `goog.net.XhrIo` API**
 * `:error-handler` - the handler function for errors, should accept an error response (detailed below). If you do not provide an error-handler, the contents of the `default-error-handler` atom will be called instead. By default this is `println` for Clojure and writes an error to the console for ClojureScript.
 * `:finally` - a function that takes no parameters and will be triggered during the callback in addition to any other handlers
 * `:format` - specifies the format for the body of the request (Transit, JSON, etc.). Also sets the appropriate `Content-Type` header.  Defaults to `:transit` if not provided.
@@ -45,6 +48,12 @@ The following settings affect the interpretation of JSON responses:  (You must s
 
 * `:keywords?` - true/false specifies whether keys in maps will be keywordized
 * `:prefix` - the prefix to be stripped from the start of the JSON response. e.g. `while(1);` which is added by some APIs to [prevent JSON hijacking](https://stackoverflow.com/questions/2669690/why-does-google-prepend-while1-to-their-json-responses).  You should *always* use this if you've got a GET request.
+
+### GET specific settings
+
+The `:vec-strategy` setting affects how sequences are written out. 
+A `:vec-strategy` of `:java` will render `{:a [1 2]}` as `a=1&a=2`.
+A `:vec-strategy` of `:rails` will render `{:a [1 2]}` as `a[]=1&a[]=2`. This is also the correct setting for working with HTTP.
 
 ### GET/POST examples
 
@@ -66,7 +75,15 @@ The following settings affect the interpretation of JSON responses:  (You must s
                         :b [1 2]
                         :c {:d 3 :e 4}
                         "f" 5}})
-;;; writes "a=0&b[0]=1&b[1]=2&c[d]=3&c[e]=4&f=5"
+;;; writes "a=0&b=1&b=2&c[d]=3&c[e]=4&f=5"
+
+(GET "/hello" {:params {:a 0
+                        :b [1 2]
+                        :c {:d 3 :e 4}
+                        "f" 5}
+               :vec-strategy :rails})
+;;; writes "a=0&b[]=1&b[]=2&c[d]=3&c[e]=4&f=5"
+
 
 (GET "/hello" {:handler handler
                :error-handler error-handler})
@@ -197,39 +214,6 @@ The following parameters are the same as in the `GET`/`POST` easy api:
 ```
 
 These examples will use the Google Closure library `XhrIo` API. If you want to use `XMLHttpRequest` API directly, add `:api (js/XMLHttpRequest.)` to the map.
-
-## Breaking Changes Since 0.3
-
-cljs-ajax never had a stable 0.4.0 release, so there's no breaking changes.
-
-* EDN support is now in its own namespace: `ajax.edn`
-* The `:edn` keyword no longer works.
-* The definition of the `AjaxImpl` protocol has changed.
-* Submitting a `GET` with `:params {:a [10 20]}` used to produce `?a=10&a=20`. It now produces `?a[0]=10&a[1]=20`.
-* `js/FormData` and `js/ArrayBuffer` &c are now submitted using a `:body` tag, not the `:params` tag
-* [Interceptors](docs/interceptors.md) were added. Whilst not strictly speaking a breaking change, the optimal way of solving certain problems has definitely changed.
-* Keywords that are used as request parameter values are stringified using `(str my-keyword)` instead of `(name my-keyword)` causing leading colons to be preserved.
-
-## Breaking Changes Since 0.2
-
-* The default response format is now transit.
-* The default request format is now transit.
-* Format detection is now "opt in" with `ajax-request`.  See [formats.md](docs/formats.md).  It remains the default with `GET` and `POST`.  This means that code using `ajax-request` will be smaller with advanced optimizations.
-* `:is-parse-error`, `:timeout?` and `:aborted?` have been removed, in favour of `:failure`
-* `ajax-request` now has `:format` and `:response-format` parameters, same as `POST`
-* The functions that returned merged request/response formats have been removed.
-
-## Breaking Changes Since 0.1
-
-* `ajax-request`'s API has significantly changed.  It used to be pretty equivalent to GET and POST.
-* `:keywordize-keys` is now `:keywords?`
-* `:format` used to be the response format.  The request format used to always to be `:url`
-
-## Contributing
-
-All pull requests are welcome, but we do ask that any changes come with tests that demonstrate the original problem. For this, you'll need to get the test environment working. You need to install [PhantomJS](http://phantomjs.org/) somewhere on your path.
-
-After that `lein run-tests` should run the tests.
 
 ## License
 

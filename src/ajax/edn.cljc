@@ -1,5 +1,5 @@
 (ns ajax.edn
-  (:require [ajax.core :refer [map->ResponseFormat]]
+  (:require [ajax.interceptors :refer [map->ResponseFormat]]
             [ajax.protocols :refer [-body]]
             #?@ (:cljs [[cljs.reader :as edn]]
                  :clj [[clojure.edn :as edn]
