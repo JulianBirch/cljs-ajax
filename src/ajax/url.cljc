@@ -43,7 +43,7 @@
             .toString)))
 
  This code remains completely correct for at least 90% of actual users
- of cljs-ajax. Now we have ~50 SLOCs acheiving much the same result.
+ of cljs-ajax. Now we have ~50 SLOCs achieving much the same result.
 "
 
 #?@ (:clj  ((:require 
