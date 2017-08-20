@@ -5,14 +5,14 @@
 ### Why is cljs-ajax making OPTIONS requests when I didn't ask for them?
 
 You're doing a cross-site request. Take a look at the full documentation in
-(server.md)[server.md].
+[server.md](server.md).
 
 ### Why does DELETE submit a body?
 
 Because that the correct thing to do according to the spec. There are, however,
 servers that don't implement this correctly. Particularly annoyingly, the Google
 App Engine throws an error if you send it one. However, it's perfectly possible 
-to solve this with the use of an (interceptor)[interceptors.md] (and the linked
+to solve this with the use of an [interceptor](interceptors.md) (and the linked
 file contains the exact code you need).
 
 ### Why doesn't JSON format treat empty string as `null`?
