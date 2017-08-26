@@ -38,6 +38,7 @@
   (-js-ajax-request [this _ h]
     (h this))
   ajax.protocols/AjaxResponse
+  (-get-all-headers [this])
   (-get-response-header [this header] content-type)
   (-status [_] status)
   (-body [_] #? (:cljs response

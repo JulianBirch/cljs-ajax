@@ -18,6 +18,8 @@
     "Returns the HTTP Status of the response as an integer.")
   (-status-text [this]
     "Returns the HTTP Status Text of the response as a string.")
+  (-get-all-headers [this]
+    "Returns all headers as a map.")
   (-body [this]
     "Returns the response body as a string or as type specified in response-format such as a blob or arraybuffer.")
   (-get-response-header [this header]
@@ -37,5 +39,6 @@
   (-body [this] (:body this))
   (-status [this] (:status this))
   (-status-text [this] (:status-text this))
+  (-get-all-headers [this] (:headers this))
   (-get-response-header [this header] (get (:headers this) header))
   (-was-aborted [this] (:was-aborted this)))
