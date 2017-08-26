@@ -36,6 +36,8 @@
   (-body [this] (.getResponse this))
   (-status [this] (.getStatus this))
   (-status-text [this] (.getStatusText this))
+  (-get-all-headers [this]
+    (js->clj (.getResponseHeaders this)))
   (-get-response-header [this header]
     (.getResponseHeader this header))
   (-was-aborted [this]

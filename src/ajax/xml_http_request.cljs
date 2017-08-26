@@ -1,6 +1,7 @@
 (ns ajax.xml-http-request
   (:require [ajax.protocols :refer [AjaxImpl AjaxRequest
-                                    AjaxResponse Interceptor]]))
+                                    AjaxResponse Interceptor]]
+            goog.string))
 
 (defn ready-state [e]
   ({0 :not-initialized
@@ -8,6 +9,22 @@
     2 :request-received
     3 :processing-request
     4 :response-ready} (.-readyState (.-target e))))
+
+(defn append [current next]
+  (if current
+    (str current ", " next)
+    next))
+
+(defn process-headers [header-str]
+  (if header-str
+    (reduce (fn [headers header-line]
+              (if (goog.string/isEmptyOrWhitespace header-line)
+                headers
+                (let [key-value (goog.string/splitLimit header-line ": " 2)]
+                  (update headers (aget key-value 0) append (aget key-value 1)))))
+            {}
+            (.split header-str "\r\n"))
+    {}))
 
 (def xmlhttprequest
   (if (= cljs.core/*target* "nodejs")
@@ -45,6 +62,8 @@
   (-body [this] (.-response this))
   (-status [this] (.-status this))
   (-status-text [this] (.-statusText this))
+  (-get-all-headers [this]
+    (process-headers (.getAllResponseHeaders this)))
   (-get-response-header [this header]
     (.getResponseHeader this header))
   (-was-aborted [this] (= 0 (.-readyState this))))

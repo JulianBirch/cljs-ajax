@@ -3,7 +3,7 @@
               AjaxImpl AjaxRequest AjaxResponse]]
             [clojure.string :as s])
   (:import [clojure.lang IDeref IBlockingDeref IPending]
-           [org.apache.http HttpResponse]
+           [org.apache.http HttpResponse Header]
            [org.apache.http.entity ByteArrayEntity StringEntity
             FileEntity InputStreamEntity]
            [org.apache.http.client.methods HttpRequestBase
@@ -62,6 +62,12 @@
   (-status-text [this]
     (let [^HttpResponse response (:response this)]
       (-> response .getStatusLine .getReasonPhrase)))
+  (-get-all-headers [this]
+    (let [^HttpResponse response (:response this)]
+      (reduce (fn [headers ^Header header]
+                (assoc headers (.getName header) (.getValue header)))
+              {}
+              (.getAllHeaders response))))
   (-get-response-header [this header]
     (let [^HttpResponse response (:response this)]
       (.getValue (.getFirstHeader response header))))
