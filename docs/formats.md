@@ -26,7 +26,7 @@ There are functions that return request and response formats.  Most of these fun
 | `:text`  | `text-request-format` | `text-response-format` |
 | `:detect` | | `detect-response-format` |
 
-`text-response-format` and `raw-response-format` are identical in Clojurescript, but `raw-response-format` returns the byte stream in Clojure, while `text-response-format` returns a string. `text-request-format` is a pass-through in Clojurescript, but converts a string to a byte stream in Clojure (which is what you want).
+`text-response-format` and `raw-response-format` are identical in ClojureScript, but `raw-response-format` returns the byte stream in Clojure, while `text-response-format` returns a string. `text-request-format` is a pass-through in ClojureScript, but converts a string to a byte stream in Clojure (which is what you want).
 
 ### Transit parameters
 
@@ -51,9 +51,9 @@ There are functions that return request and response formats.  Most of these fun
 ### Ring parameters
 
 `ring-response-format` takes one parameter: `format`. This can be any
-valid request format map as described above. The `:read` function will
-be used to populate the `:body` key of the response and the
-`:content-type` key will be used instead of the default `*/*`.
+valid response format map as described above. If a format is not specified
+then `raw-response-format` will be used. (This is also what happens if you use
+the `:ring` keyword.)
 
 ### Detect parameters
 
@@ -81,3 +81,6 @@ To get the raw XhrIo object back:
 ```clj
 {:read identity :description "raw"}
 ```
+
+Obviously, this will do something surprisingly different if you're running this
+code in Java.
