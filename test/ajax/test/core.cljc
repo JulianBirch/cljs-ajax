@@ -115,7 +115,7 @@
 ; NB This also tests that the vec-strategy has reverted to :java
 (deftest can-add-to-query-string
   (let [{:keys [uri]}
-        (process-inputs {:params {:a [3 4] :b "hello"} 
+        (process-inputs {:params {:a [3 4] :b "hello"}
                          :headers nil
                          :uri "/test?extra=true"
                          :method "GET"
@@ -272,9 +272,9 @@
       (is format))))
 
 (deftest response-format-kw
-  (is (thrown-with-msg? 
-      #?(:clj Exception :cljs js/Error) 
-      #"keywords are not allowed as response formats in ajax calls:" 
+  (is (thrown-with-msg?
+      #?(:clj Exception :cljs js/Error)
+      #"keywords are not allowed as response formats in ajax calls:"
       (get-response-format detect-response-format {:response-format :json}))))
 
 (deftest request-format-kw

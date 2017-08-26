@@ -64,8 +64,8 @@
   (println "CLJS-AJAX response:" response))
 
 (def default-handler
-  "This gets called if you forget to attach a handler to an easy 
-  API function." 
+  "This gets called if you forget to attach a handler to an easy
+  API function."
   (atom print-response))
 
 (defn print-error-response [response]

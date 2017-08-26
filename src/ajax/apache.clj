@@ -120,9 +120,9 @@
 (defn- to-clojure-future
   "Converts a normal Java future to one similar to the one generated
    by `clojure.core/future`. Operationally, this is used to wrap the
-   result of the Apache API into something that can be returned by 
-   `ajax-request`. Note that there's no guarantee anyone will ever dereference 
-   it (but they might). Also, since it's returned by `ajax-request`, 
+   result of the Apache API into something that can be returned by
+   `ajax-request`. Note that there's no guarantee anyone will ever dereference
+   it (but they might). Also, since it's returned by `ajax-request`,
    it needs to support `abort`."
   [^Future f ^Closeable client]
   ;;; We wrap the original future and closeable in a second layer
@@ -179,8 +179,8 @@
 
 (defn new-api []
   "This is the only thing exposed by the apache.clj file:
-   a factory function that returns a class that wraps the 
-   Apache async API to the cljs-ajax API. 
+   a factory function that returns a class that wraps the
+   Apache async API to the cljs-ajax API.
    Note that it's completely stateless: all of the relevant
    implementation objects are created each time."
 
