@@ -23,7 +23,8 @@
                       default-formats
                       POST GET]]
    [ajax.json :as json]
-   [ajax.edn :refer [edn-request-format edn-response-format]])
+   [ajax.edn :refer [edn-request-format edn-response-format]]
+   [ajax.ring :refer [ring-response-format]])
    #? (:cljs (:require-macros [cljs.test :refer [deftest testing is]])
        :clj (:import [ajax.interceptors ResponseFormat]
                      [java.lang String]
@@ -38,7 +39,7 @@
   (-js-ajax-request [this _ h]
     (h this))
   ajax.protocols/AjaxResponse
-  (-get-all-headers [this])
+  (-get-all-headers [this] {"Content-Type" content-type})
   (-get-response-header [this header] content-type)
   (-status [_] status)
   (-body [_] #? (:cljs response
@@ -65,6 +66,8 @@
     (:content-type a2)))
 
 (deftest keywords
+  (is (= (:content-type (easy/keyword-response-format :ring {}))
+         (:content-type (ring-response-format))))
   (is (= (:content-type (easy/keyword-response-format :transit {}))
          (:content-type (transit-response-format {}))))
   (is (= (:content-type (easy/keyword-request-format :transit {}))
@@ -288,6 +291,21 @@
                       ((:read (json-response-format opts)) response)))]
     (is (= {"a" "b"} (json-read "while(1);" false false)))
     (is (= {:a "b"} (json-read "while(1);" false true)))))
+
+(deftest ring-format
+  (let [response (FakeXhrIo. "text/plain" "BODY" 200)
+        test-format {:format {:read :content
+                              :content-type ["whatever/you-want"]}}]
+    (is (= ["*/*"]
+           (:content-type (ring-response-format))))
+    (is (= ["whatever/you-want"]
+           (:content-type (ring-response-format test-format))))
+
+    (let [read-fn (:read (ring-response-format {:format (text-response-format)}))]
+      (is (= {:status 200
+              :headers {"Content-Type" "text/plain"}
+              :body "BODY"}
+             (read-fn response))))))
 
 #_ (deftest empty-response
   (let [r1 (atom "whatever")

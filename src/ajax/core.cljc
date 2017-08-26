@@ -5,6 +5,7 @@
             [ajax.url :as url]
             [ajax.json :as json]
             [ajax.transit :as transit]
+            [ajax.ring :as ring]
             [ajax.formats :as f]
             [ajax.util :as u]
             [ajax.interceptors :as i]
@@ -21,7 +22,7 @@
 
 ;;; NB As a matter of policy, this file shouldn't reference any
 ;;; google closure files. That functionality should be off in
-;;; specific namespaces and exposed here in a platform indepdent 
+;;; specific namespaces and exposed here in a platform indepdent
 ;;; way
 
 ;;; Ideally this would be true of all functionality, but it's
@@ -30,7 +31,7 @@
 (def to-interceptor i/to-interceptor)
 
 (defn abort [this]
-  "Call this on the result of `ajax-request` to cancel the request." 
+  "Call this on the result of `ajax-request` to cancel the request."
   (pr/-abort this))
 
 ;;; Standard Formats
@@ -40,6 +41,8 @@
 
 (def transit-request-format transit/transit-request-format)
 (def transit-response-format transit/transit-response-format)
+
+(def ring-response-format ring/ring-response-format)
 
 (def url-request-format url/url-request-format)
 
