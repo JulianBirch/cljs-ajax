@@ -2,6 +2,7 @@
     (:require [ajax.simple :as simple]
               [ajax.transit :as t]
               [ajax.json :as json]
+              [ajax.ring :as ring]
               [ajax.url :as url]
               [ajax.formats :as f]))
 
@@ -45,6 +46,7 @@
            :transit (t/transit-response-format format-params)
            :json (json/json-response-format format-params)
            :text (f/text-response-format)
+           :ring (ring/ring-response-format)
            :raw (f/raw-response-format)
            :detect (detect-response-format)
            nil)))

@@ -21,6 +21,7 @@ There are functions that return request and response formats.  Most of these fun
 | `:transit`  | `transit-request-format` | `transit-response-format` |
 | `:json` | `json-request-format` | `json-response-format` |
 | `:url`  | `url-request-format` | |
+| `:ring` | | `ring-response-format` |
 | `:raw`  | | `raw-response-format` |
 | `:text`  | `text-request-format` | `text-response-format` |
 | `:detect` | | `detect-response-format` |
@@ -46,6 +47,13 @@ There are functions that return request and response formats.  Most of these fun
 * `:java` will render `{:a [1 2]}` as `a=1&a=2`. This works with yada, ASP and Jetty (ring). It also matches the behaviour of superagent.
 * `:rails` will render `{:a [1 2]}` as `a[]=1&a[]=2`. This is also the correct setting for working with PHP and matches the behaviour of jQuery.
 * `:indexed` will render `{:a [1 2]}` as `a[0]=1&a[1]=2`. This is mostly kept for backwards compatibility and shouldn't be used in new code.
+
+### Ring parameters
+
+`ring-response-format` takes one parameter: `format`. This can be any
+valid request format map as described above. The `:read` function will
+be used to populate the `:body` key of the response and the
+`:content-type` key will be used instead of the default `*/*`.
 
 ### Detect parameters
 
@@ -73,6 +81,3 @@ To get the raw XhrIo object back:
 ```clj
 {:read identity :description "raw"}
 ```
-
-Incidentally, if anyone wants to implement a response format that returns the response in a ring-style format, I accept pull requests.
-
