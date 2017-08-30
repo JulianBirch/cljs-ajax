@@ -28,7 +28,7 @@
 
 (def xmlhttprequest
   (if (= cljs.core/*target* "nodejs")
-    (let [xmlhttprequest (.-XMLHttpRequest (js/require "@pupeno/xmlhttprequest"))]
+    (let [xmlhttprequest (.-XMLHttpRequest (js/require "xmlhttprequest"))]
       (goog.object/set js/global "XMLHttpRequest" xmlhttprequest)
       xmlhttprequest)
     (.-XMLHttpRequest js/window)))
