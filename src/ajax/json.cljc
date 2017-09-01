@@ -57,8 +57,8 @@
     ([{:keys [prefix keywords? raw]}]
        (map->ResponseFormat
         {:read (fn json-read-response-format [xhrio] 
-            (read-json keywords? 
-                       raw
+            (read-json raw
+                       keywords?
                        (strip-prefix prefix (-body xhrio))))
          :description (str "JSON"
                          (if prefix (str " prefix '" prefix "'"))

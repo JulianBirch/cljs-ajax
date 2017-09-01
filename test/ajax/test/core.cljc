@@ -290,7 +290,9 @@
                     (let [opts {:prefix prefix :keywords? keywords? :raw raw}]
                       ((:read (json-response-format opts)) response)))]
     (is (= {"a" "b"} (json-read "while(1);" false false)))
-    (is (= {:a "b"} (json-read "while(1);" false true)))))
+    (is (= {:a "b"} (json-read "while(1);" true false)))
+    #? (:cljs (is (= {"a" "b"} (js->clj (json-read "while(1);" false true))))
+        :clj (is (= {"a" "b"} (json-read "while(1);" false true))))))
 
 (deftest ring-format
   (let [response (FakeXhrIo. "text/plain" "BODY" 200)
