@@ -14,8 +14,6 @@ Leiningen
 
 [![Leiningen version](http://clojars.org/cljs-ajax/latest-version.svg)](http://clojars.org/cljs-ajax)
 
-Note that there are breaking changes since 0.3, detailed near the bottom of this readme. One of them is serious if you're using `js/FormData` or binary blobs.
-
 The client provides an easy way to send Ajax requests to the server using `GET`, `POST`, and `PUT` functions. It also provides a simple way using `ajax-request`. All requests are asynchronous, accepting callback functions for response and error handling.
 
 There are four formats currently supported for communicating with the server:  `:transit`, `:json`, `:text` and `:raw`.
