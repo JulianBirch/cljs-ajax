@@ -1,3 +1,5 @@
+%% spellcheck-language en-gb
+  
 # Frequently asked questions
 
 ## Features
@@ -42,7 +44,7 @@ use `cljs-ajax`.
 ### Why doesn't `cljs-ajax` use the `ring` data model?
 
 There's certainly advantages in the ring model, but as a request format
-it leaves some things to be desired. For one, wheras a ring handler
+it leaves some things to be desired. For one, whereas a ring handler
 will populate `:params` and `:json-params` and most users can happily
 ignore the existence of `:json-params`, a request *has* to 
 specify `:json-params` and `:params` is useless. This leads to the API
@@ -56,7 +58,8 @@ Closure's advanced optimisations.
 ### How does cljs-ajax compare with its alternatives?
 
 There's are two other libraries occupying the same design space as `cljs-ajax`:
-HTTP support with extensions supporting common formats. They're both excellent and I've happily ripped off their code where appropriate. (Thanks guys.) Equally, they've got decent documentation and solid test coverage. `clj-http` is Java only, works synchronously (so you spin up extra threads if you don't want to block) and is easily the most popular and robust of the three libraries. `cljs-http` is JavaScript only, marginally less popular than `cljs-ajax` and uses a `core.async` style API. Both try to mimic the ring data model, which you may prefer as a user. 
+HTTP support with extensions supporting common formats. They're both excellent and I've happily ripped off their code where appropriate. (Thanks guys.) Equally, they've both got solid test coverage. 
+`clj-http` is Java only, works synchronously (so you spin up extra threads if you don't want to block) and is easily the most popular and robust of the three libraries. `cljs-http` is JavaScript only, marginally less popular than `cljs-ajax` and uses a `core.async` style API. Both try to mimic the ring data model, which you may prefer as a user. 
 
 These are the things that inform the design of `cljs-ajax` that I think distinguish it from its competition.
 
