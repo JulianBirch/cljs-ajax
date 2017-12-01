@@ -24,6 +24,30 @@ that the correct encoding for `null` is "null". So, cljs-ajax does the correct
 thing. Again, though, you can put an (interceptor)[interceptors.md] in to fix 
 this. Equally again, the linked file contains the full code you need.
 
+### React Native: why does bundling fail on my compiled project?
+
+If your react native project using cljs-ajax is compiled to js and you
+attempt to bundle/build/run, you might experience this error:
+
+```
+error: bundling failed: UnableToResolveError: Unable to resolve module `xmlhttprequest` from `/<path>/index.ios.js`: Module does not exist in the module map
+```
+
+The reason for the error is that cljs-ajax attempts to conditionally
+`require` the node.js library if the target is `node`, but react native
+performs a static analysis to pre-load all `require` statements and the
+node library is not available with react-native.
+
+To fix, you can add the following key/value to your package.json to tell
+react native to ignore the unnecessary `require`.
+cljs-ajax will use the provided "browser" xhr as expected.
+
+```javascript
+"react-native": {
+  "xmlhttprequest": false
+}
+```
+
 ## Design
 
 ### Why does `cljs-ajax` not use `core.async`?
