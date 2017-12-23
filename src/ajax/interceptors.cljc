@@ -51,9 +51,6 @@
 
 ;;; Response Format record
 
-(defn- success? [status]
-  (some #{status} [200 201 202 204 205 206]))
-
 #? (:clj (defn exception-message [^Exception e] (.getMessage e))
     :cljs (defn exception-message [e] (.-message e)))
 
@@ -68,7 +65,7 @@
                       :status-text status-text
                       :failure :parse
                       :original-text (-body xhrio))]
-    (if (success? status)
+    (if (u/success? status)
       parse-error
       (assoc response
         :status-text (-status-text xhrio)
@@ -119,7 +116,7 @@
           205 [true nil]
           (try
             (let [response (read xhrio)]
-              (if (success? status)
+              (if (u/success? status)
                 [true response]
                 (fail (-status-text xhrio) :error :response response)))
             (catch #? (:clj Exception :cljs js/Object) e
@@ -163,7 +160,7 @@
           body (if-not (nil? write)
                  (apply-request-format write params)
                  (u/throw-error ["unrecognized request format: "
-                               format]))
+                                 format]))
           headers (or headers {})]
       (assoc request
         :body body
@@ -229,5 +226,5 @@
                          :description "custom"
                          :content-type "*/*"})
    :else (u/throw-error ["unrecognized response format: "
-                       response-format])))
+                         response-format])))
 

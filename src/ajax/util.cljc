@@ -2,9 +2,9 @@
   "Short utility functions. A lot of these only exist because the 
    cross platform implementation is annoying."
    (:require [ajax.protocols :as pr])
-     #? (:clj
-      (:import [java.io OutputStreamWriter]
-               [java.lang String])))
+   #? (:clj
+       (:import [java.io OutputStreamWriter]
+                [java.lang String])))
 
 (defn throw-error [args]
   "Throws an error."
@@ -26,3 +26,6 @@
                (.write ^String (to-str params))
                (.flush)))))
 
+(defn success? [status]
+  "Indicates whether an HTTP status code is considered successful."
+  (<= 200 status 299))
