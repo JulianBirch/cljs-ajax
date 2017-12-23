@@ -51,6 +51,8 @@
 ; There's no raw-request-format because it's handled by the DirectSubmission code
 (def raw-response-format f/raw-response-format)
 
+(def success? u/success?)
+
 ;;; Here's the entire "simple" API.
 
 (def default-interceptors simple/default-interceptors)
