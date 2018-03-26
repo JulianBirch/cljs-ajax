@@ -72,6 +72,7 @@
          (:content-type (transit-response-format {}))))
   (is (= (:content-type (easy/keyword-request-format :transit {}))
          (:content-type (transit-request-format))))
+  (is (= "application/transit+json" (:content-type (transit-request-format {:type :json-verbose}))))
   (is (vector? (easy/keyword-response-format [:json :transit] {})))
   (is (map? (first (easy/keyword-response-format [:json :transit] {}))))
   (is (= ["application/json"] (f/accept-header {:response-format [(json-response-format {})]})))
