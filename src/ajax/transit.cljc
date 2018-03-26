@@ -24,7 +24,8 @@
   ([] (transit-request-format {}))
   ([request]
      (let [type (transit-type request)
-           mime-type (if (= type :json) "json" "msgpack")]
+           mime-type (if (or (= type :json)
+                             (= type :json-verbose)) "json" "msgpack")]
        {:write (transit-write-fn type request)
         :content-type (str "application/transit+" mime-type)})))
 
