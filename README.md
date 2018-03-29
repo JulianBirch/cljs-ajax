@@ -1,4 +1,4 @@
-#cljs-ajax
+# cljs-ajax
 
 simple Ajax client for ClojureScript and Clojure
 
