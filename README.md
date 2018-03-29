@@ -19,7 +19,7 @@ The client provides an easy way to send Ajax requests to the server using `GET`,
 There are four formats currently supported for communicating with the server:  `:transit`, `:json`, `:text` and `:raw`.
 (`:text` will send parameters up using normal form submission and return the raw text. `:raw` does the same, but on the JVM it returns the body's `java.io.InputStream` and *doesn't close it*.)
 
-For advice on how to set up the server side in Clojure to work with cljs-ajax, please see the page on [handling responses on the server](docs/server.md).
+For advice on how to set up the server side in Clojure to work with `cljs-ajax`, please see the page on [handling responses on the server](docs/server.md).
 
 ## GET/POST/PUT
 
