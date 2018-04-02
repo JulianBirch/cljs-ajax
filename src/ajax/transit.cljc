@@ -21,6 +21,13 @@
              (t/write writer params))))
 
 (defn transit-request-format
+  "Returns a Transit request format.
+
+   Options include:
+   :writer Explicit Transit writer. If not supplied one will be created using the other options.
+           The default type is :json for ClojureScript and :msgpack for Clojure.
+   :type Override the default transit type with value :json, :json-verbose or :msgpack
+   :handlers Custom Transit handlers (refer to Transit documentation)"
   ([] (transit-request-format {}))
   ([request]
      (let [type (transit-type request)
@@ -43,6 +50,11 @@
              (t/read reader))))
 
 (defn transit-response-format
+  "Returns a Transit request format.
+
+   Options include:
+   :reader (CLJS only) Explicit Transit reader. If not supplied one will be created using the other options.
+   :handlers Custom Transit handlers (refer to Transit documentation)"
   ([] (transit-response-format {}))
   ([request]
      (transit-response-format (transit-type request) request))
