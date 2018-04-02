@@ -10,14 +10,14 @@
   (or type #? (:cljs :json :clj :msgpack)))
 
 #? (:cljs (defn transit-write-fn
-            [type request]
-            (let [writer (or (:writer request)
-                             (t/writer type request))]
+            [type opts]
+            (let [writer (or (:writer opts)
+                             (t/writer type opts))]
               (fn transit-write-params [params]
                 (t/write writer params))))
     :clj (p/defn-curried transit-write-fn
-           [type request stream params]
-           (let [writer (t/writer stream type request)]
+           [type opts stream params]
+           (let [writer (t/writer stream type opts)]
              (t/write writer params))))
 
 (defn transit-request-format
@@ -29,16 +29,16 @@
    :type Override the default transit type with value :json, :json-verbose or :msgpack
    :handlers Custom Transit handlers (refer to Transit documentation)"
   ([] (transit-request-format {}))
-  ([request]
-     (let [type (transit-type request)
+  ([opts]
+     (let [type (transit-type opts)
            mime-type (if (or (= type :json)
                              (= type :json-verbose)) "json" "msgpack")]
-       {:write (transit-write-fn type request)
+       {:write (transit-write-fn type opts)
         :content-type (str "application/transit+" mime-type)})))
 
-#? (:cljs (defn transit-read-fn [request]
-            (let [reader (or (:reader request)
-                             (t/reader :json request))]
+#? (:cljs (defn transit-read-fn [opts]
+            (let [reader (or (:reader opts)
+                             (t/reader :json opts))]
               (fn transit-read-response [response]
                 (t/read reader (pr/-body response)))))
     :clj (p/defn-curried transit-read-fn [request response]
@@ -56,11 +56,11 @@
    :reader (CLJS only) Explicit Transit reader. If not supplied one will be created using the other options.
    :handlers Custom Transit handlers (refer to Transit documentation)"
   ([] (transit-response-format {}))
-  ([request]
-     (transit-response-format (transit-type request) request))
-  ([type request]
+  ([opts]
+     (transit-response-format (transit-type opts) opts))
+  ([type opts]
      (i/map->ResponseFormat
-      {:read (transit-read-fn request)
+      {:read (transit-read-fn opts)
        :description "Transit"
        :content-type
        #? (:cljs ["application/transit+json"]
