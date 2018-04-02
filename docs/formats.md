@@ -30,9 +30,16 @@ There are functions that return request and response formats.  Most of these fun
 
 ### Transit parameters
 
-`transit-request-format` takes one parameter: `writer`, which is the transit writer.  If you don't supply one, it'll create a default one.
+`transit-request-format` takes options
+* `:writer` explicit Transit writer.  If not supplied one will be created using the other options.
+* `:type` specifies transit format: `json`, `json-verbose` or `msgpack`. The default is `json` for ClojureScript and `msgpack` for Clojure.
+* `:handlers` Custom handlers passed through to Transit.
 
-`transit-response-format` has two parameters: `reader` which is the transit reader and `:raw` which, if true, causes a JS object to be returned rather than a CLJS object.
+`transit-response-format` takes options
+* `:reader` (CLJS only) explicit Transit reader. If not supplied one will be created using the other options.
+* `:handlers` Custom handlers passed through to Transit.
+
+The content-type of the response is used to determine the Transit type (json or msgpack).
 
 ### JSON parameters
 
