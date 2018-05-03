@@ -36,7 +36,7 @@ There are functions that return request and response formats.  Most of these fun
 
 ### JSON parameters
 
-`json-response-format` takes two parameters
+`json-response-format` takes an options map with three possible options
 * `:prefix` is a string that needs to be stripped off the front of the response before parsing it as JSON, which is useful for dealing with external APIs that put things like `while(1);` in front.  (And if you're using cljs-ajax with `GET`, learn about cross-site scripting and then employ this feature in your own code.)  Defaults to `nil`.
 * `:keywords?`, which if true returns the keys as keywords and if false or unprovided returns them as strings.
 * `:raw`, if true, returns a JS object rather than a CLJS object.
