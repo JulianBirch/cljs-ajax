@@ -7,7 +7,6 @@
   :dependencies [[cheshire "5.7.1"]
                  [com.cognitect/transit-clj "0.8.309"]
                  [com.cognitect/transit-cljs "0.8.256"]
-                 [net.colourcoding/poppea "0.2.1"]
                  [org.apache.httpcomponents/httpasyncclient "4.1.3"]
                  [org.apache.httpcomponents/httpcore "4.4.6"]
                  [org.clojure/clojure "1.8.0"]

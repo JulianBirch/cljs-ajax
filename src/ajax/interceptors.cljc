@@ -19,7 +19,7 @@
                    -was-aborted
                    #?@ (:cljs [AjaxImpl AjaxRequest AjaxResponse
                                Interceptor Response])]]
-              #? (:clj [poppea :as p]))
+              #? (:clj [ajax.macros :as m]))
     #? (:clj
         (:import [ajax.protocols AjaxImpl AjaxRequest
                   AjaxResponse Interceptor Response]
@@ -27,8 +27,7 @@
                   InputStreamReader Closeable OutputStream
                   InputStream])
         :cljs
-        (:require-macros [ajax.macros :as m]
-                         [poppea :as p])))
+        (:require-macros [ajax.macros :as m])))
 
 ;;; Utility
 
@@ -171,7 +170,7 @@
                    headers))))
   (-process-response [_ xhrio] xhrio))
 
-(p/defn-curried ^:internal uri-with-params [{:keys [vec-strategy params]} uri]
+(m/defn-curried ^:internal uri-with-params [{:keys [vec-strategy params]} uri]
   "Internal function. Takes a uri and appends the interpretation of the query string to it
    matching the behaviour of `url-request-format`."
   (if params

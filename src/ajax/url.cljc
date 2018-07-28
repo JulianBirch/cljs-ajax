@@ -47,13 +47,13 @@
 "
 
 #?@ (:clj  ((:require 
-             [poppea :as p]
+             [ajax.macros :as m]
              [ajax.util :as u]
              [clojure.string :as str]))
      :cljs ((:require 
              [clojure.string :as str]
              [ajax.util :as u])
-             (:require-macros [poppea :as p]))))
+             (:require-macros [ajax.macros :as m]))))
 
 
 (defn- key-encode [key]
@@ -66,7 +66,7 @@
 (defn- key-value-pair-to-str [[k v]] 
        (str (key-encode k) "=" (value-encode v)))
 
-(p/defn-curried- vec-key-transform-fn [vec-key-encode k v]
+(m/defn-curried- vec-key-transform-fn [vec-key-encode k v]
     [(vec-key-encode k) v])
 
 (defn- to-vec-key-transform [vec-strategy]
@@ -77,7 +77,7 @@
         (vec-key-transform-fn vec-key-encode)))
 
 
-(p/defn-curried- param-to-key-value-pairs [vec-key-transform prefix [key value]]
+(m/defn-curried- param-to-key-value-pairs [vec-key-transform prefix [key value]]
     "Takes a parameter and turns it into a sequence of key-value pairs suitable
      for passing to `key-value-pair-to-str`. Since we can have nested maps and
      vectors, we need a vec-key-transform function and the current query key
@@ -107,7 +107,7 @@
 
             :else [[new-key value]])))
 
-(p/defn-curried params-to-str [vec-strategy params]
+(m/defn-curried params-to-str [vec-strategy params]
     "vec-strategy is one of :rails (a[]=3&a[]=4)
                             :java (a=3&a=4) (this is the correct behaviour and the default)
                             :indexed (a[3]=1&a[4]=1)

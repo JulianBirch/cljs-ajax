@@ -13,7 +13,6 @@
             [ajax.easy :as easy]
             [ajax.protocols :as pr]
             #?@ (:clj  [[ajax.macros :as m]
-                        [poppea :as p]
                         [ajax.apache]]
                  :cljs [[ajax.xhrio]
                         [ajax.xml-http-request]]))

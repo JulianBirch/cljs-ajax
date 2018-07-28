@@ -5,10 +5,10 @@
               [ajax.formats :as f]
               [ajax.util :as u]
               #? (:clj [ajax.apache :as a])
-              #? (:clj [poppea :as p]
+              #? (:clj [ajax.macros :as m]
                   :cljs [goog.net.XhrIo :as xhr]))
     #? (:clj (:import [java.io Closeable])
-        :cljs (:require-macros [poppea :as p])))
+        :cljs (:require-macros [ajax.macros :as m])))
 
 (defn normalize-method [method]
   (if (keyword? method)
@@ -18,7 +18,7 @@
 (defn process-response [response interceptor]
   (pr/-process-response interceptor response))
 
-(p/defn-curried js-handler [handler interceptors response]
+(m/defn-curried js-handler [handler interceptors response]
   (let [processed (reduce process-response response interceptors)]
     ;;; This requires a bit of explanation: if we return a closeable,
     ;;; it should be wrapping the original response, so we _don't_

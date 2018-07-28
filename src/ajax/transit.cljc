@@ -3,8 +3,8 @@
               [ajax.interceptors :as i]
               [ajax.protocols :as pr]
               [ajax.util :as u]
-              #? (:clj  [poppea :as p]))
-    #? (:cljs (:require-macros [poppea :as p])))
+              #? (:clj [ajax.macros :as m])))
+; Surprisingly, only the clj version needs m/defn-curried
 
 (defn transit-type [{:keys [type]}]
   (or type #? (:cljs :json :clj :msgpack)))
@@ -15,7 +15,7 @@
                              (t/writer type opts))]
               (fn transit-write-params [params]
                 (t/write writer params))))
-    :clj (p/defn-curried transit-write-fn
+    :clj (m/defn-curried transit-write-fn
            [type opts stream params]
            (let [writer (t/writer stream type opts)]
              (t/write writer params))))
@@ -41,7 +41,7 @@
                              (t/reader :json opts))]
               (fn transit-read-response [response]
                 (t/read reader (pr/-body response)))))
-    :clj (p/defn-curried transit-read-fn [request response]
+    :clj (m/defn-curried transit-read-fn [request response]
            (let [content-type (u/get-content-type response)
                  type (if (.contains content-type "msgpack")
                         :msgpack :json)

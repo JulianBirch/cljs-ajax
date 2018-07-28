@@ -4,10 +4,10 @@
     (:require [ajax.interceptors :as i]
               [ajax.util :as u]
               [ajax.protocols :as pr]
-              #? (:clj [poppea :as p]))
+              #? (:clj [ajax.macros :as m]))
     #? (:clj (:import [java.io InputStream]
                       [java.util Scanner])
-        :cljs (:require-macros [poppea :as p])))
+        :cljs (:require-macros [ajax.macros :as m])))
 
 (defn raw-response-format
   "This will literally return whatever the underlying implementation
@@ -47,7 +47,7 @@
 
 ;;; Detect Response Format
 
-(p/defn-curried get-format [request format-entry]
+(m/defn-curried get-format [request format-entry]
   "Converts one of a number of types to a response format.
    Note that it processes `[text format]` the same as `format`,
    which makes it easier to work with detection vectors such as
@@ -65,7 +65,7 @@
    ;;; Must be a format generating function
    :else (format-entry request)))
 
-(p/defn-curried get-accept-entries [request format-entry]
+(m/defn-curried get-accept-entries [request format-entry]
   (let [fe (if (vector? format-entry)
              (first format-entry)
              (:content-type (get-format request format-entry)))]
@@ -73,12 +73,12 @@
           (string? fe) [fe]
           :else fe)))
 
-(p/defn-curried content-type-matches
+(m/defn-curried content-type-matches
   [^String content-type ^String accept]
   (or (= accept "*/*")
       (>= (.indexOf content-type accept) 0)))
 
-(p/defn-curried detect-content-type
+(m/defn-curried detect-content-type
   [content-type request format-entry]
   (let [accept (get-accept-entries request format-entry)]
     (some (content-type-matches content-type) accept)))
@@ -91,7 +91,7 @@
          first
          (get-format request))))
 
-(p/defn-curried detect-response-format-read
+(m/defn-curried detect-response-format-read
   [request response]
   (let [format (get-default-format response request)]
     ((:read format) response)))
