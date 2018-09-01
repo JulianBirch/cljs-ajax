@@ -170,14 +170,18 @@
                    headers))))
   (-process-response [_ xhrio] xhrio))
 
-(m/defn-curried ^:internal uri-with-params [{:keys [vec-strategy params]} uri]
+(m/defn-curried ^:internal uri-with-params [{:keys [vec-strategy params method url-params]} uri]
   "Internal function. Takes a uri and appends the interpretation of the query string to it
    matching the behaviour of `url-request-format`."
-  (if params
+  (if (and (= method "GET") params)
     (str uri
          (if (re-find #"\?" uri) "&" "?") ; add & if uri contains ?
          (url/params-to-str vec-strategy params))
-    uri))
+    (if url-params
+      (str uri
+           (if (re-find #"\?" uri) "&" "?") ; add & if uri contains ?
+           (url/params-to-str vec-strategy url-params))
+      uri)))
 
 ;;; ProcessGet is one of the standard interceptors
 ;;; Its function is to rewrite the uri of GET requests,
@@ -189,7 +193,8 @@
     (if (= method "GET")
       (reduced (update request :uri
                        (uri-with-params request)))
-      request))
+      (update request :uri
+              (uri-with-params request))))
   (-process-response [_ response] response))
 
 ;;; DirectSubmission is one of the default interceptors.

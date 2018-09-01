@@ -310,6 +310,19 @@
               :body "BODY"}
              (read-fn response))))))
 
+(deftest url-params-test
+  "Sending a delete request with URL params should populate the URL with
+  the appropriate query string. Body should have null string"
+  (let [{:keys [uri body]}
+        (process-inputs {:url-params {:a 3 :b "hello"}
+                         :headers nil
+                         :uri "/test"
+                         :method "DELETE"
+                         :format (json-request-format)
+                         :response-format (json-response-format)})]
+    (is (= "/test?a=3&b=hello" uri))
+    (is (= (as-string body) "null"))))
+
 #_ (deftest empty-response
   (let [r1 (atom "whatever")
         response (FakeXhrIo. nil nil 200)]
