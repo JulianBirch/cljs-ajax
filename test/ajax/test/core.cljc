@@ -323,6 +323,18 @@
     (is (= "/test?a=3&b=hello" uri))
     (is (= (as-string body) "null"))))
 
+(deftest get-priority-test
+  "If a GET request is given both params and url-params, url-params takes priority."
+  (let [{:keys [uri]}
+        (process-inputs {:url-params {:a 7 :b "bye"}
+                         :params {:a 3 :b "hello"}
+                         :headers nil
+                         :uri "/test"
+                         :method "GET"
+                         :format (json-request-format)
+                         :response-format (edn-response-format)})]
+    (is (= "/test?a=7&b=bye" uri))))
+
 #_ (deftest empty-response
   (let [r1 (atom "whatever")
         response (FakeXhrIo. nil nil 200)]

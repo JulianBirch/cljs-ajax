@@ -173,9 +173,9 @@
 (m/defn-curried ^:internal uri-with-params [{:keys [vec-strategy params method url-params]} uri]
   "Internal function. Takes a uri and appends the interpretation of the query string to it
    matching the behaviour of `url-request-format`."
-  (if-let [final-url-params (if (= method "GET")
-                        params
-                        url-params)]
+  (if-let [final-url-params (if (and (= method "GET") (nil? url-params))
+                              params
+                              url-params)]
     (str uri
          (if (re-find #"\?" uri) "&" "?")                   ; add & if uri contains ?
          (url/params-to-str vec-strategy final-url-params))
