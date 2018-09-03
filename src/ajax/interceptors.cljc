@@ -170,26 +170,28 @@
                    headers))))
   (-process-response [_ xhrio] xhrio))
 
-(m/defn-curried ^:internal uri-with-params [{:keys [vec-strategy params]} uri]
+(m/defn-curried ^:internal uri-with-params [{:keys [vec-strategy params method url-params]} uri]
   "Internal function. Takes a uri and appends the interpretation of the query string to it
    matching the behaviour of `url-request-format`."
-  (if params
+  (if-let [final-url-params (if (and (= method "GET") (nil? url-params))
+                              params
+                              url-params)]
     (str uri
-         (if (re-find #"\?" uri) "&" "?") ; add & if uri contains ?
-         (url/params-to-str vec-strategy params))
-    uri))
+         (if (re-find #"\?" uri) "&" "?")                   ; add & if uri contains ?
+         (url/params-to-str vec-strategy final-url-params))
+    uri)
+  )
 
 ;;; ProcessGet is one of the standard interceptors
 ;;; Its function is to rewrite the uri of GET requests,
 ;;; since there's no other way to transmit params data
 ;;; in a GET.
-(defrecord ProcessGet []
+(defrecord ProcessUrlParameters []
   Interceptor
   (-process-request [_ {:keys [method] :as request}]
-    (if (= method "GET")
-      (reduced (update request :uri
-                       (uri-with-params request)))
-      request))
+    (let [if-get-reduce (if (= method "GET") reduced identity)]
+      (if-get-reduce (update request :uri
+                       (uri-with-params request)))))
   (-process-response [_ response] response))
 
 ;;; DirectSubmission is one of the default interceptors.
@@ -205,7 +207,7 @@
 
 ;;; The standard interceptors for processing a request.
 (def request-interceptors 
-  [(ProcessGet.) (DirectSubmission.) (ApplyRequestFormat.)])
+  [(ProcessUrlParameters.) (DirectSubmission.) (ApplyRequestFormat.)])
 
 ;;; It seems rubbish making a function of this, but the namespace noise
 ;;; caused by importing the actual type across boundaries is significant

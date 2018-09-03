@@ -32,6 +32,7 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:format` - specifies the format for the body of the request (Transit, JSON, etc.). Also sets the appropriate `Content-Type` header.  Defaults to `:transit` if not provided.
 * `:response-format` - specifies that you'd like to receive a certain format of data from the server (by setting the `Accept` header and forcing the response to be parsed as the desired format).  If not provided, a permissive `Accept` header will be sent, and the response body will be interpreted according to the response's `Content-Type` header.
 * `:params` - the parameters that will be sent with the request,  format dependent: `:transit` and `:edn` can send anything, `:json`, `:text` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
+* `:url-params` - parameters that will be added onto query string. In the case of a GET request, parameters defined here will replace parameters defined in `:params`.
 * `:timeout` - the ajax call's timeout in milliseconds.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
