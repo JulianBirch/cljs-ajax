@@ -1,15 +1,18 @@
 (ns ajax.json
-  (:require [ajax.interceptors :refer 
-                [map->ResponseFormat]]
+  (:require [ajax.interceptors :refer
+             [map->ResponseFormat]]
             [ajax.protocols :refer
-                [-body -process-request -process-response -abort -status
-                -get-response-header -status-text -js-ajax-request
-                -was-aborted]]
+             [-body -process-request -process-response -abort -status
+              -get-response-header -status-text -js-ajax-request
+              -was-aborted]]
+            [ajax.util :as u]
             #?@ (:clj  [[cheshire.core :as c]
-                        [clojure.java.io :as io]]))
+                        [clojure.java.io :as io]]
+                 :cljs [[cognitect.transit :as transit]
+                        [clojure.walk :as walk]]))
   #? (:clj (:import [java.io OutputStreamWriter ByteArrayOutputStream
-                InputStreamReader Closeable OutputStream
-                InputStream])))
+                     InputStreamReader Closeable OutputStream
+                     InputStream])))
 
 ;;; NB If you're looking to use the google closure JSON implementation,
 ;;; You'll need ajax.goog-json instead
@@ -24,11 +27,14 @@
            ; NB Raw is ignored since it makes no sense in this context
            (c/parse-stream (io/reader text) keywords?)))
 
-#? (:cljs (defn read-json-native [raw keywords? text]
-               (let [result-raw (.parse js/JSON text)]
-                    (if raw
-                        result-raw
-                        (js->clj result-raw :keywordize-keys keywords?)))))
+#? (:cljs (defn read-json-transit [raw keywords? text]
+            (let [result-raw (.parse js/JSON text)]
+              (if raw
+                result-raw
+                (let [edn (transit/read (transit/reader :json) text)]
+                  (if keywords?
+                    (walk/keywordize-keys edn)
+                    edn))))))
 
 (defn make-json-request-format [write-json]
   (fn json-request-format []
@@ -55,18 +61,18 @@
   (fn json-response-format
     ([] (json-response-format {}))
     ([{:keys [prefix keywords? raw]}]
-       (map->ResponseFormat
-        {:read (fn json-read-response-format [xhrio] 
-            (read-json raw
-                       keywords?
-                       (strip-prefix prefix (-body xhrio))))
-         :description (str "JSON"
+     (map->ResponseFormat
+      {:read (fn json-read-response-format [xhrio]
+               (read-json raw
+                          keywords?
+                          (strip-prefix prefix (-body xhrio))))
+       :description (str "JSON"
                          (if prefix (str " prefix '" prefix "'"))
                          (if keywords? " keywordize"))
-         :content-type ["application/json"]}))))
+       :content-type ["application/json"]}))))
 
 (def json-response-format
-  "Returns a JSON response format using the native JSON 
+  "Returns a JSON response format using the native JSON
    implementation. Options include
    :keywords? Returns the keys as keywords
    :prefix A prefix that needs to be stripped off.  This is to
@@ -74,9 +80,9 @@
    you should think about using this.
    http://stackoverflow.com/questions/2669690/why-does-google-prepend-while1-to-their-json-responses
    http://haacked.com/archive/2009/06/24/json-hijacking.aspx"
-    (make-json-response-format 
-        #? (:clj read-json-cheshire :cljs read-json-native)))
+  (make-json-response-format
+   #? (:clj read-json-cheshire :cljs read-json-transit)))
 
-(def json-request-format 
-    (make-json-request-format 
-        #? (:clj write-json-cheshire :cljs write-json-native)))
+(def json-request-format
+  (make-json-request-format
+   #? (:clj write-json-cheshire :cljs write-json-native)))

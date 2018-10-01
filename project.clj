@@ -11,6 +11,7 @@
                  [org.apache.httpcomponents/httpcore "4.4.6"]
                  [org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.854" :scope "provided"]
+                 [com.cognitect/transit-cljs "0.8.256"]
                  [lein-doo "0.1.7" :scope "test"]
                  [org.clojure/core.async "0.3.443" :scope "test"]]
   :plugins [[lein-doo "0.1.7"]

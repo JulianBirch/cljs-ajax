@@ -1,10 +1,10 @@
 (ns ajax.util
-  "Short utility functions. A lot of these only exist because the 
+  "Short utility functions. A lot of these only exist because the
    cross platform implementation is annoying."
-   (:require [ajax.protocols :as pr])
-   #? (:clj
-       (:import [java.io OutputStreamWriter]
-                [java.lang String])))
+  (:require [ajax.protocols :as pr])
+  #? (:clj
+      (:import [java.io OutputStreamWriter]
+               [java.lang String])))
 
 (defn throw-error [args]
   "Throws an error."
