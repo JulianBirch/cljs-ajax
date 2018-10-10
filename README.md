@@ -35,6 +35,8 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:url-params` - parameters that will be added onto query string. In the case of a GET request, parameters defined here will replace parameters defined in `:params`.
 * `:timeout` - the ajax call's timeout in milliseconds.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
+* `:cookie-policy` - a keyword for the cookie management specification. **Only available in Java**. Optional. One of `:none`, `:default`, `:netscape`, `:standard`, `:standard-strict`.
+
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
 * `:body` the exact data to send with in the request. If specified, both `:params` and `:request-format` are ignored.  Note that you can submit js/FormData and other "raw" javascript types through this.
 * `:interceptors` - the [interceptors](docs/interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](docs/interceptors.md).
@@ -182,6 +184,7 @@ The following parameters are the same as in the `GET`/`POST` easy api:
 * `:params` - the parameters that will be sent with the request,  format dependent: `:transit` and `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
+* `:cookie-policy` - a keyword for the cookie management specification. **Only available in Java**. Optional. One of `:none`, `:default`, `:netscape`, `:standard`, `:standard-strict`.
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
 * `:interceptors` - the [interceptors](docs/interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](docs/interceptors.md).
 
