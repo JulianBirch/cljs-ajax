@@ -8,7 +8,7 @@
             FileEntity InputStreamEntity]
            [org.apache.http.client.methods HttpRequestBase
             HttpEntityEnclosingRequestBase]
-           [org.apache.http.client.config RequestConfig]
+           [org.apache.http.client.config RequestConfig CookieSpecs]
            [org.apache.http.concurrent FutureCallback]
            [org.apache.http.impl.nio.client HttpAsyncClients]
            [java.lang Exception]
@@ -114,13 +114,32 @@
     (failed [_ ex]
       (fail handler ex))))
 
+(defmulti get-cookie-policy
+  "Method to retrieve the cookie policy that should be used for the request.
+   This is a multimethod that may be extended to return your own cookie policy.
+   Dispatches based on the `:cookie-policy` key in the request map."
+  (fn get-cookie-dispatch [request] (:cookie-policy request)))
+
+(defmethod get-cookie-policy :none none-cookie-policy
+  [_] CookieSpecs/IGNORE_COOKIES)
+(defmethod get-cookie-policy :default default-cookie-policy
+  [_] CookieSpecs/DEFAULT)
+(defmethod get-cookie-policy :netscape netscape-cookie-policy
+  [_] CookieSpecs/NETSCAPE)
+(defmethod get-cookie-policy :standard standard-cookie-policy
+  [_] CookieSpecs/STANDARD)
+(defmethod get-cookie-policy :standard-strict standard-strict-cookie-policy
+  [_] CookieSpecs/STANDARD_STRICT)
+
 (defn- create-request-config
-  ^RequestConfig [{:keys [timeout socket-timeout]}]
+  ^RequestConfig [{:keys [timeout socket-timeout cookie-policy] :as req}]
   (let [builder (RequestConfig/custom)]
     (if timeout
       (.setConnectTimeout builder timeout))
     (if-let [st (or socket-timeout timeout)]
       (.setSocketTimeout builder st))
+    (if cookie-policy
+      (.setCookieSpec builder (get-cookie-policy req)))
     (.build builder)))
 
 (defn- to-clojure-future
