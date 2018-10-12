@@ -10,7 +10,7 @@ In addition to this document, there's an [FAQ](docs/faq.md), a [change log](CHAN
 
 ## Usage
 
-Leiningen/Boot: `[cljs-ajax "0.7.4"]`
+Leiningen/Boot: `[cljs-ajax "0.7.5"]`
 
 [![Leiningen version](http://clojars.org/cljs-ajax/latest-version.svg)](http://clojars.org/cljs-ajax)
 
