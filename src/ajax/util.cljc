@@ -26,6 +26,20 @@
                (.write ^String (to-str params))
                (.flush)))))
 
+(def successful-response-codes-set
+  "A set of successful response types derived from `goog.net.HttpStatus.isSuccess`."
+  ;; Factoid: Closure considers some 2XX status codes to *not* be successful, namely
+  ;; 205 Reset Content, 207 Multi Status & the unspecified 208+ range
+  #{200    ;; Ok
+    201    ;; Created
+    202    ;; Accepted
+    204    ;; No Content
+    206    ;; Partial Content
+    304    ;; Not Modified
+    ;; See https://github.com/google/closure-library/blob/f999480c4005641d284b86d82d0d5d0f05f3ffc8/closure/goog/net/httpstatus.js#L89-L94
+    1223}) ;; QUIRK_IE_NO_CONTENT
+
 (defn success? [status]
   "Indicates whether an HTTP status code is considered successful."
-  (<= 200 status 299))
+  (contains? successful-response-codes-set
+             status))

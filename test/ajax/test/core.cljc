@@ -42,6 +42,7 @@
   (-get-all-headers [this] {"Content-Type" content-type})
   (-get-response-header [this header] content-type)
   (-status [_] status)
+  (-status-text [_] "Test Status")
   (-body [_] #? (:cljs response
                  :clj (if response
                           (ByteArrayInputStream.
@@ -263,6 +264,30 @@
                :response-format (json-response-format)
                :api (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)})
     (is (= {"a" "b"} @r2))))
+
+(deftest not-modified
+  "If the response to a GET request is of status 304 Not Modified it should be successful"
+  (let [r1 (atom nil)
+        r2 (atom nil)
+        not-modified-response (FakeXhrIo. "application/transit+json; charset blah blah"
+                                          "Not Modified Test Response" 304)
+        see-other-response    (FakeXhrIo. "application/transit+json; charset blah blah"
+                                          "See Other Test Response" 303)]
+    (testing "successful response"
+      (ajax-request {:uri "/"
+                     :handler #(reset! r1 %)
+                     :format (url-request-format)
+                     :response-format (text-response-format)
+                     :api not-modified-response})
+      (expect-simple-reply @r1 "Not Modified Test Response"))
+    (testing "failure response"
+      (ajax-request {:uri "/"
+                     :handler #(reset! r2 %)
+                     :format (url-request-format)
+                     :response-format (text-response-format)
+                     :api see-other-response})
+      (is @r2 "There should be a non-nil response")
+      (is (not (first @r2)) "The response should be a failure"))))
 
 (deftest format-interpretation
   (is (map? (easy/keyword-response-format {} {}))))
