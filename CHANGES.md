@@ -1,3 +1,22 @@
+## Version 0.8
+
+**Breaking Changes**
+
+* The criteria for a response to be considered successful has changed.
+
+  - Previously any status from 200-299 was considered successful. If you relied
+    on 203, 205 or 207+ being successful, you may need to adjust your client
+    code.
+  - Now only those statuses specified by Google's Closure Library are
+    considered successful. Those are:
+    - 200 Ok
+    - 201 Created
+    - 202 Accepted
+    - 204 No Content
+    - 206 Partial Content
+    - 304 Not Modified
+    - 1223 QUIRK_IE_NO_CONTENT (a special case supported by Closure)
+
 ## Version 0.7
 
 * Submitting a `GET` with `:params {:a [10 20]}` used to produce `?a=10&a=20` in 0.3, it now does so again. I'd like to apologise to everyone for this particular breakage, and for the long time it's taken to fix. I know a lot of people have had to work around this issue.
