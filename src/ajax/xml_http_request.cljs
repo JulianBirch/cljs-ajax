@@ -31,7 +31,7 @@
     (let [xmlhttprequest (.-XMLHttpRequest (js/require "xmlhttprequest"))]
       (goog.object/set js/global "XMLHttpRequest" xmlhttprequest)
       xmlhttprequest)
-    (.-XMLHttpRequest js/window)))
+    js/XMLHttpRequest))
 
 (extend-type xmlhttprequest
   AjaxImpl
