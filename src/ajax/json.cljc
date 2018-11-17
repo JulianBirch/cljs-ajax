@@ -1,5 +1,7 @@
 (ns ajax.json
-  (:require [ajax.interceptors :refer 
+  (:require [cognitect.transit :as t]
+            [clojure.walk :as w]
+            [ajax.interceptors :refer 
                 [map->ResponseFormat]]
             [ajax.protocols :refer
                 [-body -process-request -process-response -abort -status
@@ -29,6 +31,15 @@
                     (if raw
                         result-raw
                         (js->clj result-raw :keywordize-keys keywords?)))))
+
+; From Kjetil Thuen's "safe" converter
+#? (:cljs (defn read-json-transit [raw keywords? text]
+            (if raw
+              (.parse js/JSON text)
+              (let [edn (t/read (t/reader :json) text) ]
+                  (if keywords?
+                    (w/keywordize-keys edn)
+                    edn)))))
 
 (defn make-json-request-format [write-json]
   (fn json-request-format []
@@ -79,4 +90,8 @@
 
 (def json-request-format 
     (make-json-request-format 
-        #? (:clj write-json-cheshire :cljs write-json-native)))
+     #? (:clj write-json-cheshire :cljs write-json-native)))
+
+(def safe-json-request-format 
+    (make-json-response-format 
+        #? (:clj read-json-cheshire :cljs read-json-transit)))
