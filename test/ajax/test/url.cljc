@@ -15,24 +15,27 @@
 
 (deftest params-to-str-indexed
   (is (= "b[0]=1&b[1]=2" (params-to-str :indexed {:b [1 2]})))
-  (is (= "a=0&b[0]=1&b[1]=2&c[d]=3&c[e]=4&f=5"
+  (is (= "a=0&b[0]=1&b[1]=2&c[d]=3&c[e]=4&f=5&g[0]=1"
          (params-to-str :indexed {:a 0
                                   :b [1 2]
                                   :c {:d 3 :e 4}
-                                  "f" 5}))))
+                                  "f" 5
+                                  :g #{1}}))))
 
 (deftest params-to-str-java
   (is (= "b=1&b=2" (params-to-str :java {:b [1 2]})))
-  (is (= "a=0&b=1&b=2&c[d]=3&c[e]=4&f=5"
+  (is (= "a=0&b=1&b=2&c[d]=3&c[e]=4&f=5&g=1"
          (params-to-str :java {:a 0
                                :b [1 2]
                                :c {:d 3 :e 4}
-                               "f" 5}))))
+                               "f" 5
+                               :g #{1}}))))
 
 (deftest params-to-str-rails
   (is (= "b[]=1&b[]=2" (params-to-str :rails {:b [1 2]})))
-  (is (= "a=0&b[]=1&b[]=2&c[d]=3&c[e]=4&f=5"
+  (is (= "a=0&b[]=1&b[]=2&c[d]=3&c[e]=4&f=5&g[]=1"
          (params-to-str :rails {:a 0
                                 :b [1 2]
                                 :c {:d 3 :e 4}
-                                "f" 5}))))
+                                "f" 5
+                                :g #{1}}))))
