@@ -100,7 +100,7 @@
             (map? value)
             (mapcat recurse (seq value)) ; {:b {:a 1}} should be ["b[a]" 1]
 
-            (sequential? value) ; behaviour depends on vec-key-transform
+            (or (sequential? value) (set? value)) ; behaviour depends on vec-key-transform
             (->> (seq value)
                  (map-indexed vec-key-transform)
                  (mapcat recurse))
