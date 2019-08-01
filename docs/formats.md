@@ -10,7 +10,7 @@ A response format (given by `:response-format`) is a bit more complex:
 * `:description` A description of the format, for use in error messages.
 * `:read` A function that takes the underlying `goog.net.XhrIo` and converts it to a response.  Exceptions thrown by this will be caught.
 * `:content-type` The content type to put in the `Accept` header.
-* `:type` Optional.  One of `:blob`, `:document`, `:json` (which uses the browser's JSON decoding to a JS object), `:text` (same as blank), `:arraybuffer`. Set `:read` to `-body` if you want to use this.
+* `:type` Optional.  One of `:blob`, `:document`, `:json` (which uses the browser's JSON decoding to a JS object), `:text` (same as blank), `:arraybuffer`. Set `:read` to `pr/-body` (after adding a `:require` for `[ajax.protocols :as pr]`) if you want to use this.
 
 ## Standard Formats
 
