@@ -1,7 +1,7 @@
 (ns ajax.core
   "This is the documented API for cljs-ajax. The only functions not
    exposed here that are documented are the deprecated features."
-  (:require [clojure.string :as str]
+  (:require [ajax.edn :as edn]
             [ajax.url :as url]
             [ajax.json :as json]
             [ajax.transit :as transit]
@@ -37,6 +37,9 @@
 
 (def json-request-format json/json-request-format)
 (def json-response-format json/json-response-format)
+
+(def edn-request-format edn/edn-request-format)
+(def edn-response-format edn/edn-response-format)
 
 (def transit-request-format transit/transit-request-format)
 (def transit-response-format transit/transit-response-format)
