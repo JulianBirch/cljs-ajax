@@ -1,5 +1,8 @@
 language: clojure
 lein: lein
+dist: xenial
+jdk:
+  - openjdk8
 before_script:
   - "yes | sudo lein upgrade 2.5.2"
 sudo: required
