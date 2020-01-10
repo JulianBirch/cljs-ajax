@@ -114,14 +114,14 @@ A `:vec-strategy` of `:rails` will render `{:a [1 2]}` as `a[]=1&a[]=2`. This is
 ; Send multiple files explicitly, ClojureScript specific
 ; input-element is an html element of file type.
 (let [form-data (let [f-d (js/FormData.)
-                      files (.-files input-element)
-                      name (.-name input-element)]
-                  (doseq [file-key (.keys js/Object files)]
-                    (.append f-d name (aget files file-key)))
-                  f-d)]
-  (POST "/send-files" {:body form-data
-                       :response-format (raw-response-format)
-                       :timeout 100}))
+      files (.-files input-element)]
+     (doseq [file-key (.keys js/Object files)]
+              (.append f-d file-key            
+                   (aget files file-key)))
+                    f-d)]
+    (POST "/send-files" {:body form-data
+                         :response-format (raw-response-format)
+                         :timeout 1000}))
                       
 (POST "/send-message"
         {:params {:message "Hello World"
