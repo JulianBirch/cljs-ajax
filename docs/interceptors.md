@@ -52,7 +52,7 @@ Note that in general, we will want to *prepend* elements to the `default-interce
 We may wish to see a rule *appended*, however. The Google App Engine doesn't permit a body in `DELETE` requests; its implementation of the HTTP spec is wrong, but there's no point arguing.  The following appends this rule:
 
 ```clj
-(def delete-is-empty [{:keys [method] :as request}]
+(defn delete-is-empty [{:keys [method] :as request}]
      (if (= method "DELETE")
          (reduced (assoc request :body nil))
          request))
