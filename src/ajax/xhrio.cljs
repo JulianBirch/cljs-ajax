@@ -50,5 +50,7 @@
                   id timeout priority max-retries]
            :or {timeout 0}}
      handler]
-    (.send this id uri method body (clj->js headers)
-           priority handler max-retries)))
+    (doto this
+      (.setTimeoutInterval timeout)
+      (.send id uri method body (clj->js headers)
+             priority handler max-retries))))
