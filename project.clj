@@ -18,7 +18,7 @@
             [lein-ancient "0.6.10"]]
   :hooks [leiningen.cljsbuild]
   :global-vars { *warn-on-reflection* true }
-  :clean-targets ^{:protect false} ["target" "target-int" "target-test"]
+  :clean-targets ^{:protect false} ["target" "target-int" "target-test" "target-test-node"]
   :profiles
   {:dev {:source-paths ["dev", "browser-test"]
          :test-paths ["test"]
@@ -49,6 +49,16 @@
                       :optimizations :whitespace
                       :pretty-print true
                       :process-shim false}}
+    :test-node {:source-paths ["src" "test"]
+                :incremental? true
+                :compiler {:output-to "target-test-node/unit-test.js"
+                           :output-dir "target-test-node"
+                           :target :nodejs
+                      ;;; :source-map "target-test/unit-test.js.map"
+                           :main ajax.test.runner
+                           ;; :optimizations :whitespace
+                           :pretty-print true
+                           :process-shim false}}
     :int {:source-paths ["src" "browser-test"]
           :incremental? true
           :compiler {:output-to "target-int/integration.js"
@@ -59,4 +69,5 @@
                      :pretty-print true}}}}
   :aliases {"clj-test"  ["test"]
             "cljs-test" ["doo" "phantom" "test" "once"]
+            "cljs-node-test" ["doo" "node" "test-node" "once"]
             "run-tests" ["do" "clean," "clj-test," "cljs-test"]})
