@@ -167,10 +167,14 @@
             "Accept" "application/json"}
            headers))))
 
-#? (:cljs (deftest body-is-passed-through
-            (let [result (process-inputs {:body (js/FormData.)
-                                           :response-format (json-response-format)})]
-              (is (instance? js/FormData (:body result))))))
+#? (:cljs
+    ;; don't include when testing node
+    (this-as this
+      (when (= this (.-window this))
+        (deftest body-is-passed-through
+          (let [result (process-inputs {:body (js/FormData.)
+                                        :response-format (json-response-format)})]
+            (is (instance? js/FormData (:body result))))))))
 
 (defn fake-from-request [{:keys [params format]}]
   (let [{:keys [content-type write]} format]
@@ -235,9 +239,12 @@
     (is (= {:a 1} @r) "Format detection didn't work")))
 
 #? (:cljs
-    (deftest js-types
-      (POST nil {:body (js/FormData.)
-                 :api simple-reply})))
+    ;; don't include when testing node
+    (this-as this
+      (when (= this (.-window this))
+        (deftest js-types
+          (POST nil {:body (js/FormData.)
+                     :api simple-reply})))))
 
 (deftest through-run
   ;;; Test format detection runs all the way through

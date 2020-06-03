@@ -27,11 +27,12 @@
     {}))
 
 (def xmlhttprequest
-  (if (= cljs.core/*target* "nodejs")
-    (let [xmlhttprequest (.-XMLHttpRequest (js/require "xmlhttprequest"))]
-      (goog.object/set js/global "XMLHttpRequest" xmlhttprequest)
-      xmlhttprequest)
-    js/XMLHttpRequest))
+  (cond
+    (exists? goog/global.XMLHttpRequest)
+    goog/global.XMLHttpRequest
+    (exists? js/require)
+    (let [req js/require]
+      (.-XMLHttpRequest (req "xmlhttprequest")))))
 
 (extend-type xmlhttprequest
   AjaxImpl
