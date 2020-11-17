@@ -2,9 +2,7 @@
     (:require [cognitect.transit :as t]
               [ajax.interceptors :as i]
               [ajax.protocols :as pr]
-              [ajax.util :as u]
-              #? (:clj [ajax.macros :as m])))
-; Surprisingly, only the clj version needs m/defn-curried
+              [ajax.util :as u]))
 
 (defn transit-type [{:keys [type]}]
   (or type #? (:cljs :json :clj :msgpack)))
@@ -15,10 +13,11 @@
                              (t/writer type opts))]
               (fn transit-write-params [params]
                 (t/write writer params))))
-    :clj (m/defn-curried transit-write-fn
-           [type opts stream params]
-           (let [writer (t/writer stream type opts)]
-             (t/write writer params))))
+    :clj (defn transit-write-fn
+           [type opts]
+           (fn transit-write-params [stream params]
+             (let [writer (t/writer stream type opts)]
+               (t/write writer params)))))
 
 (defn transit-request-format
   "Returns a Transit request format.
@@ -41,13 +40,14 @@
                              (t/reader :json opts))]
               (fn transit-read-response [response]
                 (t/read reader (pr/-body response)))))
-    :clj (m/defn-curried transit-read-fn [request response]
-           (let [content-type (u/get-content-type response)
-                 type (if (.contains content-type "msgpack")
-                        :msgpack :json)
-                 stream (pr/-body response)
-                 reader (t/reader stream type request)]
-             (t/read reader))))
+    :clj (defn transit-read-fn [request]
+           (fn transit-read-response [response]
+             (let [content-type (u/get-content-type response)
+                   type         (if (.contains content-type "msgpack")
+                                  :msgpack :json)
+                   stream       (pr/-body response)
+                   reader       (t/reader stream type request)]
+               (t/read reader)))))
 
 (defn transit-response-format
   "Returns a Transit request format.
