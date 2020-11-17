@@ -170,7 +170,7 @@
                    headers))))
   (-process-response [_ xhrio] xhrio))
 
-(m/defn-curried ^:internal uri-with-params [{:keys [vec-strategy params method url-params]} uri]
+(defn ^:internal uri-with-params [{:keys [vec-strategy params method url-params]} uri]
   "Internal function. Takes a uri and appends the interpretation of the query string to it
    matching the behaviour of `url-request-format`."
   (if-let [final-url-params (if (and (= method "GET") (nil? url-params))
@@ -189,9 +189,11 @@
 (defrecord ProcessUrlParameters []
   Interceptor
   (-process-request [_ {:keys [method] :as request}]
-    (let [if-get-reduce (if (= method "GET") reduced identity)]
-      (if-get-reduce (update request :uri
-                       (uri-with-params request)))))
+    (cond->
+      (update request :uri
+              (partial uri-with-params request))
+      (= method "GET")
+      reduced))
   (-process-response [_ response] response))
 
 ;;; DirectSubmission is one of the default interceptors.

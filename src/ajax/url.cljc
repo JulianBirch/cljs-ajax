@@ -46,14 +46,12 @@
  of cljs-ajax. Now we have ~50 SLOCs achieving much the same result.
 "
 
-#?@ (:clj  ((:require 
-             [ajax.macros :as m]
-             [ajax.util :as u]
-             [clojure.string :as str]))
-     :cljs ((:require 
-             [clojure.string :as str]
-             [ajax.util :as u])
-             (:require-macros [ajax.macros :as m]))))
+#? (:clj  (:require
+            [ajax.util :as u]
+            [clojure.string :as str])
+    :cljs (:require
+            [clojure.string :as str]
+            [ajax.util :as u])))
 
 
 (defn- key-encode [key]
@@ -66,7 +64,7 @@
 (defn- key-value-pair-to-str [[k v]] 
        (str (key-encode k) "=" (value-encode v)))
 
-(m/defn-curried- vec-key-transform-fn [vec-key-encode k v]
+(defn- vec-key-transform-fn [vec-key-encode k v]
     [(vec-key-encode k) v])
 
 (defn- to-vec-key-transform [vec-strategy]
@@ -74,10 +72,10 @@
                                :java (fn [k] nil) ; no subscript
                                :rails (fn [k] "") ; [] subscript
                                :indexed identity)] ; [1] subscript
-        (vec-key-transform-fn vec-key-encode)))
+        (partial vec-key-transform-fn vec-key-encode)))
 
 
-(m/defn-curried- param-to-key-value-pairs [vec-key-transform prefix [key value]]
+(defn- param-to-key-value-pairs [vec-key-transform prefix [key value]]
     "Takes a parameter and turns it into a sequence of key-value pairs suitable
      for passing to `key-value-pair-to-str`. Since we can have nested maps and
      vectors, we need a vec-key-transform function and the current query key
@@ -89,7 +87,7 @@
                           (str prefix "[" k1 "]")
                           prefix)
                       k1)
-          recurse (param-to-key-value-pairs vec-key-transform new-key)]
+          recurse (partial param-to-key-value-pairs vec-key-transform new-key)]
         (cond 
             (string? value) ; string is sequential so we have to handle it separately
             [[new-key value]]  ; ("a" 1) should be ["a" 1]
@@ -107,7 +105,7 @@
 
             :else [[new-key value]])))
 
-(m/defn-curried params-to-str [vec-strategy params]
+(defn params-to-str [vec-strategy params]
     "vec-strategy is one of :rails (a[]=3&a[]=4)
                             :java (a=3&a=4) (this is the correct behaviour and the default)
                             :indexed (a[3]=1&a[4]=1)
@@ -121,5 +119,5 @@
   "The request format for simple POST and GET."
   ([] (url-request-format {})) 
   ([{:keys [vec-strategy]}]
-   {:write (u/to-utf8-writer (params-to-str vec-strategy))
+   {:write (u/to-utf8-writer (partial params-to-str vec-strategy))
     :content-type "application/x-www-form-urlencoded; charset=utf-8"}))
