@@ -22,7 +22,6 @@
                       detect-response-format
                       default-formats
                       POST GET]]
-   [ajax.json :as json]
    [ajax.edn :refer [edn-request-format edn-response-format]]
    [ajax.ring :refer [ring-response-format]])
    #? (:cljs (:require-macros [cljs.test :refer [deftest testing is]])
@@ -54,12 +53,12 @@
   (letfn [(make-format [content-type]
             (f/get-default-format (FakeXhrIo. content-type nil nil)
                                 {:response-format @default-formats}))
-          (detects [{:keys [from format]}] (is format (= (:description (make-format from)))))]
+          (detects [{:keys [from format]}] (is (= format (:description (make-format from))) from))]
     (detects {:format "JSON"     :from "application/json;..."})
     (detects {:format "raw text" :from "text/plain;..."})
     (detects {:format "raw text" :from "text/html;..."})
     (detects {:format "Transit"  :from "application/transit+json;xxx"})
-    (detects {:format "raw text" :from "application/xml;..."})))
+    (detects {:format (:description (f/raw-response-format)) :from "application/xml;..."})))
 
 (defn multi-content-type [input]
   (let [a (easy/keyword-response-format input {})
