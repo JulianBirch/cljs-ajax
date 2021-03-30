@@ -51,12 +51,14 @@
   #? (:clj  (a/new-api)
       :cljs (new goog.net.XhrIo)))
 
-(defn process-request [request interceptor]
+(defn process-request 
   "-process-request with the arguments flipped for use in reduce"
+  [request interceptor]
   (pr/-process-request interceptor request))
 
-(defn raw-ajax-request [{:keys [interceptors] :as request}]
+(defn raw-ajax-request 
   "The main request function."
+  [{:keys [interceptors] :as request}]
   (let [request (reduce process-request request interceptors)
         ;;; Pass the request through the interceptors
         handler (base-handler (reverse interceptors) request)

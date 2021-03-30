@@ -61,8 +61,9 @@
                (.substring text (.-length prefix))
                text)))
 
-(defn make-json-response-format [read-json]
+(defn make-json-response-format 
   "Create a json request format given `read-json` function."
+  [read-json]
   (fn json-response-format
     ([] (json-response-format {}))
     ([{:keys [prefix keywords? raw]}]

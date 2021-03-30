@@ -75,12 +75,13 @@
         (partial vec-key-transform-fn vec-key-encode)))
 
 
-(defn- param-to-key-value-pairs [vec-key-transform prefix [key value]]
-    "Takes a parameter and turns it into a sequence of key-value pairs suitable
+(defn- param-to-key-value-pairs 
+  "Takes a parameter and turns it into a sequence of key-value pairs suitable
      for passing to `key-value-pair-to-str`. Since we can have nested maps and
      vectors, we need a vec-key-transform function and the current query key
      prefix as well as the key and value to be analysed. Ultimately, this 
-     function walks the structure and flattens it." 
+     function walks the structure and flattens it."
+  [vec-key-transform prefix [key value]]
     (let [k1 (key-encode key)
           new-key (if prefix 
                       (if key 
@@ -105,11 +106,12 @@
 
             :else [[new-key value]])))
 
-(defn params-to-str [vec-strategy params]
-    "vec-strategy is one of :rails (a[]=3&a[]=4)
-                            :java (a=3&a=4) (this is the correct behaviour and the default)
-                            :indexed (a[3]=1&a[4]=1)
+(defn params-to-str 
+   "vec-strategy is one of :rails (a[]=3&a[]=4)
+                           :java (a=3&a=4) (this is the correct behaviour and the default)
+                           :indexed (a[3]=1&a[4]=1)
      params is an arbitrary clojure map"
+  [vec-strategy params]
     (->> [nil params]
          (param-to-key-value-pairs (to-vec-key-transform vec-strategy) nil)
          (map key-value-pair-to-str)

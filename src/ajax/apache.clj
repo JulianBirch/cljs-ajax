@@ -23,10 +23,11 @@
 
 (def array-of-bytes-type (Class/forName "[B"))
 
-(defn- to-entity [b]
+(defn- to-entity 
   "This function means you can just hand cljs-ajax a byte
    array, string, normal Java file or input stream and it
    will automatically work with the Apache implementation."
+  [b]
   (condp instance? b
     array-of-bytes-type (ByteArrayEntity. b)
     String (StringEntity. ^String b "UTF-8")
@@ -81,10 +82,11 @@
   (proxy [HttpEntityEnclosingRequestBase] []
     (getMethod [] method)))
 
-(defn- cancel [handler]
+(defn- cancel 
   "This method ensures that the behaviour of the wrapped
    Apache classes matches the behaviour the javascript version,
    including the negative status number."
+  [handler]
   (handler
    (map->Response {:status -1
                    :status-text "Cancelled"
@@ -102,9 +104,10 @@
                      :exception ex
                      :was-aborted false}))))
 
-(defn- create-handler [handler]
-  "Takes a cljs-ajax style handler method and converts it
+(defn- create-handler 
+   "Takes a cljs-ajax style handler method and converts it
    to a FutureCallback suitable for use the Apache API."
+  [handler]
   (reify
     FutureCallback
     (cancelled [_]
@@ -202,11 +205,11 @@
         (to-clojure-future (.execute client request h) client))
       (catch Exception ex (fail handler ex)))))
 
-(defn new-api []
+(defn new-api
   "This is the only thing exposed by the apache.clj file:
    a factory function that returns a class that wraps the
    Apache async API to the cljs-ajax API.
    Note that it's completely stateless: all of the relevant
    implementation objects are created each time."
-
+  []
   (Connection.))
