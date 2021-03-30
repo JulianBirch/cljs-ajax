@@ -6,20 +6,22 @@
        (:import [java.io OutputStreamWriter]
                 [java.lang String])))
 
-(defn throw-error [args]
+(defn throw-error 
   "Throws an error."
+  [args]
   (throw (#?(:clj Exception. :cljs js/Error.)
            (str args))))
 
 (defn get-content-type ^String [response]
   (or (pr/-get-response-header response "Content-Type") ""))
 
-(defn to-utf8-writer [to-str]
+(defn to-utf8-writer 
   "Takes a function that converts to a string and transforms it
    into a function that converts to an object that will write
    UTF-8 to the wire. Note that this is the identity function
    for JavaScript because the underlying implementations take
    a string."
+  [to-str]
   #? (:cljs to-str
       :clj (fn write-utf8 [stream params]
              (doto (OutputStreamWriter. stream)
@@ -39,7 +41,8 @@
     ;; See https://github.com/google/closure-library/blob/f999480c4005641d284b86d82d0d5d0f05f3ffc8/closure/goog/net/httpstatus.js#L89-L94
     1223}) ;; QUIRK_IE_NO_CONTENT
 
-(defn success? [status]
+(defn success? 
   "Indicates whether an HTTP status code is considered successful."
+  [status]
   (contains? successful-response-codes-set
              status))

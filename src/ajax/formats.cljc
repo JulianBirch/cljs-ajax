@@ -45,7 +45,7 @@
 
 ;;; Detect Response Format
 
-(defn get-format [request format-entry]
+(defn get-format 
   "Converts one of a number of types to a response format.
    Note that it processes `[text format]` the same as `format`,
    which makes it easier to work with detection vectors such as
@@ -53,6 +53,7 @@
    
    It also supports providing formats as raw functions. I don't 
    know if anyone has ever used this."
+  [request format-entry]
   (cond
    (or (nil? format-entry) (map? format-entry))
    format-entry
@@ -102,12 +103,13 @@
   (let [formats (if (vector? response-format) response-format [response-format])]
     (mapcat #(get-accept-entries request %) formats)))
 
-(defn detect-response-format [opts]
-    "NB This version of the response format doesn't have a zero
+(defn detect-response-format 
+   "NB This version of the response format doesn't have a zero
      arity version. This is because it would involve pulling
      in every dependency. Instead, core.cljc adds it in."
-     (let [accept (accept-header opts)]
-       (i/map->ResponseFormat
-        {:read (detect-response-format-read opts)
-         :format (str "(from " accept ")")
-         :content-type accept})))
+  [opts]
+    (let [accept (accept-header opts)]
+      (i/map->ResponseFormat
+      {:read (detect-response-format-read opts)
+        :format (str "(from " accept ")")
+        :content-type accept})))

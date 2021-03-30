@@ -29,8 +29,9 @@
 
 (def to-interceptor i/to-interceptor)
 
-(defn abort [this]
+(defn abort 
   "Call this on the result of `ajax-request` to cancel the request."
+  [this]
   (pr/-abort this))
 
 ;;; Standard Formats

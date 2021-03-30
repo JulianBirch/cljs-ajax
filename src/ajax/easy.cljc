@@ -19,9 +19,10 @@
   ([] (f/detect-response-format {:response-format @default-formats}))
   ([opts] (f/detect-response-format opts)))
 
-(defn keyword-request-format [format format-params]
+(defn keyword-request-format 
   "Converts an easy API request format specifier to an `ajax-request`
   request format specifier."
+  [format format-params]
   (cond
    (map? format) format
    (fn? format) {:write format}
@@ -51,11 +52,12 @@
            :detect (detect-response-format)
            nil)))
 
-(defn keyword-response-format [format format-params]
+(defn keyword-response-format 
   "Converts an easy API format specifier to an `ajax-request`
    format specifier. Mostly this is just a case of replacing `:json`
    with `json-response-format`. However, it gets complex when you
    specify a detection format such as `[[\"application/madeup\" :json]]`."
+  [format format-params]
   (if (vector? format)
     (->> format
          (map #(keyword-response-format-element % format-params))
@@ -93,13 +95,12 @@
       (when (fn? finally)
         (finally)))))
 
-(defn transform-opts [{:keys [method format response-format
-                              params body]
-                       :as opts}]
+(defn transform-opts 
   "Note that if you call GET, POST et al, this function gets
    called and will include Transit code in your JS.
    If you don't want this to happen, use ajax-request directly
    (and use advanced optimisation)."
+  [{:keys [method format response-format params body] :as opts}]
   (let [needs-format (and (nil? body) (not= method "GET"))
         rf (if (or format needs-format)
              (keyword-request-format format opts))]
