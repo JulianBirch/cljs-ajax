@@ -25,9 +25,10 @@
 #? (:clj
     ;;; http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
     (do
-      (defn response-to-string [response]
+      (defn response-to-string
         "Interprets the response as text (a string). Isn't likely 
          to give you a good outcome if the response wasn't text."
+        [response]
         (let [s (doto (Scanner. ^InputStream (pr/-body response)
                                 "UTF-8")
                   (.useDelimiter "\\A"))]
