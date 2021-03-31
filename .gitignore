@@ -20,3 +20,4 @@ pom.xml.asc
 *~
 .idea/
 *.iml
+target-test-node/

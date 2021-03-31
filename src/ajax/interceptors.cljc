@@ -94,14 +94,14 @@
 (defrecord ResponseFormat [read description content-type]
   Interceptor
   (-process-request
-   "Sets the headers on the request" 
+    #_"Sets the headers on the request" 
    [{:keys [content-type]} request]
     (update request
             :headers
             #(merge {"Accept" (content-type-to-request-header content-type)}
                     (or % {}))))
   (-process-response
-    "Transforms the raw response (an implementation of AjaxResponse)"
+    #_"Transforms the raw response (an implementation of AjaxResponse)"
    [{:keys [read] :as format} xhrio]
     (try
       (let [status #? (:clj (long (-status xhrio))
