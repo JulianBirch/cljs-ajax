@@ -4,7 +4,7 @@ simple Ajax client for ClojureScript and Clojure
 
 [![Build Status](https://travis-ci.org/JulianBirch/cljs-ajax.svg?branch=master)](https://travis-ci.org/JulianBirch/cljs-ajax)
 
-`cljs-ajax` exposes the same interface (where useful) in both Clojure and ClojureScript. On ClojureScript it operates as a wrapper around [`goog.net.XhrIo`](https://developers.google.com/closure/library/docs/xhrio?hl=en) or [`js/XmlHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest), while on the JVM it's a wrapper around the [Apache HttpAsyncClient](https://hc.apache.org/httpcomponents-asyncclient-dev/) library. 
+`cljs-ajax` exposes the same interface (where useful) in both Clojure and ClojureScript. On ClojureScript it operates as a wrapper around [`goog.net.XhrIo`](https://developers.google.com/closure/library/docs/xhrio?hl=en) or [`js/XmlHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest), while on the JVM it's a wrapper around the [Apache HttpAsyncClient](https://hc.apache.org/httpcomponents-asyncclient-4.1.x/index.html) library. 
 
 In addition to this document, there's an [FAQ](docs/faq.md), a [change log](CHANGES.md) and a [contribution document](CONTRIBUTING.md). Furthermore, there is detailed documentation on specific features and design advice in the [docs folder](docs).
 
