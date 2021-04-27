@@ -55,7 +55,10 @@
 
 
 (defn- key-encode [key]
-  (if (keyword? key) (name key) key))
+  (cond
+    (qualified-keyword? key) (str/join "/" ((juxt namespace name) key))
+    (keyword? key)           (name key)
+    :else                    key))
 
 (def ^:private value-encode ; why doesn't def- exist?
     #? (:clj (fn value-encode [u] (java.net.URLEncoder/encode (str u) "UTF-8"))
@@ -92,6 +95,9 @@
         (cond 
             (string? value) ; string is sequential so we have to handle it separately
             [[new-key value]]  ; ("a" 1) should be ["a" 1]
+
+            (qualified-keyword? value)
+            [[new-key (str/join "/" ((juxt namespace name) value))]] ; (:a/b 1) should be ["a/b" 1]
 
             (keyword? value)
             [[new-key (name value)]] ; (:a 1) should be ["a" 1]

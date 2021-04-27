@@ -135,7 +135,7 @@ A `:vec-strategy` of `:rails` will render `{:a [1 2]}` as `a[]=1&a[]=2`. This is
      {:params {:id 1 :name "mystery item"}})
      
 (GET {:url "/generate.png" ; Request a PNG and get it back as a js/ArrayBuffer
-      :response-format {:content-type "image/png" :description "PNG image" :read -body :type :arraybuffer})
+      :response-format {:content-type "image/png" :description "PNG image" :read -body :type :arraybuffer}})
 ```
 
 ### FormData support
