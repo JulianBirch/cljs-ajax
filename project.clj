@@ -68,6 +68,6 @@
                      :optimizations :whitespace
                      :pretty-print true}}}}
   :aliases {"clj-test"  ["test"]
-            "cljs-test" ["doo" "phantom" "test" "once"]
+            "cljs-test" ["doo" "chrome-headless" "test" "once"]
             "cljs-node-test" ["doo" "node" "test-node" "once"]
             "run-tests" ["do" "clean," "clj-test," "cljs-test"]})

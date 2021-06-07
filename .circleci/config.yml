@@ -1,0 +1,16 @@
+version: 2
+jobs:
+  test:
+    docker:
+      - image: circleci/clojure:lein-2.9.6-node-browsers
+
+    steps:
+      - checkout
+      - run: sudo npm install karma karma-chrome-launcher karma-cljs-test -g
+      - run: lein run-tests
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - test
