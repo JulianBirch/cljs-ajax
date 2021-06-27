@@ -50,7 +50,7 @@
                (t/read reader)))))
 
 (defn transit-response-format
-  "Returns a Transit request format.
+  "Returns a Transit response format.
 
    Options include:
    :reader (CLJS only) Explicit Transit reader. If not supplied one will be created using the other options.
