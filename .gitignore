@@ -8,10 +8,8 @@ pom.xml.asc
 /.repl/
 /lib/
 /targets/
-/target-int/
-/target-int2/
+/target-*/
 /target/
-/target-test/
 .lein-deps-sum
 .#*
 *.orig
@@ -20,4 +18,3 @@ pom.xml.asc
 *~
 .idea/
 *.iml
-target-test-node/
