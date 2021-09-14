@@ -12,23 +12,25 @@ If your tastes/requirements run more to a standardized multi-format REST server,
 
 ## Cross Origin Requests
 
-By default the browser blocks ajax requests from a server which is different to the current page.  To enable such cross origin requests add the `Access-Control-Allow-Origin` and `Access-Control-Allow-Headers` headers to your response as follows.
+By default the browser blocks ajax requests from a server which is different to the current page.  To enable such cross origin requests add the `Access-Control-Allow-Origin` and `Access-Control-Allow-Headers` headers to your response as follows. You can use the [`ring-cors`](https://github.com/r0man/ring-cors) library to wrap your routes with customizable CORS middleware.
 
 ```clojure
 
-;;using the compojure library
+(require '[ring.middleware.cors :refer [wrap-cors]])
 
-(defroutes my-routes
- ...
- (ANY "/my-endpoint" []
-   {:status 200
-    :headers {
-              "Access-Control-Allow-Origin" "*"
-              "Access-Control-Allow-Headers" "Content-Type"
-              }
-    :body body
-    }))
+(def allowed-origins [#"https://example-a.com" #"https://example-b.com"])
+
+(def allowed-methods [:get :post :put :delete])
+
+(def allowed-headers #{:accept :content-type})
+
+;; my-routes already defined somewhere
+
+(def handler
+  (wrap-cors my-routes :access-control-allow-origin allowed-origins
+                       :access-control-allow-methods allowed-methods
+                       :access-control-allow-headers allowed-headers)
 
 ```
 
-`Access-Control-Allow-Origin` is the standard header telling the browser to permit a cross origin request.  Set it to the server you expect the ajax requests from or a wildcard (less secure).  For Google Chrome we must include the header `Access-Control-Allow-Headers` to prevent it stripping the `Content-Type` header from our requests.  We must also change the request method from GET or POST to ANY.  The browser will actually submit two requests.  The first is an OPTIONS request submitted in order to probe the endpoint.  The second is the main GET or POST request.  Early versions of compojure may not support this correctly.
+`Access-Control-Allow-Origin` is the standard header telling the browser to permit a cross origin request.  For Google Chrome we must include the header `Access-Control-Allow-Headers` to prevent it stripping the `Content-Type` header from our requests.  For non-simple cross-origin requests (e.g. `GET` or `HEAD` requests) the browser will submit two requests: a _preflight_ and the target request.  The first is an `OPTIONS` request submitted in order to probe the endpoint.  The second is the main `GET` or `POST` request. To understand this process better, you can read [Mozilla's guide on Cross-Origin Resource Sharing (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).
