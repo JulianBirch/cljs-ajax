@@ -1,7 +1,7 @@
-(defproject cljs-ajax "0.8.4"
+(defproject de.active-group/cljs-ajax "0.8.5"
   :min-lein-version "2.5.2" ;;; lower can't run tests in cljc
   :description "A simple Ajax library for ClojureScript"
-  :url "https://github.com/JulianBirch/cljs-ajax"
+  :url "https://github.com/active-group/cljs-ajax"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[cheshire "5.10.0"]
