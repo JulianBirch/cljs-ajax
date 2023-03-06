@@ -4,15 +4,15 @@
   :url "https://github.com/JulianBirch/cljs-ajax"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[cheshire "5.10.0"]
-                 [com.cognitect/transit-clj "1.0.324"]
-                 [com.cognitect/transit-cljs "0.8.264"]
-                 [org.apache.httpcomponents/httpasyncclient "4.1.4"]
-                 [org.apache.httpcomponents/httpcore "4.4.14"]
-                 [org.clojure/clojure "1.10.3"]
-                 [org.clojure/clojurescript "1.10.844" :scope "provided"]
+  :dependencies [[cheshire "5.11.0"]
+                 [com.cognitect/transit-clj "1.0.329"]
+                 [com.cognitect/transit-cljs "0.8.280"]
+                 [org.apache.httpcomponents/httpasyncclient "4.1.5"]
+                 [org.apache.httpcomponents/httpcore "4.4.16"]
+                 [org.clojure/clojure "1.11.1"]
+                 [org.clojure/clojurescript "1.11.60" :scope "provided"]
                  [lein-doo "0.1.11" :scope "test"]
-                 [org.clojure/core.async "1.3.610" :scope "test"]]
+                 [org.clojure/core.async "1.6.673" :scope "test"]]
   :plugins [[lein-doo "0.1.11"]
             [lein-cljsbuild "1.1.8"]
             [lein-ancient "1.0.0-RC3"]]
@@ -23,14 +23,14 @@
   {:dev {:source-paths ["dev", "browser-test"]
          :test-paths ["test"]
          :dependencies [[clj-time "0.15.2"]
-                        [compojure "1.6.2"]
+                        [compojure "1.7.0"]
                         [fogus/ring-edn "0.3.0"]
                         [lein-doo "0.1.11"]
-                        [http-kit "2.5.3"]
-                        [org.clojure/tools.namespace "1.1.0"]
+                        [http-kit "2.6.0"]
+                        [org.clojure/tools.namespace "1.4.2"]
                         [ring-server "0.5.0"]
                         [ring-transit "0.1.6"]
-                        [ring/ring-defaults "0.3.2"]
+                        [ring/ring-defaults "0.3.4"]
                         [ring/ring-json "0.5.1"]]}}
   :cljsbuild
   {:builds
