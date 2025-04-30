@@ -68,7 +68,7 @@ the `:ring` keyword.)
 
 ### EDN
 
-EDN is deprecated, but the functions `edn-request-format` and `edn-response-format` are available in the `ajax.edn` namespace.
+EDN is deprecated as a default available format (see issue [#54](https://github.com/JulianBirch/cljs-ajax/issues/54)), but the functions `edn-request-format` and `edn-response-format` are available in the `ajax.edn` namespace.
 
 ### Google Closure JSON
 
