@@ -18,3 +18,4 @@ pom.xml.asc
 *~
 .idea/
 *.iml
+node_modules/
