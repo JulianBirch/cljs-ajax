@@ -14,8 +14,6 @@
 
 #? (:cljs (enable-console-print!))
 
-(println "Test Results:")
-
 (defn handle-response [res]
   (println "Response")
   (println (pr-str res)))
@@ -110,7 +108,11 @@
                                    :timeout 100
                                    :api (js/XMLHttpRequest.)})))))
 
+(defn log-test-results-banner []
+  (println "Test Results:"))
+
 (defn run-browser-tests []
+  (log-test-results-banner)
   (run-form-data-posts)
 
   (request {:id 3 :timeout 0 :input "Hello"})
