@@ -2,6 +2,7 @@
   "name": "cljs-ajax",
   "private": true,
   "scripts": {
+    "cljs:test-browser": "clojure -M:cljs -m shadow.cljs.devtools.cli compile test-browser",
     "cljs:test-node": "clojure -M:cljs -m shadow.cljs.devtools.cli compile test-node",
     "cljs:integration": "clojure -M:cljs -m shadow.cljs.devtools.cli compile integration"
   }

@@ -85,31 +85,34 @@
   (doseq [p (get-opts opts)]
     (POST (fix-uri uri) p)))
 
-#? (:cljs
-    (do
-      (let [form-data (doto
-                          (js/FormData.)
-                        (.append "id" "10")
-                        (.append "timeout" "0")
-                        (.append "input" "Hello form-data POST"))]
-        (POST "/ajax-form-data" {:body form-data
-                                 :response-format (raw-response-format)
-                                 :handler handle-response
-                                 :error-handler handle-error
-                                 :timeout 100}))
-      (let [form-data (doto
-                          (js/FormData.)
-                        (.append "id" "110")
-                        (.append "timeout" "0")
-                        (.append "input" "Hello form-data POST"))]
-        (POST "/ajax-form-data" {:body form-data
-                                 :response-format (raw-response-format)
-                                 :handler handle-response
-                                 :error-handler handle-error
-                                 :timeout 100
-                                 :api (js/XMLHttpRequest.)}))))
+(defn run-form-data-posts []
+  #? (:cljs
+      (do
+        (let [form-data (doto
+                            (js/FormData.)
+                          (.append "id" "10")
+                          (.append "timeout" "0")
+                          (.append "input" "Hello form-data POST"))]
+          (POST "/ajax-form-data" {:body form-data
+                                   :response-format (raw-response-format)
+                                   :handler handle-response
+                                   :error-handler handle-error
+                                   :timeout 100}))
+        (let [form-data (doto
+                            (js/FormData.)
+                          (.append "id" "110")
+                          (.append "timeout" "0")
+                          (.append "input" "Hello form-data POST"))]
+          (POST "/ajax-form-data" {:body form-data
+                                   :response-format (raw-response-format)
+                                   :handler handle-response
+                                   :error-handler handle-error
+                                   :timeout 100
+                                   :api (js/XMLHttpRequest.)})))))
 
 (defn run-browser-tests []
+  (run-form-data-posts)
+
   (request {:id 3 :timeout 0 :input "Hello"})
 
   (POST2 "/ajax" {:params {:id 4 :timeout 0 :input "Hello POST"}
