@@ -198,4 +198,3 @@
                                              :type :blob
                                              :description "PNG file"
                                              :read -body}})))
-#? (:cljs (run-browser-tests))
