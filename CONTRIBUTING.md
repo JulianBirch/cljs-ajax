@@ -10,6 +10,8 @@ Equally, if you don't want to be mentioned, make sure to tell us that.
 
 If you're looking for something to do some open source work, take a look at the issue tracker. `cljs-ajax` always has a lot of [issues marked "PR welcome"](https://github.com/JulianBirch/cljs-ajax/issues?q=is%3Aissue+is%3Aopen+label%3A%22PR+welcome%22). Drop a line if you're interested in working on anything.
 
+After cloning the repository, run `npm ci` once from the repository root.
+
 After that, the usual test commands are:
 
 - `clojure -X:test`

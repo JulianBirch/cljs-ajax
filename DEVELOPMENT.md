@@ -2,8 +2,6 @@
 
 This document describes the requirements currently needed to build and test `cljs-ajax` on a clean machine.
 
-The commands below were verified on Ubuntu 24.04 and run successfully as the non-root user `jessica`.
-
 ## System Requirements
 
 Install these system packages first:
@@ -13,18 +11,31 @@ Install these system packages first:
 - Node.js and npm
 - Google Chrome
 - `bubblewrap`
-- `gh`
 
-On Ubuntu, the working package set is:
+On Linux, install Java, Node.js/npm, Chrome, and other system packages using your distro package manager. For example on Ubuntu:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y default-jdk clojure bubblewrap gh
+sudo apt-get install -y default-jdk curl rlwrap bubblewrap
 ```
 
-Node.js and npm must also be on `PATH`.
+Install the official Clojure CLI with the Linux installer script:
 
-Chrome must also be installed and available as `google-chrome` on `PATH`.
+```bash
+curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
+chmod +x linux-install.sh
+sudo ./linux-install.sh
+```
+
+Node.js and npm must also be on `PATH`, and Chrome must be installed and available as `google-chrome` on `PATH`.
+
+## Repository Setup
+
+From the repository root, install the npm dependencies before running any npm-based commands:
+
+```bash
+npm ci
+```
 
 ## Build And Test Commands
 
@@ -48,7 +59,7 @@ Alias summary:
 
 ## Verified Working State
 
-The following commands were verified successfully in this repository as user `jessica`:
+The working command set for this repository is:
 
 ```bash
 clojure -X:test

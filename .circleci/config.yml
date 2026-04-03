@@ -1,13 +1,15 @@
 version: 2.1
+orbs:
+  browser-tools: circleci/browser-tools@1.2.3
+
 jobs:
   test:
     docker:
-      - image: cimg/clojure:1.11.1-node
+      - image: cimg/clojure:1.11.1-browsers
     steps:
       - checkout
-      - run: sudo apt-get update
-      - run: sudo apt-get install -y google-chrome-stable
-      - run: npm install
+      - browser-tools/install-browser-tools
+      - run: npm ci
       - run: clojure -X:test
       - run: npm run test:cljs:node
       - run: npm run test:cljs:browser
