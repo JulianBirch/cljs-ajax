@@ -9,7 +9,7 @@ The commands below were verified on Ubuntu 24.04 and run successfully as the non
 Install these system packages first:
 
 - Java JDK
-- Leiningen
+- Clojure CLI
 - Node.js and npm
 - Google Chrome
 - `bubblewrap`
@@ -19,39 +19,12 @@ On Ubuntu, the working package set is:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y default-jdk leiningen bubblewrap gh
+sudo apt-get install -y default-jdk clojure bubblewrap gh
 ```
 
 Node.js and npm must also be on `PATH`.
 
 Chrome must also be installed and available as `google-chrome` on `PATH`.
-
-## npm Requirements
-
-This repository currently has no `package.json`, but two npm modules are still required for the test environment:
-
-- `xmlhttprequest`
-- `karma-cljs-test`
-
-The global Karma runner and Chrome launcher are also required:
-
-- `karma`
-- `karma-chrome-launcher`
-- `karma-cljs-test`
-
-One working setup is:
-
-```bash
-sudo npm install -g karma karma-cli karma-chrome-launcher karma-cljs-test
-cd /path/to/cljs-ajax
-npm install --no-save --no-package-lock xmlhttprequest karma-cljs-test
-```
-
-Notes:
-
-- `xmlhttprequest` is required by the Node test target through `src/ajax/xml_http_request.cljs`.
-- `karma-cljs-test` is required by the Chrome `doo` test target.
-- Because there is no `package.json`, these repo-local npm installs are intentionally transient.
 
 ## Build And Test Commands
 
@@ -60,32 +33,32 @@ Run all commands as your normal user, not with `sudo`.
 From the repository root:
 
 ```bash
-lein clean
-lein clj-test
-lein cljs-node-test
-lein cljs-test
+clojure -X:test
+npm run test:cljs:node
+npm run test:cljs:browser
+clojure -T:build jar
 ```
 
-Alias summary from `project.clj`:
+Alias summary:
 
-- `lein clj-test`: JVM tests
-- `lein cljs-node-test`: ClojureScript tests on Node
-- `lein cljs-test`: ClojureScript tests in headless Chrome
-- `lein run-tests`: `clean`, `clj-test`, and `cljs-test`
+- `clojure -X:test`: JVM tests
+- `npm run test:cljs:node`: ClojureScript tests on Node
+- `npm run test:cljs:browser`: ClojureScript tests in headless Chrome
+- `clojure -T:build jar`: package build
 
 ## Verified Working State
 
 The following commands were verified successfully in this repository as user `jessica`:
 
 ```bash
-lein clj-test
-lein cljs-node-test
-lein cljs-test
+clojure -X:test
+npm run test:cljs:node
+npm run test:cljs:browser
+clojure -T:build jar
 ```
 
 ## Operational Notes
 
 - Do not run normal project work with `sudo`, or the generated files and caches may become owned by `root`.
 - If you accidentally run build steps as `root`, fix ownership before continuing.
-- The current `CONTRIBUTING.md` mentions PhantomJS, but the working browser test path in this repository is `doo` with headless Chrome.
-- The Node and browser test dependencies are partly documented in prose only. They are not yet declared in repo metadata.
+- Browser tests require headless Chrome or Chrome to be installed and available on `PATH`.

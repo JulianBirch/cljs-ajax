@@ -1,13 +1,16 @@
-version: 2
+version: 2.1
 jobs:
   test:
     docker:
-      - image: circleci/clojure:lein-2.9.6-node-browsers
-
+      - image: cimg/clojure:1.11.1-node
     steps:
       - checkout
-      - run: sudo npm install karma karma-chrome-launcher karma-cljs-test -g
-      - run: lein run-tests
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y google-chrome-stable
+      - run: npm install
+      - run: clojure -X:test
+      - run: npm run test:cljs:node
+      - run: npm run test:cljs:browser
 
 workflows:
   version: 2

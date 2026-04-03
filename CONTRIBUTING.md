@@ -2,8 +2,8 @@
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for the current setup instructions.
 
-The verified test setup uses Leiningen, Node.js/npm, headless Chrome, and Karma. The older PhantomJS-based guidance is no longer the working path for this repository.
-Obviously, commits that fail the Travis build are unlikely to be accepted.
+The verified test setup uses Clojure CLI, Node.js/npm, and headless Chrome. Browser tests require Chrome to be installed and available on `PATH`.
+Obviously, commits that fail the CircleCI build are unlikely to be accepted.
 New releases tend to get announced on Twitter with credit to contributors. 
 If you want an @mention, make sure to tell us your handle.
 Equally, if you don't want to be mentioned, make sure to tell us that.
@@ -12,9 +12,9 @@ If you're looking for something to do some open source work, take a look at the 
 
 After that, the usual test commands are:
 
-- `lein clj-test`
-- `lein cljs-node-test`
-- `lein cljs-test`
-- `lein run-tests`
+- `clojure -X:test`
+- `npm run test:cljs:node`
+- `npm run test:cljs:browser`
+- `clojure -T:build jar`
 
 If you just think the documentation needs improving, please send a PR. We've accepted over 100 documentation PRs already. 
