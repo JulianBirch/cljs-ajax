@@ -14,8 +14,11 @@ pom.xml.asc
 .#*
 *.orig
 .lein-repl-history
+.cpcache/
+.shadow-cljs/
 .nrepl-port
 *~
 .idea/
 *.iml
 node_modules/
+docs/superpowers/
