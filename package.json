@@ -2,8 +2,14 @@
   "name": "cljs-ajax",
   "private": true,
   "scripts": {
-    "cljs:compile-test-browser": "clojure -M:cljs -m shadow.cljs.devtools.cli compile test-browser",
-    "cljs:compile-test-node": "clojure -M:cljs -m shadow.cljs.devtools.cli compile test-node",
-    "cljs:compile-integration": "clojure -M:cljs -m shadow.cljs.devtools.cli compile integration"
+    "test:cljs:node": "clojure -M:cljs -m shadow.cljs.devtools.cli compile test-node",
+    "test:cljs:browser": "clojure -M:cljs -m shadow.cljs.devtools.cli compile test-browser && karma start",
+    "build:integration": "clojure -M:cljs -m shadow.cljs.devtools.cli compile integration"
+  },
+  "devDependencies": {
+    "karma": "^6.4.4",
+    "karma-cljs-test": "^0.1.0",
+    "karma-chrome-launcher": "^3.2.0",
+    "xmlhttprequest": "^1.8.0"
   }
 }
