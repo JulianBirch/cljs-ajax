@@ -1,0 +1,13 @@
+{:deps {:aliases [:cljs]}
+ :builds
+ {:test-node {:target :node-test
+              :output-to "target-test-node/node-tests.js"
+              :ns-regexp "^ajax\\.test\\."
+              :autorun true}
+  :test-browser {:target :karma
+                 :output-to "target-test/browser-tests.js"
+                 :ns-regexp "^ajax\\.test\\."}
+  :integration {:target :browser
+                :output-dir "target-int"
+                :asset-path "/"
+                :modules {:integration {:init-fn browser/run-browser-tests}}}}}

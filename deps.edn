@@ -4,7 +4,7 @@
         com.cognitect/transit-cljs {:mvn/version "0.8.264"}
         org.apache.httpcomponents/httpasyncclient {:mvn/version "4.1.4"}
         org.apache.httpcomponents/httpcore {:mvn/version "4.4.14"}
-        org.clojure/clojure {:mvn/version "1.10.3"}}
+        org.clojure/clojure {:mvn/version "1.11.1"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {compojure/compojure {:mvn/version "1.6.2"}
@@ -24,7 +24,7 @@
                      ring-server/ring-server {:mvn/version "0.5.0"}
                      ring-transit/ring-transit {:mvn/version "0.1.6"}}}
   :cljs {:extra-paths ["test" "browser-test"]
-         :extra-deps {org.clojure/clojurescript {:mvn/version "1.10.844"}
+         :extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}
                       thheller/shadow-cljs {:mvn/version "2.28.19"}}}
   :build {:extra-deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
           :ns-default build}}}
