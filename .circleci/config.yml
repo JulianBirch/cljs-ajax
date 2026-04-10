@@ -13,6 +13,7 @@ jobs:
       - run: clojure -X:test
       - run: npm run test:cljs:node
       - run: npm run test:cljs:browser
+      - run: clojure -T:build jar
 
 workflows:
   version: 2

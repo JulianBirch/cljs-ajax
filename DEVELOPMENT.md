@@ -9,15 +9,17 @@ Install these system packages first:
 - Java JDK
 - Clojure CLI
 - Node.js and npm
-- Google Chrome
+- Google Chrome or Chromium
 - `bubblewrap`
 
-On Linux, install Java, Node.js/npm, Chrome, and other system packages using your distro package manager. For example on Ubuntu:
+On Linux, install the packages your distro provides with its package manager. For example on Ubuntu, install the base system packages first:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y default-jdk curl rlwrap bubblewrap
 ```
+
+Then install Node.js/npm and Chrome or Chromium using the method that fits your Ubuntu setup.
 
 Install the official Clojure CLI with the Linux installer script:
 
@@ -27,7 +29,7 @@ chmod +x linux-install.sh
 sudo ./linux-install.sh
 ```
 
-Node.js and npm must also be on `PATH`, and Chrome must be installed and available as `google-chrome` on `PATH`.
+Node.js and npm must also be on `PATH`, and Chrome or Chromium must be installed and available on `PATH`. If needed, set `CHROME_BIN` to the browser executable path instead.
 
 ## Repository Setup
 
@@ -72,4 +74,4 @@ clojure -T:build jar
 
 - Do not run normal project work with `sudo`, or the generated files and caches may become owned by `root`.
 - If you accidentally run build steps as `root`, fix ownership before continuing.
-- Browser tests require headless Chrome or Chrome to be installed and available on `PATH`.
+- Browser tests require headless Chrome or Chromium to be installed and available on `PATH`, or reachable via `CHROME_BIN`.
