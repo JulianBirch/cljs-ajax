@@ -13,7 +13,7 @@ In addition to this document, there's an [FAQ](docs/faq.md), a [change log](CHAN
 Clojure CLI:
 
 ```clojure
-{:deps {cljs-ajax {:mvn/version "0.8.4"}}}
+{:deps {cljs-ajax {:mvn/version "0.9.0-beta1"}}}
 ```
 
 The client provides an easy way to send Ajax requests to the server using `GET`, `POST`, and `PUT` functions. It also provides a simple way using `ajax-request`. All requests are asynchronous, accepting callback functions for response and error handling.
@@ -222,4 +222,3 @@ These examples will use the Google Closure library `XhrIo` API. If you want to u
 ## License
 
 Distributed under the Eclipse Public License, the same as Clojure.
-

@@ -1,4 +1,5 @@
 {:paths ["src"]
+ :mvn/repos {"clojars" {:url "https://repo.clojars.org/"}}
  :deps {cheshire/cheshire {:mvn/version "5.10.0"}
         com.cognitect/transit-clj {:mvn/version "1.0.324"}
         com.cognitect/transit-cljs {:mvn/version "0.8.264"}
@@ -41,5 +42,6 @@
   :cljs {:extra-paths ["test" "browser-test"]
          :extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}
                       thheller/shadow-cljs {:mvn/version "2.28.19"}}}
+  :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.3"}}}
   :build {:extra-deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
           :ns-default build}}}
