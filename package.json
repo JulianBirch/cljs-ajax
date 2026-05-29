@@ -4,6 +4,9 @@
   "scripts": {
     "test:cljs:node": "clojure -M:cljs -m shadow.cljs.devtools.cli compile test-node",
     "test:cljs:browser": "clojure -M:cljs -m shadow.cljs.devtools.cli compile test-browser && karma start",
+    "test:integration": "clojure -M:test -m ajax.test.integration-server-runner",
+    "test:integration:node": "clojure -M:cljs -m shadow.cljs.devtools.cli compile integration-node && node target-test-node/integration-node-tests.js",
+    "test:integration:browser": "KARMA_BUNDLE=target-test/integration-browser-tests.js clojure -M:cljs -m shadow.cljs.devtools.cli compile integration-browser && KARMA_BUNDLE=target-test/integration-browser-tests.js karma start",
     "build:integration": "clojure -M:cljs -m shadow.cljs.devtools.cli compile integration"
   },
   "devDependencies": {

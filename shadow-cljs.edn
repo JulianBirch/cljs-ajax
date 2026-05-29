@@ -2,10 +2,16 @@
  :builds
  {:test-node {:target :node-test
               :output-to "target-test-node/node-tests.js"
-              :ns-regexp "^ajax\\.test\\."}
+              :ns-regexp "^ajax\\.test\\.(core|url)$"}
   :test-browser {:target :karma
                  :output-to "target-test/browser-tests.js"
-                 :ns-regexp "^ajax\\.test\\."}
+                 :ns-regexp "^ajax\\.test\\.(core|url)$"}
+  :integration-node {:target :node-test
+                     :output-to "target-test-node/integration-node-tests.js"
+                     :ns-regexp "^ajax\\.test\\.(integration|integration-node)$"}
+  :integration-browser {:target :karma
+                        :output-to "target-test/integration-browser-tests.js"
+                        :ns-regexp "^ajax\\.test\\.(integration|integration-browser)$"}
   :integration {:target :browser
                 :output-dir "target-int"
                 :asset-path "/"

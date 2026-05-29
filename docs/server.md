@@ -1,6 +1,6 @@
 # Server
 
-If you're looking for working examples of how to reply to cljs-ajax from a ring server, take a look at [the integration test server source code](../dev/user.clj).
+If you're looking for working examples of how to reply to cljs-ajax from a ring server, take a look at [the shared integration support server](../support/ajax/test/integration_support.clj) and the small REPL wrapper in [dev/user.clj](../dev/user.clj).
 
 If you're using transit, take a look at [ring-transit](https://github.com/jalehman/ring-transit).  It will populate the request `:params` with the contents of the transit request.
 

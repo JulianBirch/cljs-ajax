@@ -49,6 +49,7 @@ From the repository root:
 clojure -X:test
 npm run test:cljs:node
 npm run test:cljs:browser
+npm run test:integration
 clojure -T:build jar
 ```
 
@@ -57,6 +58,7 @@ Alias summary:
 - `clojure -X:test`: JVM tests
 - `npm run test:cljs:node`: ClojureScript tests on Node
 - `npm run test:cljs:browser`: ClojureScript tests in headless Chrome
+- `npm run test:integration`: shared JVM + dedicated Node + dedicated browser integration tests against one live local server
 - `clojure -T:build jar`: package build
 
 ## Verified Working State
@@ -67,6 +69,7 @@ The working command set for this repository is:
 clojure -X:test
 npm run test:cljs:node
 npm run test:cljs:browser
+npm run test:integration
 clojure -T:build jar
 ```
 
@@ -75,3 +78,4 @@ clojure -T:build jar
 - Do not run normal project work with `sudo`, or the generated files and caches may become owned by `root`.
 - If you accidentally run build steps as `root`, fix ownership before continuing.
 - Browser tests require headless Chrome or Chromium to be installed and available on `PATH`, or reachable via `CHROME_BIN`.
+- `npm run test:integration` starts a local integration server and then runs the JVM, Node, and browser integration suites against it.

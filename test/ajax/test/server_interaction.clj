@@ -1,9 +1,11 @@
 (ns ajax.test.server-interaction
   (:require [ajax.core :as ajax]
+            [ajax.test.integration-support :as integration-support]
             [clojure.core.async :refer [go >! <!! chan]]
             [clojure.test :refer :all]
             [compojure.core :as compojure]
             [compojure.handler :refer [site]]
+            [clojure.java.io :as io]
             [org.httpkit.client :as httpkit]
             [org.httpkit.server :refer [run-server]]))
 
@@ -53,6 +55,64 @@
                               :body payload})
             out (<!! comm)]
         (is (= payload out))))))
+
+(deftest integration-support-routes
+  (testing "the extracted support app still serves the integration contract"
+    (let [resp (integration-support/app {:request-method :get
+                                         :uri "/ajax"
+                                         :params {:id 1
+                                                  :timeout 0
+                                                  :input "Hello"}})]
+      (is (= 200 (:status resp)))
+      (is (= (pr-str {:id 1 :output "INPUT:  Hello"}) (:body resp)))))
+  (is (re-matches #"^http://localhost:\d+$" integration-support/base-url)))
+
+(deftest integration-support-server-lifecycle
+  (let [integration-js (io/file "target-int" "integration.js")
+        _ (.mkdirs (.getParentFile integration-js))]
+    (spit integration-js "console.log('integration support');")
+    (let [server (integration-support/start-server)]
+      (try
+        (testing "the extracted lifecycle serves the static integration bundle"
+          (let [{:keys [:status :body]} @(httpkit/get (str integration-support/base-url "/integration.js"))]
+            (is (= 200 status))
+            (is (= "console.log('integration support');" (slurp body)))))
+        (testing "the extracted lifecycle preserves key integration routes"
+          (let [ajax-resp @(httpkit/post (str integration-support/base-url "/ajax")
+                                         {:headers {"Content-Type" "application/edn"}
+                                          :body (pr-str {:id 4
+                                                         :timeout 0
+                                                         :input "Hello POST"})})
+                ajax-url-resp @(httpkit/get (str integration-support/base-url "/ajax-url")
+                                            {:query-params {:id "12"
+                                                            :timeout "0"
+                                                            :input "Hello GET"}})
+                form-data-resp @(httpkit/post (str integration-support/base-url "/ajax-form-data")
+                                              {:multipart [{:name "id" :content "18"}
+                                                           {:name "timeout" :content "0"}
+                                                           {:name "input" :content "Hello form-data"}]})
+                transit-resp @(httpkit/post (str integration-support/base-url "/ajax-transit")
+                                            {:headers {"Content-Type" "application/edn"}
+                                             :body (pr-str {:id 16
+                                                            :timeout 0
+                                                            :input "Hello Transit"})})
+                png-resp @(httpkit/post (str integration-support/base-url "/ajax-form-data-png"))]
+            (is (= 200 (:status ajax-resp)))
+            (is (= (pr-str {:id 4 :output "INPUT:  Hello POST"})
+                   (slurp (:body ajax-resp))))
+            (is (= 200 (:status ajax-url-resp)))
+            (is (= (pr-str {:id 12 :output "INPUT:  Hello GET"})
+                   (slurp (:body ajax-url-resp))))
+            (is (= 200 (:status form-data-resp)))
+            (is (= (pr-str {:id 18 :output "INPUT:  Hello form-data"})
+                   (slurp (:body form-data-resp))))
+            (is (= 200 (:status transit-resp)))
+            (is (.contains (str (:body transit-resp)) "INPUT:  Hello Transit"))
+            (is (= 200 (:status png-resp)))
+            (is (= "im not even a real png!" (slurp (:body png-resp))))))
+        (finally
+          (integration-support/stop-server server)
+          (.delete integration-js))))))
 
 (comment (run-tests))
 

@@ -3,12 +3,12 @@
                                     AjaxResponse Interceptor]]
             goog.string))
 
-(defn ready-state [e]
+(defn ready-state [request]
   ({0 :not-initialized
     1 :connection-established
     2 :request-received
     3 :processing-request
-    4 :response-ready} (.-readyState (.-target e))))
+    4 :response-ready} (.-readyState request)))
 
 (defn append [current next]
   (if current
@@ -45,8 +45,10 @@
      handler]
     (set! (.-withCredentials this) with-credentials)
     (set! (.-onreadystatechange this)
-          #(when (= :response-ready (ready-state %))
-             (handler this)))
+          (fn [e]
+            (let [request (or (some-> e .-target) this)]
+              (when (= :response-ready (ready-state request))
+                (handler this)))))
     (.open this method uri true)
     (set! (.-timeout this) timeout)
 ;;; IE8 needs timeout to be set between open and send
@@ -60,7 +62,11 @@
   AjaxRequest
   (-abort [this] (.abort this))
   AjaxResponse
-  (-body [this] (.-response this))
+  (-body [this]
+    (let [response (.-response this)]
+      (if (undefined? response)
+        (.-responseText this)
+        response)))
   (-status [this] (.-status this))
   (-status-text [this] (.-statusText this))
   (-get-all-headers [this]
