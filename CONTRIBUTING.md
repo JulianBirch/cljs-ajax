@@ -3,8 +3,8 @@
 See [DEVELOPMENT.md](DEVELOPMENT.md) for the current setup instructions.
 
 The verified test setup uses Clojure CLI, Node.js/npm, and headless Chrome or Chromium. Browser tests require a browser binary on `PATH`, or `CHROME_BIN` set to the executable if needed.
-Obviously, commits that fail the CircleCI build are unlikely to be accepted.
-New releases tend to get announced on Twitter with credit to contributors. 
+Commits that fail the GitHub Actions CI build are unlikely to be accepted.
+New releases tend to get announced on Mastodon and Bluesky with credit to contributors. 
 If you want an @mention, make sure to tell us your handle.
 Equally, if you don't want to be mentioned, make sure to tell us that.
 
@@ -17,6 +17,7 @@ After that, the usual verification commands are:
 - `clojure -X:test`
 - `npm run test:cljs:node`
 - `npm run test:cljs:browser`
+- `npm run test:integration`
 - `clojure -T:build jar`
 
 If you just think the documentation needs improving, please send a PR. We've accepted over 100 documentation PRs already. 

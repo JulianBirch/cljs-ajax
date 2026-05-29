@@ -2,7 +2,9 @@
 
 simple Ajax client for ClojureScript and Clojure
 
-[![CircleCI](https://circleci.com/gh/JulianBirch/cljs-ajax.svg?style=shield)](https://circleci.com/gh/JulianBirch/cljs-ajax)
+[![CI](https://github.com/JulianBirch/cljs-ajax/actions/workflows/ci.yml/badge.svg)](https://github.com/JulianBirch/cljs-ajax/actions/workflows/ci.yml)
+[![Release](https://github.com/JulianBirch/cljs-ajax/actions/workflows/release.yml/badge.svg)](https://github.com/JulianBirch/cljs-ajax/actions/workflows/release.yml)
+[![Clojars](https://img.shields.io/clojars/v/cljs-ajax.svg)](https://clojars.org/cljs-ajax)
 
 `cljs-ajax` exposes the same interface (where useful) in both Clojure and ClojureScript. On ClojureScript it operates as a wrapper around [`goog.net.XhrIo`](https://developers.google.com/closure/library/docs/xhrio?hl=en) or [`js/XmlHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest), while on the JVM it's a wrapper around the [Apache HttpAsyncClient](https://hc.apache.org/httpcomponents-asyncclient-4.1.x/index.html) library. 
 
@@ -10,7 +12,7 @@ In addition to this document, there's an [FAQ](docs/faq.md), a [change log](CHAN
 
 ## Usage
 
-Clojure CLI:
+Clojure CLI, using the latest version shown on the Clojars badge above:
 
 ```clojure
 {:deps {cljs-ajax {:mvn/version "0.9.0-beta1"}}}
