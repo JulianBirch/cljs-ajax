@@ -12,7 +12,7 @@ If your tastes/requirements run more to a standardized multi-format REST server,
 
 ## Cross Origin Requests
 
-By default the browser blocks ajax requests from a server which is different to the current page.  To enable such cross origin requests add the `Access-Control-Allow-Origin` and `Access-Control-Allow-Headers` headers to your response as follows. You can use the [`ring-cors`](https://github.com/r0man/ring-cors) library to wrap your routes with customizable CORS middleware.
+By default the browser blocks ajax requests to a server which is different from the current page.  To enable such cross origin requests add the `Access-Control-Allow-Origin` and `Access-Control-Allow-Headers` headers to your response as follows. You can use the [`ring-cors`](https://github.com/r0man/ring-cors) library to wrap your routes with customizable CORS middleware.
 
 ```clojure
 
