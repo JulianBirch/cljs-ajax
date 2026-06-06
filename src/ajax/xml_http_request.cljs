@@ -31,8 +31,8 @@
     (exists? goog/global.XMLHttpRequest)
     goog/global.XMLHttpRequest
     (exists? js/require)
-    (let [req js/require]
-      (.-XMLHttpRequest (req "xmlhttprequest")))))
+    (let [req (atom js/require)]
+      (.-XMLHttpRequest (@req "xmlhttprequest")))))
 
 (extend-type xmlhttprequest
   AjaxImpl
