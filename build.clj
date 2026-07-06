@@ -2,7 +2,7 @@
   (:require [clojure.tools.build.api :as b]))
 
 (def project {:lib 'cljs-ajax/cljs-ajax
-              :version "0.9.0-beta1"
+              :version "0.9.0-beta2"
               :description "A simple Ajax library for ClojureScript"
               :url "https://github.com/JulianBirch/cljs-ajax"
               :license {:name "Eclipse Public License"

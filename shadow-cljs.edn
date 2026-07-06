@@ -2,7 +2,7 @@
  :builds
  {:test-node {:target :node-test
               :output-to "target-test-node/node-tests.js"
-              :ns-regexp "^ajax\\.test\\.(core|url)$"}
+              :ns-regexp "^ajax\\.test\\.(core|url|compiled-output)$"}
   :test-browser {:target :karma
                  :output-to "target-test/browser-tests.js"
                  :ns-regexp "^ajax\\.test\\.(core|url)$"}

@@ -30,9 +30,8 @@
   (cond
     (exists? goog/global.XMLHttpRequest)
     goog/global.XMLHttpRequest
-    (exists? js/require)
-    (let [req (atom js/require)]
-      (.-XMLHttpRequest (@req "xmlhttprequest")))))
+    (js* "(typeof module !== 'undefined' && module.require)")
+    (js* "module.require('xmlhttprequest').XMLHttpRequest")))
 
 (extend-type xmlhttprequest
   AjaxImpl
