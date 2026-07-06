@@ -28,6 +28,16 @@ There are functions that return request and response formats.  Most of these fun
 
 `text-response-format` and `raw-response-format` are identical in ClojureScript, but `raw-response-format` returns the byte stream in Clojure, while `text-response-format` returns a string. `text-request-format` is a pass-through in ClojureScript, but converts a string to a byte stream in Clojure (which is what you want).
 
+### Empty responses
+
+JSON, EDN and Transit response formats return `ajax.core/empty-response` when
+the response body is empty. This applies irrespective of the HTTP status code,
+including 204 No Content and 205 Reset Content.
+
+This is distinct from encoded nil/null values. For example, a JSON response
+body of `null` decodes to `nil`, while an empty JSON response body decodes to
+`ajax.core/empty-response`.
+
 ### Transit parameters
 
 `transit-request-format` takes options

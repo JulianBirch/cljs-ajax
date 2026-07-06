@@ -2,7 +2,8 @@
     (:require [cognitect.transit :as t]
               [ajax.interceptors :as i]
               [ajax.protocols :as pr]
-              [ajax.util :as u]))
+              [ajax.util :as u])
+    #? (:clj (:import [java.io PushbackInputStream])))
 
 (defn transit-type [{:keys [type]}]
   (or type #? (:cljs :json :clj :msgpack)))
@@ -39,15 +40,26 @@
             (let [reader (or (:reader opts)
                              (t/reader :json opts))]
               (fn transit-read-response [response]
-                (t/read reader (pr/-body response)))))
+                (let [body (pr/-body response)]
+                  (if (empty? body)
+                    pr/empty-response
+                    (t/read reader body))))))
     :clj (defn transit-read-fn [request]
            (fn transit-read-response [response]
              (let [content-type (u/get-content-type response)
                    type         (if (.contains content-type "msgpack")
                                   :msgpack :json)
-                   stream       (pr/-body response)
-                   reader       (t/reader stream type request)]
-               (t/read reader)))))
+                   body         (pr/-body response)]
+               (if (nil? body)
+                 pr/empty-response
+                 (let [stream     (PushbackInputStream. body)
+                       first-byte (.read stream)
+                       reader     (t/reader stream type request)]
+                   (if (= -1 first-byte)
+                     pr/empty-response
+                     (do
+                       (.unread stream first-byte)
+                       (t/read reader)))))))))
 
 (defn transit-response-format
   "Returns a Transit response format.

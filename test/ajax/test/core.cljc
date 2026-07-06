@@ -12,6 +12,7 @@
                               is-response-format?]]
    [ajax.core :refer [to-interceptor
                       ajax-request
+                      empty-response
                       url-request-format
                       raw-response-format
                       text-response-format
@@ -259,17 +260,23 @@
 
 (deftest no-content
   (let [r1 (atom "whatever")
-        r2 (atom "whatever")]
+        r2 (atom "whatever")
+        r3 (atom "whatever")]
     (POST "/" {:handler #(reset! r1 %)
                :error-handler #(reset! r1 %)
                :response-format (json-response-format)
                :api (FakeXhrIo. "application/json; charset blah blah" "" 204)})
-    (is (= nil @r1))
+    (is (= empty-response @r1))
     (POST "/" {:handler #(reset! r2 %)
                :error-handler #(reset! r2 %)
                :response-format (json-response-format)
+               :api (FakeXhrIo. "application/json; charset blah blah" "" 205)})
+    (is (= empty-response @r2))
+    (POST "/" {:handler #(reset! r3 %)
+               :error-handler #(reset! r3 %)
+               :response-format (json-response-format)
                :api (FakeXhrIo. "application/json; charset blah blah" "{\"a\":\"b\"}" 200)})
-    (is (= {"a" "b"} @r2))))
+    (is (= {"a" "b"} @r3))))
 
 (deftest not-modified
   "If the response to a GET request is of status 304 Not Modified it should be successful"
@@ -326,6 +333,21 @@
     #? (:cljs (is (= {"a" "b"} (js->clj (json-read "while(1);" false true))))
         :clj (is (= {"a" "b"} (json-read "while(1);" false true))))))
 
+(deftest empty-body-decodes-to-empty-response
+  (doseq [response-format [(json-response-format)
+                           (edn-response-format)
+                           (transit-response-format)]]
+    (is (= empty-response
+           ((:read response-format)
+            (FakeXhrIo. "application/json; charset blah blah" "" 200))))
+    (is (= empty-response
+           ((:read response-format)
+            (FakeXhrIo. "application/json; charset blah blah" nil 200))))))
+
+(deftest json-null-decodes-to-nil
+  (is (nil? ((:read (json-response-format))
+             (FakeXhrIo. "application/json; charset blah blah" "null" 200)))))
+
 (deftest ring-format
   (let [response (FakeXhrIo. "text/plain" "BODY" 200)
         test-format {:format {:read :content
@@ -340,6 +362,19 @@
               :headers {"Content-Type" "text/plain"}
               :body "BODY"}
              (read-fn response))))))
+
+(deftest ring-format-runs-for-empty-statuses
+  (doseq [status [204 205]]
+    (let [r (atom nil)]
+      (POST "/" {:handler #(reset! r %)
+                 :error-handler #(reset! r %)
+                 :response-format (ring-response-format
+                                   {:format (json-response-format)})
+                 :api (FakeXhrIo. "application/json; charset blah blah" "" status)})
+      (is (= {:status status
+              :headers {"Content-Type" "application/json; charset blah blah"}
+              :body empty-response}
+             @r)))))
 
 (deftest url-params-test
   "Sending a delete request with URL params should populate the URL with

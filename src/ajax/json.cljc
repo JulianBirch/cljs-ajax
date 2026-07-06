@@ -6,12 +6,12 @@
             [ajax.protocols :refer
                 [-body -process-request -process-response -abort -status
                 -get-response-header -status-text -js-ajax-request
-                -was-aborted]]
+                -was-aborted empty-response]]
             #?@ (:clj  [[cheshire.core :as c]
                         [clojure.java.io :as io]]))
   #? (:clj (:import [java.io OutputStreamWriter ByteArrayOutputStream
                 InputStreamReader Closeable OutputStream
-                InputStream])))
+                InputStream PushbackReader])))
 
 ;;; NB If you're looking to use the google closure JSON implementation,
 ;;; You'll need ajax.goog-json instead
@@ -24,22 +24,34 @@
 
 #? (:clj (defn read-json-cheshire [raw keywords? text]
            ; NB Raw is ignored since it makes no sense in this context
-           (c/parse-stream (io/reader text) keywords?)))
+           (if (nil? text)
+             empty-response
+             (let [reader (PushbackReader. (io/reader text))
+                   first-char (.read reader)]
+               (if (= -1 first-char)
+                 empty-response
+                 (do
+                   (.unread reader first-char)
+                   (c/parse-stream reader keywords?)))))))
 
 #? (:cljs (defn read-json-native [raw keywords? text]
-               (let [result-raw (.parse js/JSON text)]
-                    (if raw
-                        result-raw
-                        (js->clj result-raw :keywordize-keys keywords?)))))
+            (if (empty? text)
+              empty-response
+              (let [result-raw (.parse js/JSON text)]
+                (if raw
+                  result-raw
+                  (js->clj result-raw :keywordize-keys keywords?))))))
 
 ; From Kjetil Thuen's "safe" converter
 #? (:cljs (defn read-json-transit [raw keywords? text]
-            (if raw
-              (.parse js/JSON text)
-              (let [edn (t/read (t/reader :json) text) ]
+            (if (empty? text)
+              empty-response
+              (if raw
+                (.parse js/JSON text)
+                (let [edn (t/read (t/reader :json) text) ]
                   (if keywords?
                     (w/keywordize-keys edn)
-                    edn)))))
+                    edn))))))
 
 (defn make-json-request-format [write-json]
   (fn json-request-format []

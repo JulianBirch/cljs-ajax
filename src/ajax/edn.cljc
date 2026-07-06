@@ -1,6 +1,6 @@
 (ns ajax.edn
   (:require [ajax.interceptors :refer [map->ResponseFormat]]
-            [ajax.protocols :refer [-body]]
+            [ajax.protocols :refer [-body empty-response]]
             #?@ (:cljs [[cljs.reader :as edn]]
                  :clj [[clojure.edn :as edn]
                        [clojure.java.io :refer [reader]]]))
@@ -10,11 +10,22 @@
                      InputStream OutputStream))))
 
 (defn edn-read [xhrio]
-  #? (:cljs (-> xhrio -body edn/read-string)
-      :clj (-> ^InputStream (-body xhrio)
-               (InputStreamReader. "UTF-8")
-               PushbackReader.
-               edn/read)))
+  #? (:cljs (let [body (-body xhrio)]
+              (if (empty? body)
+                empty-response
+                (edn/read-string body)))
+      :clj (let [body (-body xhrio)]
+             (if (nil? body)
+               empty-response
+               (let [reader (-> ^InputStream body
+                                (InputStreamReader. "UTF-8")
+                                PushbackReader.)
+                     first-char (.read reader)]
+                 (if (= -1 first-char)
+                   empty-response
+                   (do
+                     (.unread reader first-char)
+                     (edn/read reader))))))))
 
 (defn edn-response-format
   ([] (map->ResponseFormat {:read edn-read

@@ -1,5 +1,6 @@
 (ns ajax.goog-json
     (:require [ajax.json :as json]
+            [ajax.protocols :refer [empty-response]]
             #?@ (:cljs [[goog.json :as goog-json]
                         [goog.json.Serializer]])))
 
@@ -7,10 +8,12 @@
             (.serialize (goog.json.Serializer.) (clj->js data))))
 
 #? (:cljs (defn read-json-google [raw keywords? text]
-            (let [json (goog-json/parse text)]
-              (if raw
+            (if (empty? text)
+              empty-response
+              (let [json (goog-json/parse text)]
+                (if raw
                   json
-                  (js->clj json :keywordize-keys keywords?)))))
+                  (js->clj json :keywordize-keys keywords?))))))
 
 (def goog-json-response-format
   "Returns a JSON response format using the native JSON 

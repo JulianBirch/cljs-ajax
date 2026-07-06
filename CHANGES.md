@@ -1,3 +1,17 @@
+## Version 0.9
+
+**Breaking Changes**
+
+* Empty JSON, EDN and Transit response bodies now decode to
+  `ajax.core/empty-response`, irrespective of HTTP status. This distinguishes
+  an absent response body from encoded nil/null values such as JSON `null` or
+  EDN `nil`, which still decode to `nil`.
+* HTTP 204 No Content and 205 Reset Content responses are now passed through
+  the configured response format instead of returning `nil` before response
+  parsing. This means `ring-response-format` can return status and headers for
+  these responses, with `:body` set to `ajax.core/empty-response` when the body
+  is empty.
+
 ## Version 0.8
 
 **Breaking Changes**

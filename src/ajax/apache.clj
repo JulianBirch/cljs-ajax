@@ -56,7 +56,7 @@
   AjaxResponse
   (-body [this]
     (let [^HttpResponse response (:response this)]
-      (.getContent (.getEntity response))))
+      (some-> response .getEntity .getContent)))
   (-status [this]
     (let [^HttpResponse response (:response this)]
       (-> response .getStatusLine .getStatusCode)))

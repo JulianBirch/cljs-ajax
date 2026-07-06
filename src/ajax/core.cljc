@@ -36,6 +36,10 @@
 
 ;;; Standard Formats
 
+(def empty-response
+  "Sentinel value returned by structured response formats when the response body is empty."
+  pr/empty-response)
+
 (def json-request-format json/json-request-format)
 (def json-response-format json/json-response-format)
 

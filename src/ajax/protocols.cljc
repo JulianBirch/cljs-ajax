@@ -1,5 +1,9 @@
 (ns ajax.protocols)
 
+(def empty-response
+  "Sentinel value returned by structured response formats when the response body is empty."
+  ::empty-response)
+
 (defprotocol AjaxImpl
   "An abstraction for a javascript class that implements
    Ajax calls."
