@@ -6,7 +6,7 @@ simple Ajax client for ClojureScript and Clojure
 [![Release](https://github.com/JulianBirch/cljs-ajax/actions/workflows/release.yml/badge.svg)](https://github.com/JulianBirch/cljs-ajax/actions/workflows/release.yml)
 [![Clojars](https://img.shields.io/clojars/v/cljs-ajax.svg)](https://clojars.org/cljs-ajax)
 
-`cljs-ajax` exposes the same interface (where useful) in both Clojure and ClojureScript. On ClojureScript it operates as a wrapper around [`goog.net.XhrIo`](https://developers.google.com/closure/library/docs/xhrio?hl=en) or [`js/XmlHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest), while on the JVM it's a wrapper around the [Apache HttpAsyncClient](https://hc.apache.org/httpcomponents-asyncclient-4.1.x/index.html) library. 
+`cljs-ajax` exposes the same interface (where useful) in both Clojure and ClojureScript. On ClojureScript it operates as a wrapper around [`goog.net.XhrIo`](https://developers.google.com/closure/library/docs/xhrio?hl=en) or [`js/XmlHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest), while on the JVM it's a wrapper around the [Apache HttpClient](https://hc.apache.org/httpcomponents-client-5.6.x/index.html) asynchronous API. 
 
 In addition to this document, there's an [FAQ](docs/faq.md), a [change log](CHANGES.md) and a [contribution document](CONTRIBUTING.md). Furthermore, there is detailed documentation on specific features and design advice in the [docs folder](docs).
 
@@ -39,7 +39,7 @@ The `GET`, `POST`, and `PUT` helpers accept a URI followed by a map of options:
 * `:url-params` - parameters that will be added onto query string. In the case of a GET request, parameters defined here will replace parameters defined in `:params`.
 * `:timeout` - the ajax call's timeout in milliseconds.  Default is `0` (no timeout).
 * `:headers` - a map of the HTTP headers to set with the request
-* `:cookie-policy` - a keyword for the cookie management specification. **Only available in Java**. Optional. One of `:none`, `:default`, `:netscape`, `:standard`, `:standard-strict`.
+* `:cookie-policy` - a keyword for the cookie management specification. **Only available in Java**. Optional. One of `:none`, `:default`, `:netscape`, `:standard`, `:standard-strict`. Apache HttpClient 5 only ships the RFC 6265 specifications, so `:default`, `:netscape` and `:standard` all select the relaxed RFC 6265 policy, and `:standard-strict` selects the strict one.
 
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
 * `:body` the exact data to send with in the request. If specified, both `:params` and `:request-format` are ignored.  Note that you can submit js/FormData and other "raw" javascript types through this.
@@ -188,7 +188,7 @@ The following parameters are the same as in the `GET`/`POST` easy api:
 * `:params` - the parameters that will be sent with the request,  format dependent: `:transit` and `:edn` can send anything, `:json` and `:raw` need to be given a map.  `GET` will add params onto the query string, `POST` will put the params in the body
 * `:timeout` - the ajax call's timeout.  30 seconds if left blank
 * `:headers` - a map of the HTTP headers to set with the request
-* `:cookie-policy` - a keyword for the cookie management specification. **Only available in Java**. Optional. One of `:none`, `:default`, `:netscape`, `:standard`, `:standard-strict`.
+* `:cookie-policy` - a keyword for the cookie management specification. **Only available in Java**. Optional. One of `:none`, `:default`, `:netscape`, `:standard`, `:standard-strict`. Apache HttpClient 5 only ships the RFC 6265 specifications, so `:default`, `:netscape` and `:standard` all select the relaxed RFC 6265 policy, and `:standard-strict` selects the strict one.
 * `:with-credentials` - a boolean, whether to set the `withCredentials` flag on the XHR object.
 * `:interceptors` - the [interceptors](docs/interceptors.md) to run for this request. If not set, runs contents of the `default-interceptors` global atom. This is an empty vector by default. For more information, visit the [interceptors page](docs/interceptors.md).
 
