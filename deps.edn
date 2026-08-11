@@ -3,8 +3,8 @@
  :deps {cheshire/cheshire {:mvn/version "5.10.0"}
         com.cognitect/transit-clj {:mvn/version "1.0.324"}
         com.cognitect/transit-cljs {:mvn/version "0.8.264"}
-        org.apache.httpcomponents/httpasyncclient {:mvn/version "4.1.4"}
-        org.apache.httpcomponents/httpcore {:mvn/version "4.4.14"}
+        org.apache.httpcomponents.client5/httpclient5 {:mvn/version "5.6.1"}
+        org.apache.httpcomponents.core5/httpcore5 {:mvn/version "5.4.2"}
         org.clojure/clojure {:mvn/version "1.11.1"}}
  :aliases
  {:test {:extra-paths ["test" "support"]
