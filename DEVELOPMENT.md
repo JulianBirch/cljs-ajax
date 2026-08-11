@@ -55,7 +55,8 @@ clojure -T:build jar
 
 Alias summary:
 
-- `clojure -X:test`: JVM tests
+- `clojure -X:test`: JVM tests, including the property based tests for the
+  Apache implementation
 - `npm run test:cljs:node`: ClojureScript tests on Node
 - `npm run test:cljs:browser`: ClojureScript tests in headless Chrome
 - `npm run test:integration`: shared JVM + dedicated Node + dedicated browser integration tests against one live local server
