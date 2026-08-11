@@ -40,8 +40,8 @@
                      ring-server/ring-server {:mvn/version "0.5.0"}
                      ring-transit/ring-transit {:mvn/version "0.1.6"}}}
   :cljs {:extra-paths ["test" "browser-test"]
-         :extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}
-                      thheller/shadow-cljs {:mvn/version "2.28.19"}}}
+         :extra-deps {org.clojure/clojurescript {:mvn/version "1.12.145"}
+                      thheller/shadow-cljs {:mvn/version "3.4.12"}}}
   :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.3"}}}
   :build {:extra-deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
           :ns-default build}}}
