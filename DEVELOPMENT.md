@@ -60,6 +60,8 @@ Alias summary:
 - `npm run test:cljs:node`: ClojureScript tests on Node
 - `npm run test:cljs:browser`: ClojureScript tests in headless Chrome
 - `npm run test:integration`: shared JVM + dedicated Node + dedicated browser integration tests against one live local server
+- `clojure -X:mutation`: mutation testing of the Apache implementation against
+  the property suite
 - `clojure -T:build jar`: package build
 
 ## Verified Working State
