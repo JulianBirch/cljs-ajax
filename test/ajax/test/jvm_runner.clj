@@ -2,7 +2,8 @@
   (:require [clojure.test :as t]))
 
 (def test-namespaces
-  ['ajax.test.core
+  ['ajax.test.apache-property
+   'ajax.test.core
    'ajax.test.server-interaction
    'ajax.test.url])
 
