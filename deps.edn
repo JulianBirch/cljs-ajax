@@ -1,11 +1,11 @@
 {:paths ["src"]
  :mvn/repos {"clojars" {:url "https://repo.clojars.org/"}}
- :deps {cheshire/cheshire {:mvn/version "5.10.0"}
-        com.cognitect/transit-clj {:mvn/version "1.0.324"}
-        com.cognitect/transit-cljs {:mvn/version "0.8.264"}
+ :deps {cheshire/cheshire {:mvn/version "6.2.0"}
+        com.cognitect/transit-clj {:mvn/version "1.0.333"}
+        com.cognitect/transit-cljs {:mvn/version "0.8.280"}
         org.apache.httpcomponents/httpasyncclient {:mvn/version "4.1.4"}
         org.apache.httpcomponents/httpcore {:mvn/version "4.4.14"}
-        org.clojure/clojure {:mvn/version "1.11.1"}}
+        org.clojure/clojure {:mvn/version "1.12.0"}}
  :aliases
  {:test {:extra-paths ["test" "support"]
          :extra-deps {compojure/compojure {:mvn/version "1.6.2"}
