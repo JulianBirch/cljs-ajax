@@ -2,6 +2,18 @@
 
 **Breaking Changes**
 
+* The JVM implementation now uses Apache HttpClient 5 instead of Apache
+  HttpAsyncClient 4, which reached end of life. The dependency changes from
+  `org.apache.httpcomponents/httpasyncclient` to
+  `org.apache.httpcomponents.client5/httpclient5`; anything that pinned or
+  excluded the old coordinates needs updating.
+* `:cookie-policy` values are mapped onto the cookie specifications HttpClient
+  5 provides. It only ships RFC 6265, so `:default`, `:netscape` and
+  `:standard` all select the relaxed RFC 6265 policy and `:standard-strict`
+  selects the strict one. The Netscape draft specification no longer exists.
+* A connect timeout now also reports a status of `-1` and a `:failure` of
+  `:timeout`, matching what a socket timeout has always reported.
+
 * Empty JSON, EDN and Transit response bodies now decode to
   `ajax.core/empty-response`, irrespective of HTTP status. This distinguishes
   an absent response body from encoded nil/null values such as JSON `null` or
