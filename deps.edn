@@ -1,47 +1,47 @@
 {:paths ["src"]
  :mvn/repos {"clojars" {:url "https://repo.clojars.org/"}}
- :deps {cheshire/cheshire {:mvn/version "5.10.0"}
-        com.cognitect/transit-clj {:mvn/version "1.0.324"}
-        com.cognitect/transit-cljs {:mvn/version "0.8.264"}
+ :deps {cheshire/cheshire {:mvn/version "6.2.0"}
+        com.cognitect/transit-clj {:mvn/version "1.1.363"}
+        com.cognitect/transit-cljs {:mvn/version "0.8.280"}
         org.apache.httpcomponents/httpasyncclient {:mvn/version "4.1.4"}
         org.apache.httpcomponents/httpcore {:mvn/version "4.4.14"}
-        org.clojure/clojure {:mvn/version "1.11.1"}}
+        org.clojure/clojure {:mvn/version "1.12.5"}}
  :aliases
  {:test {:extra-paths ["test" "support"]
-         :extra-deps {compojure/compojure {:mvn/version "1.6.2"}
+         :extra-deps {compojure/compojure {:mvn/version "1.7.2"}
                       fogus/ring-edn {:mvn/version "0.3.0"}
-                      hiccup/hiccup {:mvn/version "1.0.5"}
-                      http-kit/http-kit {:mvn/version "2.5.3"}
-                      javax.servlet/javax.servlet-api {:mvn/version "3.1.0"}
-                      org.clojure/core.async {:mvn/version "1.3.610"}
+                      hiccup/hiccup {:mvn/version "2.0.0"}
+                      http-kit/http-kit {:mvn/version "2.8.1"}
+                      javax.servlet/javax.servlet-api {:mvn/version "4.0.1"}
+                      org.clojure/core.async {:mvn/version "1.9.865"}
                       ring-server/ring-server {:mvn/version "0.5.0"}
                       ring-transit/ring-transit {:mvn/version "0.1.6"}}
          :exec-fn ajax.test.jvm-runner/run-tests}
   :integration {:extra-paths ["test" "support"]
-                :extra-deps {compojure/compojure {:mvn/version "1.6.2"}
+                :extra-deps {compojure/compojure {:mvn/version "1.7.2"}
                              fogus/ring-edn {:mvn/version "0.3.0"}
-                             hiccup/hiccup {:mvn/version "1.0.5"}
-                             http-kit/http-kit {:mvn/version "2.5.3"}
-                             javax.servlet/javax.servlet-api {:mvn/version "3.1.0"}
-                             org.clojure/core.async {:mvn/version "1.3.610"}
+                             hiccup/hiccup {:mvn/version "2.0.0"}
+                             http-kit/http-kit {:mvn/version "2.8.1"}
+                             javax.servlet/javax.servlet-api {:mvn/version "4.0.1"}
+                             org.clojure/core.async {:mvn/version "1.9.865"}
                              ring-server/ring-server {:mvn/version "0.5.0"}
                              ring-transit/ring-transit {:mvn/version "0.1.6"}}
                 :exec-fn ajax.test.integration-jvm-runner/run-tests}
   :dev {:extra-paths ["dev" "browser-test" "support"]
         :extra-deps {clj-time/clj-time {:mvn/version "0.15.2"}
-                     compojure/compojure {:mvn/version "1.6.2"}
+                     compojure/compojure {:mvn/version "1.7.2"}
                      fogus/ring-edn {:mvn/version "0.3.0"}
-                     hiccup/hiccup {:mvn/version "1.0.5"}
-                     http-kit/http-kit {:mvn/version "2.5.3"}
-                     org.clojure/tools.namespace {:mvn/version "1.1.0"}
-                     ring/ring-defaults {:mvn/version "0.3.2"}
+                     hiccup/hiccup {:mvn/version "2.0.0"}
+                     http-kit/http-kit {:mvn/version "2.8.1"}
+                     org.clojure/tools.namespace {:mvn/version "1.5.1"}
+                     ring/ring-defaults {:mvn/version "0.7.1"}
                      ring/ring-json {:mvn/version "0.5.1"}
-                     ring/ring-devel {:mvn/version "1.9.6"}
+                     ring/ring-devel {:mvn/version "1.15.5"}
                      ring-server/ring-server {:mvn/version "0.5.0"}
                      ring-transit/ring-transit {:mvn/version "0.1.6"}}}
   :cljs {:extra-paths ["test" "browser-test"]
-         :extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}
-                      thheller/shadow-cljs {:mvn/version "2.28.19"}}}
-  :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.3"}}}
-  :build {:extra-deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
+         :extra-deps {org.clojure/clojurescript {:mvn/version "1.12.145"}
+                      thheller/shadow-cljs {:mvn/version "3.4.12"}}}
+  :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.5"}}}
+  :build {:extra-deps {io.github.clojure/tools.build {:mvn/version "0.10.14"}}
           :ns-default build}}}
